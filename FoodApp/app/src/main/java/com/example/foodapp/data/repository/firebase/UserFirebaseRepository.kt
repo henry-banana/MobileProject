@@ -2,7 +2,7 @@ package com.example.foodapp.data.repository.firebase
 
 import android.content.Context
 import com.example.foodapp.R
-import com.example.foodapp.data.model.User
+import com.example.foodapp.data.model.Client
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -172,7 +172,7 @@ class UserFirebaseRepository(context: Context) {
     }
 
 
-    fun getCurrentUserWithDetails(onComplete: (User?) -> Unit) {
+    fun getCurrentUserWithDetails(onComplete: (Client?) -> Unit) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
             onComplete(null)
@@ -195,7 +195,7 @@ class UserFirebaseRepository(context: Context) {
                         val createdAt = document.getLong("createdAt") ?: System.currentTimeMillis()
                         val updatedAt = document.getLong("updatedAt") ?: System.currentTimeMillis()
 
-                        val user = User(
+                        val user = Client(
                             id = userId,
                             fullName = fullName,
                             email = email,
@@ -213,7 +213,7 @@ class UserFirebaseRepository(context: Context) {
                         onComplete(null)
                     }
                 } else {
-                    val user = User(
+                    val user = Client(
                         id = userId,
                         fullName = currentUser.displayName ?: "",
                         email = currentUser.email ?: "",
@@ -293,7 +293,7 @@ class UserFirebaseRepository(context: Context) {
         email: String,
         onComplete: (Boolean, String?) -> Unit
     ) {
-        val user = User(
+        val user = Client(
             id = userId,
             fullName = fullName,
             email = email,
@@ -320,7 +320,7 @@ class UserFirebaseRepository(context: Context) {
         email: String?,
         onComplete: (Boolean, String?) -> Unit
     ) {
-        val user = User(
+        val user = Client(
             id = userId,
             fullName = displayName ?: "Google User",
             email = email ?: "",
@@ -363,7 +363,7 @@ class UserFirebaseRepository(context: Context) {
             }
     }
 
-    fun getUserById(userId: String, onComplete: (User?) -> Unit) {
+    fun getUserById(userId: String, onComplete: (Client?) -> Unit) {
         db.collection("users").document(userId)
             .get()
             .addOnSuccessListener { document ->
@@ -380,7 +380,7 @@ class UserFirebaseRepository(context: Context) {
                         val createdAt = document.getLong("createdAt") ?: 0L
                         val updatedAt = document.getLong("updatedAt") ?: 0L
 
-                        val user = User(
+                        val user = Client(
                             id = id,
                             fullName = fullName,
                             email = email,
@@ -406,7 +406,7 @@ class UserFirebaseRepository(context: Context) {
     }
 
     // Lấy User hiện tại đang đăng nhập
-    fun getCurrentUser(onComplete: (User?) -> Unit) {
+    fun getCurrentUser(onComplete: (Client?) -> Unit) {
         val userId = auth.currentUser?.uid
         if (userId == null) {
             onComplete(null)

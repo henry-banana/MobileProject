@@ -1,4 +1,4 @@
-package com.example.foodapp.authentication.forgotPassword
+package com.example.foodapp.authentication.forgotpassword
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

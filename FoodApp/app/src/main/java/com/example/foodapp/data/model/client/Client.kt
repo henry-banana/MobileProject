@@ -1,6 +1,6 @@
 package com.example.foodapp.data.model
 
-data class User(
+data class Client(
     var id: String,
     var fullName: String,
     var email: String,

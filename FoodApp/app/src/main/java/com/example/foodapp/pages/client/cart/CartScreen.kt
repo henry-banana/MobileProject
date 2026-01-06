@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.cart
+package com.example.foodapp.pages.client.cart
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.foodapp.R
-import com.example.foodapp.pages.user.components.UserBottomNav
+import com.example.foodapp.pages.client.components.UserBottomNav
 
 data class CartItem(
     val id: String,

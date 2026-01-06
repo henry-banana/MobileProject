@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.components
+package com.example.foodapp.pages.client.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -13,7 +13,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
-import com.example.foodapp.data.model.product.Product
+import com.example.foodapp.data.model.shared.product.Product
 
 @Composable
 fun UserProductCard(product: Product, onClick: () -> Unit) {

@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.profile
+package com.example.foodapp.pages.client.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState

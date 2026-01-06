@@ -1,4 +1,4 @@
-package com.example.foodapp.data.model.product
+package com.example.foodapp.data.model.shared.product
 import java.io.Serializable
 
 // Enum để phân loại món ăn

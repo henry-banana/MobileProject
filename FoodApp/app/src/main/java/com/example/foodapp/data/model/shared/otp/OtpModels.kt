@@ -1,4 +1,4 @@
-package com.example.foodapp.data.model.OTP
+package com.example.foodapp.data.model.shared.otp
 
 import com.google.gson.annotations.SerializedName
 

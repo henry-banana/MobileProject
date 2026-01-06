@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.notifications
+package com.example.foodapp.pages.client.notifications
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,7 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.foodapp.pages.user.components.UserBottomNav
+import com.example.foodapp.pages.client.components.UserBottomNav
 
 data class UserNotification(
     val id: String,

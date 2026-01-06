@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.components
+package com.example.foodapp.pages.client.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

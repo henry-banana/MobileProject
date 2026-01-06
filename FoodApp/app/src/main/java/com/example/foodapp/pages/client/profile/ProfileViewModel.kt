@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.profile
+package com.example.foodapp.pages.client.profile
 
 import android.content.Context
 import androidx.lifecycle.LiveData
@@ -6,14 +6,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.foodapp.data.model.User
+import com.example.foodapp.data.model.Client
 import com.example.foodapp.data.repository.firebase.UserFirebaseRepository
 import kotlinx.coroutines.launch
 
 sealed class UserDataState {
     object Idle : UserDataState()
     object Loading : UserDataState()
-    data class Success(val user: User) : UserDataState()
+    data class Success(val user: Client) : UserDataState()
     data class Error(val message: String) : UserDataState()
 }
 

@@ -11,18 +11,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
-import com.example.foodapp.pages.user.home.HomeViewModel
-import com.example.foodapp.pages.user.home.UserNameState
+import com.example.foodapp.pages.client.home.HomeViewModel
+import com.example.foodapp.pages.client.home.UserNameState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.foodapp.R
-import com.example.foodapp.data.model.product.Product
-import com.example.foodapp.data.model.product.FoodCategory
-import com.example.foodapp.pages.user.components.UserBottomNav
-import com.example.foodapp.pages.user.components.UserCategoryList
-import com.example.foodapp.pages.user.components.UserHeader
-import com.example.foodapp.pages.user.components.UserProductCard
-import com.example.foodapp.pages.user.components.UserSearchBar
+import com.example.foodapp.data.model.shared.product.Product
+import com.example.foodapp.data.model.shared.product.FoodCategory
+import com.example.foodapp.pages.client.components.UserBottomNav
+import com.example.foodapp.pages.client.components.UserCategoryList
+import com.example.foodapp.pages.client.components.UserHeader
+import com.example.foodapp.pages.client.components.UserProductCard
+import com.example.foodapp.pages.client.components.UserSearchBar
 
 @Composable
 fun UserHomeScreen(

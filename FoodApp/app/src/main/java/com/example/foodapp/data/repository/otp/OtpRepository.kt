@@ -1,11 +1,16 @@
 package com.example.foodapp.data.repository
 
-import com.example.foodapp.data.model.OTP.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.io.IOException
 import com.example.foodapp.data.api.ApiClient
+import com.example.foodapp.data.model.shared.otp.ApiResult
+import com.example.foodapp.data.model.shared.otp.SendOtpRequest
+import com.example.foodapp.data.model.shared.otp.SendOtpResponse
+import com.example.foodapp.data.model.shared.otp.VerificationStatusResponse
+import com.example.foodapp.data.model.shared.otp.VerifyOtpRequest
+import com.example.foodapp.data.model.shared.otp.VerifyOtpResponse
 
 class OtpRepository {
     private val apiService = ApiClient.otpApiService

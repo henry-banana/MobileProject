@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.favorites
+package com.example.foodapp.pages.client.favorites
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.foodapp.pages.user.components.UserBottomNav
+import com.example.foodapp.pages.client.components.UserBottomNav
 import androidx.compose.foundation.Image
 import androidx.compose.ui.text.style.TextAlign
 import com.example.foodapp.R

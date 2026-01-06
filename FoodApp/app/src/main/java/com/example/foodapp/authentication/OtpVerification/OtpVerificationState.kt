@@ -1,4 +1,4 @@
-package com.example.foodapp.authentication.OtpVerification
+package com.example.foodapp.authentication.otpverification
 
 import android.content.Context
 import androidx.lifecycle.LiveData
@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.foodapp.data.model.OTP.*
+import com.example.foodapp.data.model.shared.otp.ApiResult
 import com.example.foodapp.data.repository.OtpRepository
 import com.example.foodapp.data.repository.firebase.UserFirebaseRepository
 import kotlinx.coroutines.launch

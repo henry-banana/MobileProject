@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.components
+package com.example.foodapp.pages.client.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.foodapp.R
-import com.example.foodapp.pages.user.home.UserNameState
+import com.example.foodapp.pages.client.home.UserNameState
 
 @Composable
 fun UserHeader(state: UserNameState) {

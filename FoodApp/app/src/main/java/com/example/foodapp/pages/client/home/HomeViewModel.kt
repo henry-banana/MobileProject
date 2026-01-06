@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.user.home
+package com.example.foodapp.pages.client.home
 
 import android.content.Context
 import androidx.lifecycle.LiveData
