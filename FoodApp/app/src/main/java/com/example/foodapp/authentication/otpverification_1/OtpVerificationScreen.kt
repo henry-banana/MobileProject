@@ -1,4 +1,4 @@
-package com.example.foodapp.authentication.otpverification
+package com.example.foodapp.authentication.otpverification_1
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

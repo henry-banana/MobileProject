@@ -14,8 +14,8 @@ import com.example.foodapp.authentication.login.LoginScreen
 import com.example.foodapp.data.repository.firebase.UserFirebaseRepository
 import com.example.foodapp.pages.client.profile.UserProfileScreen
 import com.example.foodapp.authentication.roleselection.RoleSelectionScreen
-import com.example.foodapp.authentication.forgotpassword.NewPasswordScreen
-import com.example.foodapp.authentication.otpverification.OtpVerificationScreen
+import com.example.foodapp.authentication.forgotpassword_1.NewPasswordScreen
+import com.example.foodapp.authentication.otpverification_1.OtpVerificationScreen
 import com.example.foodapp.authentication.signup.SignUpScreen
 import com.example.foodapp.presentation.view.user.home.UserHomeScreen
 import com.example.foodapp.pages.client.cart.CartScreen

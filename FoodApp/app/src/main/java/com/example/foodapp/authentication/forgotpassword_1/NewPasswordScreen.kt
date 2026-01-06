@@ -1,4 +1,4 @@
-package com.example.foodapp.authentication.forgotpassword
+package com.example.foodapp.authentication.forgotpassword_1
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
