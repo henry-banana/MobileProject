@@ -1,4 +1,4 @@
-package com.example.foodapp.authentication.otpverification_1
+package com.example.foodapp.authentication.otpverification
 
 import android.content.Context
 import androidx.lifecycle.LiveData
