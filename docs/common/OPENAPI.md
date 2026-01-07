@@ -1,6 +1,6 @@
 # OpenAPI Specification - KTX Delivery API
 
-> **Version:** 1.0.0  
+> **Version:** 2.1  
 > **Updated:** 2026-01-07  
 > **Base URL:** `http://localhost:3000/api`  
 > **Swagger UI:** `http://localhost:3000/api/docs`
@@ -29,20 +29,22 @@ Authorization: Bearer <firebase-id-token>
 
 # API Endpoints
 
-## 1. AUTH ✅ DONE
+## 1. AUTH ✅ (Leader: Hòa)
 
-| Status | Method | Endpoint             | Description              |
-| ------ | ------ | -------------------- | ------------------------ |
-| ✅     | POST   | `/auth/register`     | 🔓 Đăng ký tài khoản mới |
-| ✅     | POST   | `/auth/login`        | 🔓 Hướng dẫn đăng nhập   |
-| ✅     | POST   | `/auth/verify-token` | 🔓 Xác thực ID Token     |
-| ✅     | POST   | `/auth/google`       | 🔓 Google Sign-In        |
-| ✅     | GET    | `/auth/profile`      | Lấy thông tin profile    |
-| ✅     | PUT    | `/auth/profile`      | Cập nhật profile         |
-| ✅     | PUT    | `/auth/role`         | Cập nhật vai trò         |
-| ✅     | DELETE | `/auth/account`      | Xóa tài khoản            |
+> 🔐 **Module thuần xác thực** - KHÔNG chứa /me endpoints
 
-### POST /auth/register ✅
+| Status | Method | Endpoint               | Description              |
+| ------ | ------ | ---------------------- | ------------------------ |
+| ✅     | POST   | `/auth/register`       | 🔓 Đăng ký tài khoản mới |
+| ✅     | POST   | `/auth/google`         | 🔓 Google Sign-In        |
+| ✅     | POST   | `/auth/verify-email`   | 🔓 Xác thực OTP email    |
+| ✅     | POST   | `/auth/resend-otp`     | 🔓 Gửi lại OTP           |
+| ✅     | POST   | `/auth/forgot-password`| 🔓 Quên mật khẩu         |
+| ✅     | POST   | `/auth/reset-password` | 🔓 Đặt lại mật khẩu      |
+| ✅     | PUT    | `/auth/change-password`| Đổi mật khẩu             |
+| ✅     | POST   | `/auth/logout`         | Đăng xuất (xóa FCM)      |
+
+### POST /auth/register
 
 Đăng ký tài khoản mới với email/password.
 
@@ -50,193 +52,156 @@ Authorization: Bearer <firebase-id-token>
 
 ```json
 {
-  "fullName": "Nguyễn Văn A",
   "email": "user@example.com",
-  "password": "Password123",
-  "phone": "0901234567" // optional
+  "password": "Password123!",
+  "displayName": "Nguyễn Văn A",
+  "phone": "0901234567",
+  "role": "CUSTOMER"
 }
 ```
+
+| Field       | Type   | Required | Options                  |
+| ----------- | ------ | -------- | ------------------------ |
+| email       | string | ✅       | Valid email              |
+| password    | string | ✅       | Min 6 chars              |
+| displayName | string | ✅       | Min 2 chars              |
+| phone       | string | ❌       | VN phone (10 digits)     |
+| role        | string | ✅       | CUSTOMER, OWNER, SHIPPER |
 
 **Response:** `201 Created`
 
 ```json
 {
   "success": true,
-  "message": "Đăng ký thành công",
   "data": {
     "user": {
-      "id": "abc123",
-      "fullName": "Nguyễn Văn A",
+      "id": "uid_abc123",
       "email": "user@example.com",
-      "isVerify": false,
-      "phone": "",
-      "role": "user",
-      "imageAvatar": "",
-      "createdAt": 1704700000000,
-      "updatedAt": 1704700000000
+      "displayName": "Nguyễn Văn A",
+      "role": "CUSTOMER",
+      "status": "ACTIVE",
+      "createdAt": "2026-01-05T10:00:00Z"
     },
-    "uid": "abc123"
-  }
+    "customToken": "firebase_custom_token..."
+  },
+  "message": "Đăng ký thành công"
 }
 ```
-
-### POST /auth/verify-token ✅
-
-Xác thực Firebase ID Token và trả về user profile.
-
-**Request:**
-
-```json
-{
-  "idToken": "eyJhbGciOiJS..."
-}
-```
-
-**Response:** `200 OK`
-
-```json
-{
-  "success": true,
-  "message": "Xác thực thành công",
-  "data": {
-    "user": { ... }
-  }
-}
-```
-
-### POST /auth/google ✅
-
-Đăng nhập bằng Google.
-
-**Request:**
-
-```json
-{
-  "idToken": "firebase-id-token-from-google-signin"
-}
-```
-
-**Response:** `200 OK`
-
-```json
-{
-  "success": true,
-  "message": "Đăng nhập thành công",
-  "data": {
-    "user": { ... },
-    "isNewUser": true
-  }
-}
-```
-
-### GET /auth/profile ✅
-
-Lấy thông tin profile user hiện tại.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Response:** `200 OK`
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "abc123",
-    "fullName": "Nguyễn Văn A",
-    "email": "user@example.com",
-    "isVerify": true,
-    "phone": "0901234567",
-    "role": "user",
-    "imageAvatar": "",
-    "createdAt": 1704700000000,
-    "updatedAt": 1704700000000
-  }
-}
-```
-
-### PUT /auth/profile ✅
-
-Cập nhật thông tin profile.
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request:**
-
-```json
-{
-  "fullName": "Nguyễn Văn B",
-  "phone": "0909876543",
-  "imageAvatar": "https://example.com/avatar.jpg"
-}
-```
-
-### PUT /auth/role ✅
-
-Cập nhật vai trò (Role Selection screen).
-
-**Headers:** `Authorization: Bearer <token>`
-
-**Request:**
-
-```json
-{
-  "role": "seller" // user | seller | delivery
-}
-```
-
-### DELETE /auth/account ✅
-
-Xóa tài khoản (Firebase Auth + Firestore).
-
-**Headers:** `Authorization: Bearer <token>`
 
 ---
 
-## 2. CATEGORIES 🔲
+## 2. USER 🔲 (Hiệp)
+
+> 👤 **Profile & Settings** - Tất cả /me endpoints
+
+| Status | Method | Endpoint                    | Description              |
+| ------ | ------ | --------------------------- | ------------------------ |
+| 🔲     | GET    | `/me`                       | Lấy thông tin profile    |
+| 🔲     | PUT    | `/me`                       | Cập nhật profile         |
+| 🔲     | POST   | `/me/avatar`                | Upload avatar            |
+| 🔲     | PUT    | `/me/fcm-token`             | Cập nhật FCM token       |
+| 🔲     | GET    | `/me/addresses`             | Danh sách địa chỉ        |
+| 🔲     | POST   | `/me/addresses`             | Thêm địa chỉ             |
+| 🔲     | PUT    | `/me/addresses/:id`         | Sửa địa chỉ              |
+| 🔲     | DELETE | `/me/addresses/:id`         | Xóa địa chỉ              |
+| 🔲     | PUT    | `/me/addresses/:id/default` | Set địa chỉ mặc định     |
+| 🔲     | GET    | `/me/favorites`             | Danh sách yêu thích      |
+| 🔲     | POST   | `/me/favorites`             | Thêm vào yêu thích       |
+| 🔲     | DELETE | `/me/favorites/:productId`  | Xóa khỏi yêu thích       |
+| 🔲     | GET    | `/me/settings`              | Lấy settings             |
+| 🔲     | PUT    | `/me/settings`              | Cập nhật settings        |
+| 🔲     | DELETE | `/me`                       | Xóa tài khoản            |
+
+### GET /me
+
+Lấy thông tin user hiện tại.
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "uid_abc123",
+      "email": "user@example.com",
+      "displayName": "Nguyễn Văn A",
+      "role": "CUSTOMER",
+      "phone": "0901234567",
+      "avatarUrl": "https://...",
+      "addresses": [...],
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    "context": null
+  }
+}
+```
+
+---
+
+## 3. CATEGORIES 🔲 (Leader: Hòa)
+
+> 📁 **Admin-managed** - Chỉ Admin CRUD, Owner/Customer chỉ đọc
 
 | Status | Method | Endpoint                 | Description           |
 | ------ | ------ | ------------------------ | --------------------- |
 | 🔲     | GET    | `/categories`            | 🔓 Danh sách danh mục |
 | 🔲     | POST   | `/admin/categories`      | [Admin] Tạo danh mục  |
-| 🔲     | PUT    | `/admin/categories/{id}` | [Admin] Sửa danh mục  |
-| 🔲     | DELETE | `/admin/categories/{id}` | [Admin] Xóa danh mục  |
+| 🔲     | PUT    | `/admin/categories/:id`  | [Admin] Sửa danh mục  |
+| 🔲     | DELETE | `/admin/categories/:id`  | [Admin] Xóa danh mục  |
 
 ---
 
-## 3. SHOPS (Customer) 🔲
+## 4. SHOPS (Customer) 🔲 (Ninh)
 
 | Status | Method | Endpoint                   | Description               |
 | ------ | ------ | -------------------------- | ------------------------- |
 | 🔲     | GET    | `/shops`                   | 🔓 Danh sách shop đang mở |
-| 🔲     | GET    | `/shops/{shopId}`          | 🔓 Chi tiết shop          |
-| 🔲     | GET    | `/shops/{shopId}/products` | 🔓 Menu của shop          |
+| 🔲     | GET    | `/shops/:shopId`           | 🔓 Chi tiết shop          |
+| 🔲     | GET    | `/shops/:shopId/products`  | 🔓 Menu của shop          |
+| 🔲     | GET    | `/shops/:shopId/reviews`   | 🔓 Reviews của shop       |
+| 🔲     | GET    | `/shops/search`            | 🔓 Tìm kiếm shop          |
+| 🔲     | GET    | `/customer/shop-feed`      | Discovery feed            |
 
 ---
 
-## 4. CART 🔲
+## 5. PRODUCTS (Customer) 🔲 (Ninh)
+
+| Status | Method | Endpoint            | Description             |
+| ------ | ------ | ------------------- | ----------------------- |
+| 🔲     | GET    | `/products`         | 🔓 Product Feed         |
+| 🔲     | GET    | `/products/:id`     | 🔓 Chi tiết sản phẩm    |
+| 🔲     | GET    | `/products/search`  | 🔓 Tìm kiếm sản phẩm    |
+
+---
+
+## 6. CART 🔲 (Hiệp)
 
 | Status | Method | Endpoint                  | Description       |
 | ------ | ------ | ------------------------- | ----------------- |
 | 🔲     | GET    | `/cart`                   | Lấy giỏ hàng      |
 | 🔲     | POST   | `/cart/items`             | Thêm sản phẩm     |
-| 🔲     | PATCH  | `/cart/items/{productId}` | Cập nhật số lượng |
-| 🔲     | DELETE | `/cart/items/{productId}` | Xóa sản phẩm      |
+| 🔲     | PUT    | `/cart/items/:itemId`     | Cập nhật số lượng |
+| 🔲     | DELETE | `/cart/items/:itemId`     | Xóa sản phẩm      |
 | 🔲     | DELETE | `/cart`                   | Xóa toàn bộ giỏ   |
+| 🔲     | POST   | `/cart/validate`          | Validate trước checkout |
 
 ---
 
-## 5. ORDERS (Customer) 🔲
+## 7. ORDERS (Customer) 🔲 (Leader: Hòa)
 
-| Status | Method | Endpoint                   | Description           |
-| ------ | ------ | -------------------------- | --------------------- |
-| 🔲     | POST   | `/orders`                  | Tạo đơn hàng          |
-| 🔲     | GET    | `/orders`                  | Danh sách đơn của tôi |
-| 🔲     | GET    | `/orders/{orderId}`        | Chi tiết đơn          |
-| 🔲     | POST   | `/orders/{orderId}/cancel` | Hủy đơn               |
+| Status | Method | Endpoint                    | Description           |
+| ------ | ------ | --------------------------- | --------------------- |
+| 🔲     | POST   | `/orders`                   | Tạo đơn hàng          |
+| 🔲     | GET    | `/orders`                   | Danh sách đơn của tôi |
+| 🔲     | GET    | `/orders/:orderId`          | Chi tiết đơn          |
+| 🔲     | POST   | `/orders/:orderId/payment`  | Thanh toán (2-step)   |
+| 🔲     | POST   | `/orders/:orderId/cancel`   | Hủy đơn               |
+| 🔲     | POST   | `/orders/:orderId/review`   | Đánh giá              |
 
 ---
 
-## 6. VOUCHERS (Customer) 🔲
+## 8. VOUCHERS (Customer) 🔲 (Leader: Hòa)
 
 | Status | Method | Endpoint          | Description               |
 | ------ | ------ | ----------------- | ------------------------- |
@@ -246,93 +211,82 @@ Xóa tài khoản (Firebase Auth + Firestore).
 
 ---
 
-## 7. SELLER - SHOP 🔲
+## 9. OWNER - SHOP 🔲 (Ninh)
 
 | Status | Method | Endpoint             | Description            |
 | ------ | ------ | -------------------- | ---------------------- |
-| 🔲     | GET    | `/seller/shop`       | Lấy thông tin shop     |
-| 🔲     | POST   | `/seller/shop`       | Tạo shop               |
-| 🔲     | PATCH  | `/seller/shop`       | Cập nhật shop          |
-| 🔲     | POST   | `/seller/shop/open`  | Mở shop (lock giá)     |
-| 🔲     | POST   | `/seller/shop/close` | Đóng shop (unlock giá) |
+| 🔲     | GET    | `/owner/shop`        | Lấy thông tin shop     |
+| 🔲     | POST   | `/owner/shop`        | Tạo shop               |
+| 🔲     | PUT    | `/owner/shop`        | Cập nhật shop          |
+| 🔲     | PUT    | `/owner/shop/status` | Mở/đóng shop           |
+| 🔲     | GET    | `/owner/dashboard`   | Dashboard analytics    |
 
 ---
 
-## 8. SELLER - PRODUCTS 🔲
+## 10. OWNER - PRODUCTS 🔲 (Ninh)
 
-| Status | Method | Endpoint                | Description        |
-| ------ | ------ | ----------------------- | ------------------ |
-| 🔲     | GET    | `/seller/products`      | Danh sách sản phẩm |
-| 🔲     | POST   | `/seller/products`      | Tạo sản phẩm       |
-| 🔲     | PUT    | `/seller/products/{id}` | Sửa sản phẩm       |
-| 🔲     | DELETE | `/seller/products/{id}` | Xóa sản phẩm       |
-
----
-
-## 9. SELLER - ORDERS 🔲
-
-| Status | Method | Endpoint                      | Description            |
-| ------ | ------ | ----------------------------- | ---------------------- |
-| 🔲     | GET    | `/seller/orders`              | Danh sách đơn của shop |
-| 🔲     | POST   | `/seller/orders/{id}/confirm` | Xác nhận đơn           |
-| 🔲     | POST   | `/seller/orders/{id}/ready`   | Đánh dấu sẵn sàng      |
-| 🔲     | POST   | `/seller/orders/{id}/cancel`  | Hủy đơn                |
+| Status | Method | Endpoint                       | Description        |
+| ------ | ------ | ------------------------------ | ------------------ |
+| 🔲     | GET    | `/owner/products`              | Danh sách sản phẩm |
+| 🔲     | POST   | `/owner/products`              | Tạo sản phẩm       |
+| 🔲     | PUT    | `/owner/products/:id`          | Sửa sản phẩm       |
+| 🔲     | PATCH  | `/owner/products/:id`          | Toggle available   |
+| 🔲     | DELETE | `/owner/products/:id`          | Xóa sản phẩm       |
 
 ---
 
-## 10. SELLER - SHIPPER POOL 🔲
+## 11. OWNER - ORDERS 🔲 (Leader: Hòa)
 
-| Status | Method | Endpoint                                 | Description                |
-| ------ | ------ | ---------------------------------------- | -------------------------- |
-| 🔲     | GET    | `/seller/shippers`                       | Danh sách shipper của shop |
-| 🔲     | POST   | `/seller/shippers/invite`                | Mời shipper                |
-| 🔲     | DELETE | `/seller/shippers/{id}`                  | Xóa shipper                |
-| 🔲     | GET    | `/seller/shippers/requests`              | Yêu cầu tham gia           |
-| 🔲     | POST   | `/seller/shippers/requests/{id}/approve` | Duyệt yêu cầu              |
-| 🔲     | POST   | `/seller/shippers/requests/{id}/reject`  | Từ chối yêu cầu            |
-
----
-
-## 11. SELLER - VOUCHERS 🔲
-
-| Status | Method | Endpoint                | Description            |
-| ------ | ------ | ----------------------- | ---------------------- |
-| 🔲     | GET    | `/seller/vouchers`      | Danh sách voucher shop |
-| 🔲     | POST   | `/seller/vouchers`      | Tạo voucher            |
-| 🔲     | PUT    | `/seller/vouchers/{id}` | Sửa voucher            |
-| 🔲     | DELETE | `/seller/vouchers/{id}` | Xóa voucher            |
+| Status | Method | Endpoint                        | Description            |
+| ------ | ------ | ------------------------------- | ---------------------- |
+| 🔲     | GET    | `/owner/orders`                 | Danh sách đơn của shop |
+| 🔲     | POST   | `/owner/orders/:id/confirm`     | Xác nhận đơn           |
+| 🔲     | POST   | `/owner/orders/:id/preparing`   | Bắt đầu chuẩn bị       |
+| 🔲     | POST   | `/owner/orders/:id/ready`       | Sẵn sàng giao          |
+| 🔲     | POST   | `/owner/orders/:id/cancel`      | Hủy đơn                |
 
 ---
 
-## 12. SELLER - SUBSCRIPTION 🔲
+## 12. OWNER - SHIPPERS 🔲 (Ninh)
 
-| Status | Method | Endpoint                       | Description   |
-| ------ | ------ | ------------------------------ | ------------- |
-| 🔲     | GET    | `/seller/subscription`         | Gói hiện tại  |
-| 🔲     | GET    | `/seller/subscription/plans`   | Danh sách gói |
-| 🔲     | POST   | `/seller/subscription/upgrade` | Nâng cấp gói  |
-| 🔲     | POST   | `/seller/subscription/cancel`  | Hủy gói       |
-
----
-
-## 13. SHIPPER 🔲
-
-| Status | Method | Endpoint                         | Description        |
-| ------ | ------ | -------------------------------- | ------------------ |
-| 🔲     | GET    | `/shipper/available-orders`      | Đơn có thể nhận    |
-| 🔲     | POST   | `/shipper/orders/{id}/accept`    | Nhận đơn           |
-| 🔲     | GET    | `/shipper/orders`                | Đơn đang giao      |
-| 🔲     | POST   | `/shipper/orders/{id}/picked`    | Đã lấy hàng        |
-| 🔲     | POST   | `/shipper/orders/{id}/delivered` | Đã giao xong       |
-| 🔲     | POST   | `/shipper/orders/{id}/failed`    | Giao thất bại      |
-| 🔲     | GET    | `/shipper/earnings`              | Thu nhập           |
-| 🔲     | GET    | `/shipper/history`               | Lịch sử giao hàng  |
-| 🔲     | GET    | `/shipper/shops`                 | Shop đang tham gia |
-| 🔲     | POST   | `/shipper/shops/{id}/request`    | Xin vào shop       |
+| Status | Method | Endpoint                                   | Description      |
+| ------ | ------ | ------------------------------------------ | ---------------- |
+| 🔲     | GET    | `/owner/shippers`                          | DS shipper       |
+| 🔲     | GET    | `/owner/shippers/applications`             | DS đơn xin       |
+| 🔲     | POST   | `/owner/shippers/applications/:id/approve` | Duyệt            |
+| 🔲     | POST   | `/owner/shippers/applications/:id/reject`  | Từ chối          |
+| 🔲     | DELETE | `/owner/shippers/:id`                      | Xóa shipper      |
 
 ---
 
-## 14. WALLET 🔲
+## 13. SHIPPER 🔲 (Ninh)
+
+| Status | Method | Endpoint                           | Description        |
+| ------ | ------ | ---------------------------------- | ------------------ |
+| 🔲     | POST   | `/shipper/apply`                   | Xin vào shop       |
+| 🔲     | GET    | `/shipper/applications`            | DS đơn xin của tôi |
+| 🔲     | PUT    | `/shipper/status`                  | Toggle online      |
+| 🔲     | GET    | `/shipper/orders/available`        | Đơn có thể nhận    |
+| 🔲     | POST   | `/shipper/orders/:id/claim`        | Nhận đơn           |
+| 🔲     | PUT    | `/shipper/orders/:id/pickup`       | Đã lấy hàng        |
+| 🔲     | PUT    | `/shipper/orders/:id/delivering`   | Đang giao          |
+| 🔲     | PUT    | `/shipper/orders/:id/delivered`    | Đã giao xong       |
+| 🔲     | GET    | `/shipper/stats`                   | Thống kê           |
+
+---
+
+## 14. NOTIFY 🔲 (Hiệp)
+
+| Status | Method | Endpoint                    | Description            |
+| ------ | ------ | --------------------------- | ---------------------- |
+| 🔲     | GET    | `/notifications`            | Danh sách thông báo    |
+| 🔲     | PUT    | `/notifications/:id/read`   | Đánh dấu đã đọc        |
+| 🔲     | PUT    | `/notifications/read-all`   | Đánh dấu tất cả đã đọc |
+| 🔲     | GET    | `/notifications/unread-count`| Số chưa đọc           |
+
+---
+
+## 15. WALLET 🔲 (Leader: Hòa)
 
 | Status | Method | Endpoint               | Description       |
 | ------ | ------ | ---------------------- | ----------------- |
@@ -342,48 +296,26 @@ Xóa tài khoản (Firebase Auth + Firestore).
 
 ---
 
-## 15. WEBHOOKS 🔲
-
-| Status | Method | Endpoint            | Description      |
-| ------ | ------ | ------------------- | ---------------- |
-| 🔲     | POST   | `/webhooks/zalopay` | ZaloPay callback |
-| 🔲     | POST   | `/webhooks/momo`    | MoMo callback    |
-| 🔲     | POST   | `/webhooks/sepay`   | SePay callback   |
-
----
-
-## 16. ADMIN 🔲
+## 16. ADMIN 🔲 (Leader: Hòa)
 
 | Status | Method | Endpoint                    | Description     |
 | ------ | ------ | --------------------------- | --------------- |
 | 🔲     | GET    | `/admin/users`              | Danh sách users |
-| 🔲     | GET    | `/admin/shops`              | Danh sách shops |
-| 🔲     | POST   | `/admin/shops/{id}/approve` | Duyệt shop      |
-| 🔲     | POST   | `/admin/shops/{id}/suspend` | Khóa shop       |
+| 🔲     | GET    | `/admin/categories`         | Categories      |
+| 🔲     | POST   | `/admin/categories`         | Tạo category    |
+| 🔲     | PUT    | `/admin/categories/:id`     | Sửa category    |
+| 🔲     | DELETE | `/admin/categories/:id`     | Xóa category    |
 
 ---
 
-## 📊 Progress Summary
+## 📊 Progress Summary by Owner
 
-| Module              | Endpoints | Done  | Progress |
-| ------------------- | --------- | ----- | -------- |
-| Auth                | 8         | 8     | ✅ 100%  |
-| Categories          | 4         | 0     | 🔲 0%    |
-| Shops (Customer)    | 3         | 0     | 🔲 0%    |
-| Cart                | 5         | 0     | 🔲 0%    |
-| Orders (Customer)   | 4         | 0     | 🔲 0%    |
-| Vouchers (Customer) | 3         | 0     | 🔲 0%    |
-| Seller Shop         | 5         | 0     | 🔲 0%    |
-| Seller Products     | 4         | 0     | 🔲 0%    |
-| Seller Orders       | 4         | 0     | 🔲 0%    |
-| Seller Shippers     | 6         | 0     | 🔲 0%    |
-| Seller Vouchers     | 4         | 0     | 🔲 0%    |
-| Seller Subscription | 4         | 0     | 🔲 0%    |
-| Shipper             | 10        | 0     | 🔲 0%    |
-| Wallet              | 3         | 0     | 🔲 0%    |
-| Webhooks            | 3         | 0     | 🔲 0%    |
-| Admin               | 4         | 0     | 🔲 0%    |
-| **TOTAL**           | **74**    | **8** | **11%**  |
+| Owner | Modules                              | Done | Total |
+| ----- | ------------------------------------ | ---- | ----- |
+| Hòa   | AUTH, ORDER, PAYMENT, WALLET, VOUCHER, ADMIN | 8 | ~70 |
+| Hiệp  | USER, CART, NOTIFY                   | 0    | ~27   |
+| Ninh  | SHOP, PRODUCT, SHIPPER               | 0    | ~38   |
+| **TOTAL** |                                  | **8**| **~135** |
 
 ---
 
@@ -391,24 +323,25 @@ Xóa tài khoản (Firebase Auth + Firestore).
 
 ```json
 {
-  "statusCode": 400,
-  "code": "AUTH_1011",
-  "message": "Email đã được sử dụng",
-  "timestamp": "2026-01-07T10:00:00Z"
+  "success": false,
+  "error": {
+    "code": "AUTH_001",
+    "message": "Token không hợp lệ",
+    "details": {}
+  }
 }
 ```
 
 ### Error Codes
 
-| Code      | Description             |
-| --------- | ----------------------- |
-| AUTH_1001 | Token không hợp lệ      |
-| AUTH_1002 | Token hết hạn           |
-| AUTH_1005 | Không tìm thấy user     |
-| AUTH_1011 | Email đã tồn tại        |
-| AUTH_1012 | Email không hợp lệ      |
-| AUTH_1013 | Mật khẩu quá yếu        |
-| AUTH_1014 | Đăng ký thất bại        |
-| AUTH_1016 | Google Sign-In thất bại |
-
-Xem đầy đủ tại `shared/constants/error-codes.ts`
+| Code         | Status | Description             |
+| ------------ | ------ | ----------------------- |
+| AUTH_001     | 401    | Token không hợp lệ      |
+| AUTH_002     | 401    | Token hết hạn           |
+| AUTH_004     | 409    | Email đã tồn tại        |
+| AUTH_005     | 400    | Mật khẩu quá yếu        |
+| USER_001     | 404    | User không tồn tại      |
+| SHOP_001     | 404    | Shop không tồn tại      |
+| PRODUCT_003  | 409    | Price locked            |
+| CART_001     | 400    | Khác shop               |
+| ORDER_002    | 400    | Invalid status          |
