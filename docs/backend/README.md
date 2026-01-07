@@ -84,13 +84,30 @@ Backend/
 
 ### ✅ Implemented
 
-#### `AuthModule`
+#### `AuthModule` - **COMPLETED**
 
-- Đăng ký email/password
-- Đăng nhập / Xác thực token
-- Google Sign-In
-- Profile CRUD
-- Role selection (user/seller/delivery)
+**9 Authentication APIs:**
+
+- ✅ Register (email/password)
+- ✅ Login (email/password)
+- ✅ Google Sign-In
+- ✅ Send OTP (email verification)
+- ✅ Verify OTP
+- ✅ Forgot Password
+- ✅ Reset Password
+- ✅ Change Password (protected)
+- ✅ Logout (protected)
+
+**Features:**
+
+- Firebase Authentication integration
+- Custom token generation
+- Email verification with SendGrid
+- OTP system (rate limiting, expiry, max attempts)
+- Phone number E.164 normalization
+- Role-based access control
+
+📖 **[Authentication Guide](AUTH_GUIDE.md)** - Chi tiết cách integrate với frontend
 
 ### 🔲 Planned
 
@@ -118,13 +135,32 @@ Xem chi tiết:
 
 ## 6. API Reference
 
+- **[Authentication Guide](AUTH_GUIDE.md)** - 📖 Hướng dẫn chi tiết authentication flow
 - [OpenAPI Specification](../common/OPENAPI.md) - Danh sách endpoints với status
 - Swagger UI: http://localhost:3000/api/docs
 
 ### Authentication
 
-Tất cả API (trừ public) yêu cầu header:
+Hệ thống sử dụng **Firebase ID Token** cho protected APIs.
 
-```
+**Flow:**
+
+1. Client call `POST /auth/register` hoặc `POST /auth/login`
+2. Backend trả về `customToken`
+3. Client sign in Firebase: `signInWithCustomToken(customToken)`
+4. Client lấy ID token: `user.getIdToken()`
+5. Client dùng ID token cho protected APIs:
+
+```http
 Authorization: Bearer <firebase-id-token>
 ```
+
+**Testing trên Swagger:**
+
+```bash
+cd Backend/functions
+node get-id-token.js your-email@example.com
+# Copy token và paste vào Swagger Authorize button
+```
+
+📖 Xem chi tiết: [AUTH_GUIDE.md](AUTH_GUIDE.md)
