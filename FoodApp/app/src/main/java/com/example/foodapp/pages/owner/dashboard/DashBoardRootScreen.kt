@@ -9,17 +9,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-// SỬA LỖI: Thêm import cho CustomerScreen
-import com.example.foodapp.pages.owner.customer.CustomerScreen
-// SỬA LỖI: Import DashboardScreen thật sự, không phải placeholder
-import com.example.foodapp.pages.owner.dashboard.DashboardScreen
+
 // Import FoodsScreen
 import com.example.foodapp.pages.owner.foods.FoodsScreen
 // Import OrdersScreen
@@ -205,7 +200,10 @@ fun DashBoardRootScreen(navController: NavHostController) {
         Scaffold(
             topBar = {
                 // HIDE TopBar if we are on Dashboard
-                if (currentScreen != "dashboard") {
+
+                // HIDE TopBar if we are on Dashboard
+                if (currentScreen != "dashboard" && currentScreen != "orders") {
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -244,7 +242,7 @@ fun DashBoardRootScreen(navController: NavHostController) {
             ) {
                 when (currentScreen) {
                     "dashboard" -> DashboardScreen(onMenuClick = { scope.launch { drawerState.open() } }) // Pass Open Drawer
-                    "orders" -> OrdersScreen()
+                    "orders" -> OrdersScreen(onMenuClick = { scope.launch { drawerState.open() } })
                     "foods" -> FoodsScreen()
                     "shippers" -> ShippersScreen()
                     "customers" -> CustomerScreenMain() 
