@@ -96,12 +96,62 @@ if (BuildConfig.DEBUG) {
 
 ---
 
+## � Authentication Flow
+
+### Quan trọng: customToken ≠ ID Token!
+
+```
+1. Client call API Login/Register
+   → Backend trả về customToken
+
+2. Client sign in Firebase với customToken
+   → Firebase.signInWithCustomToken(customToken)
+
+3. Client lấy ID Token
+   → user.getIdToken()
+
+4. Client dùng ID Token để call protected APIs
+   → Authorization: Bearer <ID_TOKEN>
+```
+
+**Xem hướng dẫn chi tiết:** [`docs/backend/AUTH_GUIDE.md`](../docs/backend/AUTH_GUIDE.md)
+
+### Quick Test với Swagger
+
+```bash
+# 1. Lấy ID token để test protected APIs
+cd Backend/functions
+node get-id-token.js your-email@example.com
+
+# 2. Copy ID token từ output (hoặc từ file id-token.txt)
+# 3. Mở Swagger → Click "Authorize" → Paste: Bearer <token>
+```
+
+---
+
 ## 📚 API Documentation
 
 Mở Swagger UI để xem tất cả endpoints:
 
 - **Local**: http://localhost:3000/api/docs
 - **Emulator**: http://127.0.0.1:5001/foodappproject-7c136/asia-southeast1/api/docs
+
+### Available Endpoints
+
+**Public APIs** (không cần authentication):
+
+- `POST /api/auth/register` - Đăng ký
+- `POST /api/auth/login` - Đăng nhập
+- `POST /api/auth/send-otp` - Gửi OTP verification
+- `POST /api/auth/verify-otp` - Xác thực OTP
+- `POST /api/auth/forgot-password` - Quên mật khẩu
+- `POST /api/auth/reset-password` - Reset mật khẩu với OTP
+
+**Protected APIs** (cần ID token):
+
+- `PUT /api/auth/change-password` - Đổi mật khẩu
+- `POST /api/auth/logout` - Đăng xuất
+- `POST /api/auth/google` - Google Sign-In
 
 ---
 
