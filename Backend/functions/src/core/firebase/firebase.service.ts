@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -10,7 +10,7 @@ import * as fs from 'fs';
  * Cung cấp access đến Auth, Firestore, Storage, Messaging.
  */
 @Injectable()
-export class FirebaseService implements OnModuleInit {
+export class FirebaseService {
   private readonly logger = new Logger(FirebaseService.name);
 
   private _app: admin.app.App;
@@ -19,7 +19,11 @@ export class FirebaseService implements OnModuleInit {
   private _storage: admin.storage.Storage;
   private _messaging: admin.messaging.Messaging;
 
-  onModuleInit() {
+  constructor() {
+    this.initialize();
+  }
+
+  private initialize() {
     try {
       if (!admin.apps.length) {
         // Check if running in Firebase Functions environment

@@ -14,7 +14,10 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "seed:categories": "ts-node scripts/seed-categories.ts",
+    "admin:create": "ts-node scripts/create-admin.ts",
+    "admin:set-role": "ts-node scripts/set-admin-role.ts"
   },
   "engines": {
     "node": "24"
@@ -37,6 +40,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/multer": "^2.0.0",
     "@types/node": "^18.19.130",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",

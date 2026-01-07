@@ -30,10 +30,10 @@ export interface IUser {
  * User roles in the system
  */
 export enum UserRole {
-  CUSTOMER = 'customer',
-  SELLER = 'seller',
-  SHIPPER = 'shipper',
-  ADMIN = 'admin',
+  CUSTOMER = 'CUSTOMER',
+  OWNER = 'OWNER',
+  SHIPPER = 'SHIPPER',
+  ADMIN = 'ADMIN',
 }
 
 /**
