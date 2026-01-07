@@ -1,6 +1,11 @@
 package com.example.foodapp.data.api
 
-import com.example.foodapp.data.model.OTP.*
+import com.example.foodapp.data.model.shared.otp.ApiResponse
+import com.example.foodapp.data.model.shared.otp.SendOtpRequest
+import com.example.foodapp.data.model.shared.otp.SendOtpResponse
+import com.example.foodapp.data.model.shared.otp.VerificationStatusResponse
+import com.example.foodapp.data.model.shared.otp.VerifyOtpRequest
+import com.example.foodapp.data.model.shared.otp.VerifyOtpResponse
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response

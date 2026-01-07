@@ -12,19 +12,18 @@ import androidx.navigation.compose.composable
 import com.example.foodapp.authentication.intro.IntroScreen
 import com.example.foodapp.authentication.login.LoginScreen
 import com.example.foodapp.data.repository.firebase.UserFirebaseRepository
-import com.example.foodapp.pages.user.profile.UserProfileScreen
+import com.example.foodapp.pages.client.profile.UserProfileScreen
 import com.example.foodapp.authentication.roleselection.RoleSelectionScreen
-import com.example.foodapp.authentication.forgotPassword.NewPasswordScreen
-import com.example.foodapp.authentication.OtpVerification.OtpVerificationScreen
+import com.example.foodapp.authentication.forgotpassword.NewPasswordScreen
+import com.example.foodapp.authentication.otpverification.OtpVerificationScreen
 import com.example.foodapp.authentication.signup.SignUpScreen
 import com.example.foodapp.presentation.view.user.home.UserHomeScreen
-import com.example.foodapp.pages.user.cart.CartScreen
-import com.example.foodapp.pages.user.favorites.FavoritesScreen
-import com.example.foodapp.pages.user.notifications.UserNotificationsScreen
+import com.example.foodapp.pages.client.cart.CartScreen
+import com.example.foodapp.pages.client.favorites.FavoritesScreen
+import com.example.foodapp.pages.client.notifications.UserNotificationsScreen
 
 import com.google.firebase.auth.FirebaseAuth
 import androidx.compose.ui.platform.LocalContext
-import com.example.foodapp.authentication.OtpVerification.OtpVerificationScreen
 
 sealed class Screen(val route: String) {
     object Intro : Screen("intro")
