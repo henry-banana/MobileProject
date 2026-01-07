@@ -1,88 +1,71 @@
 import {
   Controller,
   Get,
-  Post,
-  Put,
-  Delete,
-  Body,
   Param,
-  Query,
-  HttpStatus,
-  HttpCode,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CategoryResponseDto } from './dto/category-response.dto';
 
-@ApiTags('categories')
+/**
+ * Categories Controller - Public API
+ *
+ * Lấy danh sách categories cho khách hàng/users
+ * Không cần xác thực
+ *
+ * Base URL: /categories
+ *
+ * Theo docs: docs-god/api/05_CATEGORIES_API.md
+ */
+@ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  /**
+   * GET /categories
+   * Lấy danh sách categories active
+   */
   @Get()
-  @ApiOperation({ summary: 'Get all categories' })
+  @ApiOperation({ summary: 'Lấy danh sách categories (chỉ active)' })
   @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'List of all active categories',
-    type: [CategoryResponseDto],
+    status: 200,
+    description: 'Danh sách categories',
   })
-  async findAll(@Query('includeInactive') includeInactive?: boolean) {
-    return this.categoriesService.findAll(includeInactive);
+  async findActive() {
+    const categories = await this.categoriesService.findActive();
+    return {
+      success: true,
+      data: categories,
+    };
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get category by ID' })
+  /**
+   * GET /categories/:idOrSlug
+   * Lấy chi tiết category theo ID hoặc slug
+   */
+  @Get(':idOrSlug')
+  @ApiOperation({ summary: 'Lấy chi tiết category theo ID hoặc slug' })
   @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Category found',
-    type: CategoryResponseDto,
+    status: 200,
+    description: 'Chi tiết category',
   })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Category not found',
-  })
-  async findOne(@Param('id') id: string) {
-    return this.categoriesService.findById(id);
-  }
+  @ApiResponse({ status: 404, description: 'Category không tồn tại' })
+  async findOne(@Param('idOrSlug') idOrSlug: string) {
+    // Thử tìm theo slug trước
+    let category = await this.categoriesService.findBySlug(idOrSlug);
 
-  @Post()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create new category (Admin only)' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Category created successfully',
-    type: CategoryResponseDto,
-  })
-  async create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoriesService.create(createCategoryDto);
-  }
+    // Nếu không tìm thấy, thử tìm theo ID
+    if (!category) {
+      category = await this.categoriesService.findById(idOrSlug);
+    }
 
-  @Put(':id')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update category (Admin only)' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Category updated successfully',
-    type: CategoryResponseDto,
-  })
-  async update(
-    @Param('id') id: string,
-    @Body() updateCategoryDto: UpdateCategoryDto,
-  ) {
-    return this.categoriesService.update(id, updateCategoryDto);
-  }
-
-  @Delete(':id')
-  @ApiBearerAuth()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete category (Admin only)' })
-  @ApiResponse({
-    status: HttpStatus.NO_CONTENT,
-    description: 'Category deleted successfully',
-  })
-  async remove(@Param('id') id: string) {
-    return this.categoriesService.delete(id);
+    return {
+      success: true,
+      data: category,
+    };
   }
 }

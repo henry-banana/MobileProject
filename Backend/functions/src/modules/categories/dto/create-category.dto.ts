@@ -1,42 +1,87 @@
-import { IsString, IsOptional, IsNumber, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsInt,
+  Min,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CategoryStatus } from '../entities/category.entity';
 
+/**
+ * CreateCategoryDto - DTO để tạo category mới
+ *
+ * Sử dụng bởi Admin để tạo category
+ */
 export class CreateCategoryDto {
   @ApiProperty({
-    description: 'Category name',
+    description: 'Tên category',
     example: 'Cơm',
-    minLength: 2,
-    maxLength: 50,
+    maxLength: 100,
   })
   @IsString()
-  @MinLength(2)
-  @MaxLength(50)
+  @IsNotEmpty()
+  @MaxLength(100)
   name: string;
 
   @ApiPropertyOptional({
-    description: 'Category description',
-    example: 'Các món cơm đa dạng',
-    maxLength: 200,
+    description: 'Slug (URL-friendly). Nếu không cung cấp, sẽ tự động generate từ name',
+    example: 'com',
+    maxLength: 100,
   })
   @IsOptional()
   @IsString()
-  @MaxLength(200)
+  @MaxLength(100)
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: 'Slug chỉ được chứa chữ thường, số và dấu gạch ngang',
+  })
+  slug?: string;
+
+  @ApiPropertyOptional({
+    description: 'Mô tả category',
+    example: 'Các món cơm đa dạng từ khắp nơi',
+    maxLength: 500,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
   description?: string;
 
   @ApiPropertyOptional({
-    description: 'Icon/Image URL',
-    example: 'https://storage.googleapis.com/ktx-delivery/categories/com.png',
+    description: 'URL ảnh đại diện',
+    example: 'https://storage.googleapis.com/ktx-delivery/categories/com.jpg',
   })
   @IsOptional()
   @IsString()
-  iconUrl?: string;
+  imageUrl?: string;
 
   @ApiPropertyOptional({
-    description: 'Sort order for display',
-    example: 1,
-    default: 0,
+    description: 'Icon name (material icons)',
+    example: 'rice_bowl',
   })
   @IsOptional()
-  @IsNumber()
-  sortOrder?: number;
+  @IsString()
+  icon?: string;
+
+  @ApiPropertyOptional({
+    description: 'Thứ tự hiển thị (số nhỏ hiển thị trước). Mặc định là sau category cuối',
+    example: 1,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  displayOrder?: number;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái',
+    enum: CategoryStatus,
+    default: CategoryStatus.ACTIVE,
+  })
+  @IsOptional()
+  @IsEnum(CategoryStatus)
+  status?: CategoryStatus;
 }

@@ -1,73 +1,167 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
-import { CategoriesRepository } from './categories.repository';
+import {
+  Injectable,
+  Inject,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
+import {
+  ICategoriesRepository,
+  CATEGORIES_REPOSITORY_TOKEN,
+} from './interfaces';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { Category } from './entities/category.entity';
+import {
+  CategoryEntity,
+  CategoryStatus,
+} from './entities/category.entity';
+import { generateSlug } from '../../shared/utils/string.utils';
 
+/**
+ * CategoriesService - Business logic cho categories
+ *
+ * Responsibilities:
+ * - Validation business rules
+ * - Generate slug từ name
+ * - Đảm bảo slug unique
+ * - Orchestrate repository operations
+ *
+ * Tuân theo:
+ * - Single Responsibility Principle
+ * - Dependency Inversion (inject repository via interface)
+ *
+ * NOTE: Inject qua interface token, KHÔNG inject trực tiếp repository class
+ */
 @Injectable()
 export class CategoriesService {
   private readonly logger = new Logger(CategoriesService.name);
 
-  constructor(private readonly categoriesRepository: CategoriesRepository) {}
+  constructor(
+    @Inject(CATEGORIES_REPOSITORY_TOKEN)
+    private readonly categoriesRepository: ICategoriesRepository,
+  ) {}
 
-  async findAll(includeInactive = false): Promise<Category[]> {
-    this.logger.log(`Finding all categories, includeInactive: ${includeInactive}`);
+  /**
+   * Tạo category mới
+   *
+   * Business rules:
+   * - Slug phải unique
+   * - Nếu không có slug, tự động generate từ name
+   * - Nếu không có displayOrder, đặt sau category cuối cùng
+   */
+  async create(dto: CreateCategoryDto): Promise<CategoryEntity> {
+    // Generate slug nếu không có
+    let slug = dto.slug || generateSlug(dto.name);
 
-    if (includeInactive) {
-      return this.categoriesRepository.findAll();
+    // Kiểm tra slug unique
+    const isSlugExist = await this.categoriesRepository.isSlugExist(slug);
+    if (isSlugExist) {
+      // Thêm suffix số để unique
+      let suffix = 1;
+      while (await this.categoriesRepository.isSlugExist(`${slug}-${suffix}`)) {
+        suffix++;
+      }
+      slug = `${slug}-${suffix}`;
     }
+
+    // Get displayOrder nếu không có
+    let displayOrder = dto.displayOrder;
+    if (displayOrder === undefined) {
+      const maxOrder = await this.categoriesRepository.getMaxDisplayOrder();
+      displayOrder = maxOrder + 1;
+    }
+
+    const categoryData = {
+      name: dto.name,
+      slug,
+      description: dto.description,
+      imageUrl: dto.imageUrl,
+      icon: dto.icon,
+      displayOrder,
+      status: dto.status ?? CategoryStatus.ACTIVE,
+    };
+
+    const category = await this.categoriesRepository.create(categoryData);
+
+    this.logger.log(`Category created: ${category.id} - ${category.name}`);
+
+    return category;
+  }
+
+  /**
+   * Lấy category theo ID
+   */
+  async findById(id: string): Promise<CategoryEntity> {
+    return this.categoriesRepository.findByIdOrThrow(id);
+  }
+
+  /**
+   * Lấy category theo slug
+   */
+  async findBySlug(slug: string): Promise<CategoryEntity | null> {
+    return this.categoriesRepository.findBySlug(slug);
+  }
+
+  /**
+   * Lấy tất cả categories (cho Admin)
+   */
+  async findAll(): Promise<CategoryEntity[]> {
+    return this.categoriesRepository.findAll();
+  }
+
+  /**
+   * Lấy categories active (cho Public API)
+   */
+  async findActive(): Promise<CategoryEntity[]> {
     return this.categoriesRepository.findActive();
   }
 
-  async findById(id: string): Promise<Category> {
-    this.logger.log(`Finding category by id: ${id}`);
+  /**
+   * Update category
+   *
+   * Business rules:
+   * - Nếu đổi slug, phải unique
+   */
+  async update(id: string, dto: UpdateCategoryDto): Promise<CategoryEntity> {
+    // Kiểm tra category tồn tại
+    await this.categoriesRepository.findByIdOrThrow(id);
 
-    const category = await this.categoriesRepository.findById(id);
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
+    // Kiểm tra slug unique nếu đổi slug
+    if (dto.slug) {
+      const isSlugExist = await this.categoriesRepository.isSlugExist(
+        dto.slug,
+        id,
+      );
+      if (isSlugExist) {
+        throw new ConflictException(`Slug "${dto.slug}" already exists`);
+      }
     }
+
+    const category = await this.categoriesRepository.update(id, dto);
+
+    this.logger.log(`Category updated: ${category.id} - ${category.name}`);
+
     return category;
   }
 
-  async create(dto: CreateCategoryDto): Promise<Category> {
-    this.logger.log(`Creating category: ${dto.name}`);
-
-    const category = await this.categoriesRepository.create({
-      name: dto.name,
-      description: dto.description || '',
-      iconUrl: dto.iconUrl || '',
-      sortOrder: dto.sortOrder || 0,
-      isActive: true,
-    });
-
-    this.logger.log(`Category created with id: ${category.id}`);
-    return category;
-  }
-
-  async update(id: string, dto: UpdateCategoryDto): Promise<Category> {
-    this.logger.log(`Updating category: ${id}`);
-
-    // Check if exists
-    await this.findById(id);
-
-    const updated = await this.categoriesRepository.update(id, dto);
-    if (!updated) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
-    }
-
-    this.logger.log(`Category updated: ${id}`);
-    return updated;
-  }
-
+  /**
+   * Xóa category
+   *
+   * Business rules:
+   * - Không cho xóa nếu có products (future implementation)
+   */
   async delete(id: string): Promise<void> {
-    this.logger.log(`Deleting category: ${id}`);
+    // Kiểm tra category tồn tại
+    const category = await this.categoriesRepository.findByIdOrThrow(id);
 
-    // Check if exists
-    await this.findById(id);
+    // TODO: Kiểm tra có products không
+    // if (category.productCount && category.productCount > 0) {
+    //   throw new ConflictException(
+    //     `Cannot delete category with ${category.productCount} products`,
+    //   );
+    // }
 
-    // Soft delete - just set isActive to false
-    await this.categoriesRepository.update(id, { isActive: false });
+    await this.categoriesRepository.delete(id);
 
-    this.logger.log(`Category soft deleted: ${id}`);
+    this.logger.log(`Category deleted: ${id} - ${category.name}`);
   }
 }
