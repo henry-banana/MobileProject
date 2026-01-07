@@ -1,7 +1,18 @@
 # compiled output
-/dist
-/node_modules
-/build
+dist
+node_modules
+build
+lib
+
+# Firebase
+.firebase/
+service-account.json
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+pubsub-debug.log
+database-debug.log
+storage-debug.log
 
 # Logs
 logs
@@ -16,11 +27,11 @@ lerna-debug.log*
 .DS_Store
 
 # Tests
-/coverage
-/.nyc_output
+coverage
+.nyc_output
 
 # IDEs and editors
-/.idea
+.idea
 .project
 .classpath
 .c9/
