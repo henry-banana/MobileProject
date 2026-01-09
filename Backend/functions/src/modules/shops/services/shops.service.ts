@@ -88,13 +88,16 @@ export class ShopsService {
 
   /**
    * Toggle shop open/close status
-   * Business Rule: Can only open if subscription is ACTIVE
+   * Business Rule: Can only open if subscription is ACTIVE or TRIAL
    */
   async toggleShopStatus(ownerId: string, isOpen: boolean): Promise<void> {
     const shop = await this.getMyShop(ownerId);
 
     // If trying to open, check subscription status
-    if (isOpen && shop.subscription.status !== SubscriptionStatus.ACTIVE) {
+    // Allow opening during TRIAL (7 days free) and ACTIVE (paid)
+    const validStatuses = [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL];
+
+    if (isOpen && !validStatuses.includes(shop.subscription.status)) {
       throw new BadRequestException({
         code: 'SHOP_004',
         message: 'Không thể mở shop. Subscription chưa active hoặc đã hết hạn.',
