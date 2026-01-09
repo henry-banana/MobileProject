@@ -1,5 +1,3 @@
-import { Timestamp } from 'firebase-admin/firestore';
-
 /**
  * Shop Subscription Status
  */
@@ -24,10 +22,10 @@ export enum ShopStatus {
  */
 export interface ShopSubscription {
   status: SubscriptionStatus;
-  startDate: Timestamp;
-  trialEndDate: Timestamp | null;
-  currentPeriodEnd: Timestamp | null;
-  nextBillingDate: Timestamp | null;
+  startDate: string; // ISO 8601 string
+  trialEndDate: string | null;
+  currentPeriodEnd: string | null;
+  nextBillingDate: string | null;
   autoRenew: boolean;
 }
 
@@ -69,7 +67,7 @@ export class ShopEntity {
   // Subscription
   subscription: ShopSubscription;
 
-  // Timestamps
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  // Timestamps (ISO 8601 strings)
+  createdAt: string;
+  updatedAt: string;
 }

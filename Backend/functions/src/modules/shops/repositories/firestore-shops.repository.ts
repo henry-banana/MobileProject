@@ -171,9 +171,16 @@ export class FirestoreShopsRepository implements IShopsRepository {
       totalRatings: data.totalRatings,
       totalOrders: data.totalOrders,
       totalRevenue: data.totalRevenue,
-      subscription: data.subscription,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      subscription: {
+        status: data.subscription.status,
+        startDate: data.subscription.startDate?.toDate().toISOString(),
+        trialEndDate: data.subscription.trialEndDate?.toDate().toISOString() || null,
+        currentPeriodEnd: data.subscription.currentPeriodEnd?.toDate().toISOString() || null,
+        nextBillingDate: data.subscription.nextBillingDate?.toDate().toISOString() || null,
+        autoRenew: data.subscription.autoRenew,
+      },
+      createdAt: data.createdAt?.toDate().toISOString(),
+      updatedAt: data.updatedAt?.toDate().toISOString(),
     };
   }
 }
