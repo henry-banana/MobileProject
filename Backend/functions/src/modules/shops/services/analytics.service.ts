@@ -79,25 +79,6 @@ export class AnalyticsService {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
 
-    // Get recent reviews
-    const reviewsSnapshot = await this.firestore
-      .collection('reviews')
-      .where('shopId', '==', shopId)
-      .orderBy('createdAt', 'desc')
-      .limit(5)
-      .get();
-
-    const recentReviews = reviewsSnapshot.docs.map((doc) => {
-      const review = doc.data();
-      return {
-        userId: review.userId,
-        userName: review.userName,
-        rating: review.rating,
-        comment: review.comment,
-        createdAt: review.createdAt?.toDate(),
-      };
-    });
-
     // Get shop rating
     const shopDoc = await this.firestore.collection('shops').doc(shopId).get();
     const shopData = shopDoc.data();
@@ -114,7 +95,6 @@ export class AnalyticsService {
       topProducts,
       averageRating: shopData?.rating || 0,
       totalRatings: shopData?.totalRatings || 0,
-      recentReviews,
     };
   }
 }

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { IShopsRepository, SHOPS_REPOSITORY } from '../interfaces';
 import { ShopEntity, SubscriptionStatus } from '../entities/shop.entity';
+import { ShopCustomerEntity, ShopCustomerDetailEntity } from '../entities/shop-customer.entity';
 import { CreateShopDto, UpdateShopDto } from '../dto';
 
 @Injectable()
@@ -22,11 +23,7 @@ export class ShopsService {
    * Create a new shop
    * Business Rule: 1 Owner = 1 Shop
    */
-  async createShop(
-    ownerId: string,
-    ownerName: string,
-    dto: CreateShopDto,
-  ): Promise<ShopEntity> {
+  async createShop(ownerId: string, ownerName: string, dto: CreateShopDto): Promise<ShopEntity> {
     // Check if owner already has a shop
     const existingShop = await this.shopsRepository.findByOwnerId(ownerId);
     if (existingShop) {
@@ -67,7 +64,7 @@ export class ShopsService {
   /**
    * Update shop information
    */
-  async updateShop(ownerId: string, dto: UpdateShopDto): Promise<ShopEntity> {
+  async updateShop(ownerId: string, dto: UpdateShopDto): Promise<void> {
     const shop = await this.getMyShop(ownerId);
 
     // Validate time range if both provided
@@ -83,7 +80,7 @@ export class ShopsService {
       }
     }
 
-    return this.shopsRepository.update(shop.id, dto);
+    await this.shopsRepository.update(shop.id, dto);
   }
 
   /**
@@ -118,11 +115,27 @@ export class ShopsService {
     limit: number;
     status?: string;
     search?: string;
-  }): Promise<{ shops: ShopEntity[]; total: number; page: number; limit: number }> {
+  }): Promise<{ shops: ShopCustomerEntity[]; total: number; page: number; limit: number }> {
     const result = await this.shopsRepository.findAll(params);
 
+    // Map to customer entity (exclude sensitive fields)
+    const customerShops = result.shops.map((shop) => ({
+      id: shop.id,
+      name: shop.name,
+      description: shop.description,
+      address: shop.address,
+      rating: shop.rating,
+      totalRatings: shop.totalRatings,
+      isOpen: shop.isOpen,
+      openTime: shop.openTime,
+      closeTime: shop.closeTime,
+      shipFeePerOrder: shop.shipFeePerOrder,
+      minOrderAmount: shop.minOrderAmount,
+    }));
+
     return {
-      ...result,
+      shops: customerShops,
+      total: result.total,
       page: params.page,
       limit: params.limit,
     };
@@ -131,7 +144,7 @@ export class ShopsService {
   /**
    * Get shop detail by ID
    */
-  async getShopById(shopId: string): Promise<ShopEntity> {
+  async getShopById(shopId: string): Promise<ShopCustomerDetailEntity> {
     const shop = await this.shopsRepository.findById(shopId);
     if (!shop) {
       throw new NotFoundException({
@@ -140,7 +153,25 @@ export class ShopsService {
         statusCode: 404,
       });
     }
-    return shop;
+
+    // Map to customer detail entity (exclude owner info, subscription, etc.)
+    return {
+      id: shop.id,
+      name: shop.name,
+      description: shop.description,
+      address: shop.address,
+      phone: shop.phone,
+      coverImageUrl: shop.coverImageUrl,
+      logoUrl: shop.logoUrl,
+      rating: shop.rating,
+      totalRatings: shop.totalRatings,
+      isOpen: shop.isOpen,
+      openTime: shop.openTime,
+      closeTime: shop.closeTime,
+      shipFeePerOrder: shop.shipFeePerOrder,
+      minOrderAmount: shop.minOrderAmount,
+      totalOrders: shop.totalOrders,
+    };
   }
 
   // ==================== Utility Methods ====================
@@ -149,7 +180,14 @@ export class ShopsService {
    * Verify shop exists and belongs to owner
    */
   async verifyShopOwnership(shopId: string, ownerId: string): Promise<ShopEntity> {
-    const shop = await this.getShopById(shopId);
+    const shop = await this.shopsRepository.findById(shopId);
+    if (!shop) {
+      throw new NotFoundException({
+        code: 'SHOP_005',
+        message: 'Không tìm thấy shop',
+        statusCode: 404,
+      });
+    }
     if (shop.ownerId !== ownerId) {
       throw new ConflictException({
         code: 'SHOP_006',

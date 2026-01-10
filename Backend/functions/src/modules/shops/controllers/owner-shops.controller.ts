@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Body,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
@@ -141,7 +132,8 @@ export class OwnerShopsController {
     description: 'Shop updated successfully',
   })
   async updateShop(@CurrentUser('uid') ownerId: string, @Body() dto: UpdateShopDto) {
-    return this.shopsService.updateShop(ownerId, dto);
+    await this.shopsService.updateShop(ownerId, dto);
+    return { message: 'Cập nhật shop thành công' };
   }
 
   /**
@@ -171,10 +163,7 @@ export class OwnerShopsController {
       },
     },
   })
-  async toggleShopStatus(
-    @CurrentUser('uid') ownerId: string,
-    @Body() dto: ToggleShopStatusDto,
-  ) {
+  async toggleShopStatus(@CurrentUser('uid') ownerId: string, @Body() dto: ToggleShopStatusDto) {
     await this.shopsService.toggleShopStatus(ownerId, dto.isOpen);
     return { message: dto.isOpen ? 'Mở shop thành công' : 'Đóng shop thành công' };
   }
@@ -190,8 +179,7 @@ export class OwnerShopsController {
   @Get('dashboard')
   @ApiOperation({
     summary: 'Get shop dashboard',
-    description:
-      'Get shop analytics including revenue, orders, top products, and recent reviews',
+    description: 'Get shop analytics including revenue, orders, top products, and recent reviews',
   })
   @ApiResponse({
     status: 200,

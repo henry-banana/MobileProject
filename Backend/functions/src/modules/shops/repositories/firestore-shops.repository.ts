@@ -81,14 +81,10 @@ export class FirestoreShopsRepository implements IShopsRepository {
   }
 
   async toggleStatus(shopId: string, isOpen: boolean): Promise<void> {
-    await this.firestore
-      .collection(this.collection)
-      .doc(shopId)
-      .update({
-        isOpen,
-        status: isOpen ? ShopStatus.OPEN : ShopStatus.CLOSED,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+    await this.firestore.collection(this.collection).doc(shopId).update({
+      isOpen,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
   }
 
   async findAll(params: {
