@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Put, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Body, UseGuards, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
 import { Roles } from '../../../core/decorators/roles.decorator';
@@ -51,15 +51,36 @@ export class OwnerShopsController {
     schema: {
       example: {
         success: true,
-        message: 'Tạo shop thành công',
         data: {
           id: 'shop_abc123',
-          name: 'Quán Phở Việt',
           ownerId: 'uid_owner',
+          ownerName: 'Nguyễn Văn A',
+          name: 'Quán Phở Việt',
+          description: 'Phở ngon nhất KTX',
+          address: 'Tòa A, Tầng 1',
+          phone: '0901234567',
+          coverImageUrl: 'https://...',
+          logoUrl: 'https://...',
+          openTime: '07:00',
+          closeTime: '21:00',
+          shipFeePerOrder: 5000,
+          minOrderAmount: 20000,
+          isOpen: false,
+          status: 'OPEN',
+          rating: 0,
+          totalRatings: 0,
+          totalOrders: 0,
+          totalRevenue: 0,
           subscription: {
             status: 'TRIAL',
-            trialEndDate: '2026-01-16T00:00:00Z',
+            startDate: '2026-01-11T10:00:00.000Z',
+            trialEndDate: '2026-01-18T10:00:00.000Z',
+            currentPeriodEnd: '2026-01-18T10:00:00.000Z',
+            nextBillingDate: null,
+            autoRenew: true,
           },
+          createdAt: '2026-01-11T10:00:00.000Z',
+          updatedAt: '2026-01-11T10:00:00.000Z',
         },
       },
     },
@@ -82,7 +103,10 @@ export class OwnerShopsController {
     @Body() dto: CreateShopDto,
   ) {
     const shop = await this.shopsService.createShop(ownerId, ownerName, dto);
-    return shop;
+    return {
+      success: true,
+      data: shop,
+    };
   }
 
   /**
@@ -179,8 +203,10 @@ export class OwnerShopsController {
   @Get('dashboard')
   @ApiOperation({
     summary: 'Get shop dashboard',
-    description: 'Get shop analytics including revenue, orders, top products, and recent reviews',
+    description: 'Get shop analytics including revenue, orders, top products, and recent orders',
   })
+  @ApiQuery({ name: 'from', required: false, type: String, example: '2026-01-01' })
+  @ApiQuery({ name: 'to', required: false, type: String, example: '2026-01-31' })
   @ApiResponse({
     status: 200,
     description: 'Shop analytics',
@@ -188,30 +214,57 @@ export class OwnerShopsController {
       example: {
         success: true,
         data: {
-          totalRevenue: 10000000,
-          todayRevenue: 500000,
-          weekRevenue: 2000000,
-          monthRevenue: 5000000,
-          totalOrders: 150,
-          pendingOrders: 5,
-          completedOrders: 140,
-          cancelledOrders: 5,
+          today: {
+            revenue: 500000,
+            orderCount: 25,
+            avgOrderValue: 20000,
+            pendingOrders: 3,
+          },
+          thisWeek: {
+            revenue: 2500000,
+            orderCount: 120,
+            avgOrderValue: 20833,
+          },
+          thisMonth: {
+            revenue: 10000000,
+            orderCount: 500,
+          },
+          ordersByStatus: {
+            PENDING: 3,
+            CONFIRMED: 5,
+            PREPARING: 2,
+            READY: 1,
+            DELIVERING: 4,
+            COMPLETED: 140,
+            CANCELLED: 5,
+          },
           topProducts: [
             {
-              productId: 'prod_1',
-              productName: 'Cơm sườn',
+              id: 'prod_1',
+              name: 'Cơm sườn',
               soldCount: 50,
               revenue: 1750000,
             },
           ],
-          averageRating: 4.5,
-          totalRatings: 50,
+          recentOrders: [
+            {
+              id: 'order_1',
+              orderNumber: 'ORD-20260111-001',
+              status: 'COMPLETED',
+              total: 50000,
+              createdAt: '2026-01-11T10:00:00.000Z',
+            },
+          ],
         },
       },
     },
   })
-  async getShopDashboard(@CurrentUser('uid') ownerId: string) {
+  async getShopDashboard(
+    @CurrentUser('uid') ownerId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
     const shop = await this.shopsService.getMyShop(ownerId);
-    return this.analyticsService.getShopAnalytics(shop.id);
+    return this.analyticsService.getShopAnalytics(shop.id, from, to);
   }
 }
