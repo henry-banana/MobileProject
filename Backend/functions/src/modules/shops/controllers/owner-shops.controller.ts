@@ -153,7 +153,7 @@ export class OwnerShopsController {
   @Put('status')
   @ApiOperation({
     summary: 'Toggle shop status',
-    description: 'Open or close shop. Can only open if subscription is active.',
+    description: 'Open or close shop. Can only open if subscription is active/trial.',
   })
   @ApiResponse({
     status: 200,

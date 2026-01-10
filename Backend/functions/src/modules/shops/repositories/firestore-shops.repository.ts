@@ -104,29 +104,35 @@ export class FirestoreShopsRepository implements IShopsRepository {
       query = query.where('status', '==', params.status);
     }
 
-    // Get total count
-    const countSnapshot = await query.get();
-    const total = countSnapshot.size;
-
-    // Apply pagination
-    const offset = (params.page - 1) * params.limit;
-    query = query.orderBy('createdAt', 'desc').offset(offset).limit(params.limit);
-
+    // Get all matching documents (for search and count)
     const snapshot = await query.get();
-    const shops = snapshot.docs.map((doc: any) => this.mapToEntity(doc.data()));
+    let allShops = snapshot.docs.map((doc: any) => this.mapToEntity(doc.data()));
 
     // Client-side search if needed (Firestore doesn't support full-text search)
-    let filteredShops = shops;
     if (params.search) {
       const searchLower = params.search.toLowerCase();
-      filteredShops = shops.filter(
+      allShops = allShops.filter(
         (shop: ShopEntity) =>
           shop.name.toLowerCase().includes(searchLower) ||
           shop.description.toLowerCase().includes(searchLower),
       );
     }
 
-    return { shops: filteredShops, total };
+    // Get total after filtering
+    const total = allShops.length;
+
+    // Sort by createdAt desc
+    allShops.sort((a: ShopEntity, b: ShopEntity) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+
+    // Apply pagination (client-side)
+    const offset = (params.page - 1) * params.limit;
+    const paginatedShops = allShops.slice(offset, offset + params.limit);
+
+    return { shops: paginatedShops, total };
   }
 
   async updateStats(
