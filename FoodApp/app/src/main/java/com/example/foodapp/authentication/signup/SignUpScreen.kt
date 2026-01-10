@@ -2,6 +2,7 @@ package com.example.foodapp.authentication.signup
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -46,7 +47,7 @@ fun SignUpScreen(
     val googleSignInState by viewModel.googleSignInState.observeAsState(GoogleSignInState.Idle)
     val saveUserState by viewModel.saveUserState.observeAsState(null)
 
-    // Google Sign-In Launcher - chỉ trigger intent
+    // Google Sign-In Launcher
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -69,9 +70,23 @@ fun SignUpScreen(
     }
 
     // Navigate on success
+    LaunchedEffect(signUpState) {
+        if (signUpState is SignUpState.Success) {
+            onSignUpSuccess()
+        }
+    }
+
     LaunchedEffect(saveUserState) {
         if (saveUserState == true) {
             onSignUpSuccess()
+        }
+    }
+
+    // Reset UI khi state thay đổi
+    LaunchedEffect(signUpState, googleSignInState) {
+        // Reset error khi loading bắt đầu
+        if (signUpState is SignUpState.Loading || googleSignInState is GoogleSignInState.Loading) {
+            // Có thể reset UI state nếu cần
         }
     }
 
@@ -79,14 +94,8 @@ fun SignUpScreen(
     SignUpContent(
         signUpState = signUpState,
         googleSignInState = googleSignInState,
-        onRegisterClick = { fullName, email, password ->
-            val validation = viewModel.validateInput(fullName, email, password, password)
-            if (validation is SignUpViewModel.ValidationResult.Success) {
-                viewModel.registerWithEmail(fullName, email, password)
-            } else if (validation is SignUpViewModel.ValidationResult.Error) {
-                // Hiển thị lỗi validation trong UI
-                // (có thể dùng state hoặc callback)
-            }
+        onRegisterClick = { fullName, email, password, confirmPassword ->
+            viewModel.registerWithEmail(fullName, email, password, confirmPassword)
         },
         onGoogleClick = {
             val signInIntent = viewModel.getGoogleSignInClient().signInIntent
@@ -96,9 +105,6 @@ fun SignUpScreen(
         onBackClicked = {
             viewModel.resetStates()
             onBackClicked()
-        },
-        onValidateInput = { fullName, email, password, confirmPassword ->
-            viewModel.validateInput(fullName, email, password, confirmPassword)
         }
     )
 }
@@ -108,13 +114,12 @@ fun SignUpScreen(
 fun SignUpContent(
     signUpState: SignUpState,
     googleSignInState: GoogleSignInState,
-    onRegisterClick: (String, String, String) -> Unit,
+    onRegisterClick: (String, String, String, String) -> Unit,
     onGoogleClick: () -> Unit,
     onLoginClicked: () -> Unit,
-    onBackClicked: () -> Unit,
-    onValidateInput: (String, String, String, String) -> SignUpViewModel.ValidationResult
+    onBackClicked: () -> Unit
 ) {
-    // Local UI State - KHÔNG chứa business logic
+    // Local UI State
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -132,6 +137,13 @@ fun SignUpContent(
     // Display error
     val displayError = validationError ?: serverErrorMessage
 
+    // Reset validation error khi input thay đổi
+    LaunchedEffect(fullName, email, password, confirmPassword) {
+        if (validationError != null) {
+            validationError = null
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -142,8 +154,17 @@ fun SignUpContent(
     ) {
         // Back Button
         Row(modifier = Modifier.fillMaxWidth()) {
-            IconButton(onClick = onBackClicked, enabled = !isLoading) {
-                Text("←", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            IconButton(
+                onClick = {
+                    onBackClicked()
+                },
+                enabled = !isLoading
+            ) {
+                Text(
+                    "←",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 
@@ -184,7 +205,7 @@ fun SignUpContent(
             value = fullName,
             onValueChange = { fullName = it },
             placeholder = "Họ và tên",
-            enabled = !isLoading && !isSuccess,
+            enabled = !isLoading,
             colors = textFieldColors
         )
 
@@ -192,7 +213,7 @@ fun SignUpContent(
             value = email,
             onValueChange = { email = it },
             placeholder = "Email",
-            enabled = !isLoading && !isSuccess,
+            enabled = !isLoading,
             colors = textFieldColors,
             keyboardType = KeyboardType.Email
         )
@@ -201,7 +222,7 @@ fun SignUpContent(
             value = password,
             onValueChange = { password = it },
             placeholder = "Mật khẩu (ít nhất 6 ký tự)",
-            enabled = !isLoading && !isSuccess,
+            enabled = !isLoading,
             isPassword = true,
             isVisible = passwordVisible,
             onToggleVisibility = { passwordVisible = !passwordVisible },
@@ -212,7 +233,7 @@ fun SignUpContent(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
             placeholder = "Xác nhận mật khẩu",
-            enabled = !isLoading && !isSuccess,
+            enabled = !isLoading,
             isPassword = true,
             isVisible = confirmPasswordVisible,
             onToggleVisibility = { confirmPasswordVisible = !confirmPasswordVisible },
@@ -224,12 +245,20 @@ fun SignUpContent(
         // Register Button
         Button(
             onClick = {
-                val validation = onValidateInput(fullName, email, password, confirmPassword)
-                if (validation is SignUpViewModel.ValidationResult.Success) {
-                    validationError = null
-                    onRegisterClick(fullName, email, password)
-                } else if (validation is SignUpViewModel.ValidationResult.Error) {
-                    validationError = validation.message
+                // Validate input
+                when {
+                    fullName.isBlank() -> validationError = "Vui lòng nhập họ và tên"
+                    fullName.length < 2 -> validationError = "Tên phải có ít nhất 2 ký tự"
+                    email.isBlank() -> validationError = "Vui lòng nhập email"
+                    !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+                        validationError = "Email không hợp lệ"
+                    password.isBlank() -> validationError = "Vui lòng nhập mật khẩu"
+                    password.length < 6 -> validationError = "Mật khẩu phải có ít nhất 6 ký tự"
+                    password != confirmPassword -> validationError = "Mật khẩu xác nhận không khớp"
+                    else -> {
+                        validationError = null
+                        onRegisterClick(fullName, email, password, confirmPassword)
+                    }
                 }
             },
             modifier = Modifier
@@ -240,27 +269,30 @@ fun SignUpContent(
                 disabledContainerColor = PrimaryOrange.copy(alpha = 0.5f)
             ),
             shape = RoundedCornerShape(28.dp),
-            enabled = !isLoading && !isSuccess
+            enabled = !isLoading
         ) {
-            when {
-                isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Đang xử lý...", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                }
-                isSuccess -> Text("Thành công!", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                else -> Text("Đăng ký", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            if (isLoading && signUpState is SignUpState.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Đang xử lý...", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            } else if (isSuccess) {
+                Text("Thành công!", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            } else {
+                Text("Đăng ký", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // Divider với "Hoặc"
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             HorizontalDivider(
                 modifier = Modifier.weight(1f),
                 thickness = 1.dp,
@@ -288,15 +320,15 @@ fun SignUpContent(
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(28.dp),
-            enabled = !isLoading && !isSuccess,
+            enabled = !isLoading,
             colors = ButtonDefaults.outlinedButtonColors(
                 contentColor = Color.Black,
                 disabledContentColor = Color.Gray
             ),
-            border = if (isLoading || isSuccess) {
+            border = if (isLoading) {
                 null
             } else {
-                androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
+                BorderStroke(1.dp, Color.LightGray)
             }
         ) {
             if (googleSignInState is GoogleSignInState.Loading) {
@@ -305,9 +337,8 @@ fun SignUpContent(
                     strokeWidth = 2.dp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Đang đăng nhập...")
+                Text("Đang đăng nhập...", color = Color.Gray)
             } else {
-
                 Text("Đăng nhập với Google", color = Color.Black)
             }
         }
@@ -330,10 +361,14 @@ fun SignUpContent(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
-                    .clickable(enabled = !isLoading) { onLoginClicked() }
+                    .clickable(enabled = !isLoading) {
+                        onLoginClicked()
+                    }
                     .padding(vertical = 4.dp, horizontal = 2.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -357,7 +392,7 @@ fun SignUpTextField(
         placeholder = { Text(placeholder, color = Color.Gray) },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp),
+            .padding(bottom = 16.dp),
         shape = RoundedCornerShape(12.dp),
         colors = colors,
         visualTransformation = if (isPassword && !isVisible)

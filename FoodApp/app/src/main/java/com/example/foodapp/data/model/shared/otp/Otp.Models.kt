@@ -33,8 +33,8 @@ data class VerifyOtpRequest(
     @SerializedName("email")
     val email: String,
 
-    @SerializedName("otp")
-    val otp: String
+    @SerializedName("code")
+    val code: String
 )
 
 // Response models
@@ -56,8 +56,6 @@ data class VerifyOtpResponse(
     @SerializedName("message")
     val message: String,
 
-    @SerializedName("verified")
-    val verified: Boolean
 )
 
 data class VerificationStatusResponse(

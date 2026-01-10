@@ -175,7 +175,7 @@ export class AuthService {
         email: dto.email,
         displayName: dto.displayName,
         ...(phoneNumber && { phone: phoneNumber }), // Store normalized phone
-        role: dto.role,
+        role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
         emailVerified: false,
         fcmTokens: [],
@@ -188,7 +188,7 @@ export class AuthService {
 
       // Generate custom token for client to sign in
       const customToken = await this.firebaseService.auth.createCustomToken(userRecord.uid);
-// Send welcome email (don't await - run in background)
+  // Send welcome email (don't await - run in background)
       this.emailService.sendWelcomeEmail(dto.email, dto.displayName).catch(err => {
         console.error('Failed to send welcome email:', err);
       });

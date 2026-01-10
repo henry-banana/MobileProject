@@ -61,26 +61,5 @@ class OtpRepository {
         }
     }
 
-    suspend fun checkVerification(email: String): ApiResult<VerificationStatusResponse> {
-        return try {
-            withContext(Dispatchers.IO) {
-                val response = apiService.checkVerification(email)
 
-                if (response.isSuccessful && response.body()?.success == true) {
-                    ApiResult.Success(response.body()?.data!!)
-                } else {
-                    val errorMessage = response.body()?.message ?:
-                    response.body()?.error ?:
-                    "Failed to check verification status"
-                    ApiResult.Failure(Exception(errorMessage))
-                }
-            }
-        } catch (e: HttpException) {
-            ApiResult.Failure(Exception("HTTP error: ${e.code()} - ${e.message()}"))
-        } catch (e: IOException) {
-            ApiResult.Failure(Exception("Network error: ${e.message}"))
-        } catch (e: Exception) {
-            ApiResult.Failure(Exception("Unexpected error: ${e.message}"))
-        }
-    }
 }

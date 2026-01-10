@@ -160,8 +160,7 @@ class OtpVerificationViewModel(
 
             when (val result = otpRepository.verifyOtp(email, otpCode)) {
                 is ApiResult.Success -> {
-                    if (result.data.verified) {
-                        // Cập nhật isVerify = true
+                    if (result.data.success) {
                         userRepository.setUserVerified { success ->
                             _otpState.value = OtpVerificationState.Success
                             stopTimer()

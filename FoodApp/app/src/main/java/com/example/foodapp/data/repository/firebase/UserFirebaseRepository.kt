@@ -11,7 +11,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 
-class UserFirebaseRepository(context: Context) {
+class UserFirebaseRepository(private val context : Context) {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
     private val googleSignInClient: GoogleSignInClient
@@ -27,6 +27,19 @@ class UserFirebaseRepository(context: Context) {
 
     fun getGoogleSignInClient(): GoogleSignInClient {
         return googleSignInClient
+    }
+
+
+    fun signInWithCustomToken(customToken: String, callback: (Boolean, Exception?) -> Unit) {
+        auth.signInWithCustomToken(customToken)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+
+                    callback(true, null)
+                } else {
+                    callback(false, task.exception)
+                }
+            }
     }
 
 
@@ -418,9 +431,9 @@ class UserFirebaseRepository(context: Context) {
 
     // Lấy tên người dùng hiện tại
     fun getCurrentUserName(onComplete: (String?) -> Unit) {
-        getCurrentUser { user ->
-            onComplete(user?.fullName)
-        }
+        val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val savedName = sharedPref.getString("user_name", null)
+        onComplete(savedName)
     }
 
     // ========== ĐĂNG XUẤT ==========
