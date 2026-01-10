@@ -1,0 +1,243 @@
+import { Injectable, Inject } from '@nestjs/common';
+import { Firestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { IProductsRepository } from '../interfaces';
+import { ProductEntity } from '../entities';
+import { CreateProductDto, ProductFilterDto, ProductSortOption } from '../dto';
+
+@Injectable()
+export class FirestoreProductsRepository implements IProductsRepository {
+  private readonly collection = 'products';
+
+  constructor(@Inject('FIRESTORE') private readonly firestore: Firestore) {}
+
+  async create(
+    shopId: string,
+    shopName: string,
+    categoryName: string,
+    data: CreateProductDto,
+  ): Promise<ProductEntity> {
+    const productRef = this.firestore.collection(this.collection).doc();
+    const now = Timestamp.now();
+
+    const productData = {
+      shopId,
+      shopName, // Denormalized
+      categoryName, // Denormalized
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      categoryId: data.categoryId,
+      imageUrl: data.imageUrl || null,
+      isAvailable: true,
+      preparationTime: data.preparationTime,
+      rating: 0,
+      totalRatings: 0,
+      soldCount: 0,
+      sortOrder: 0,
+      isDeleted: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await productRef.set(productData);
+
+    return this.mapToEntity({ id: productRef.id, ...productData });
+  }
+
+  async findById(id: string): Promise<ProductEntity | null> {
+    const doc = await this.firestore.collection(this.collection).doc(id).get();
+
+    if (!doc.exists) {
+      return null;
+    }
+
+    return this.mapToEntity({ id: doc.id, ...doc.data() });
+  }
+
+  async findByShopId(
+    shopId: string,
+    filters: ProductFilterDto,
+  ): Promise<{ products: ProductEntity[]; total: number }> {
+    let query: FirebaseFirestore.Query = this.firestore
+      .collection(this.collection)
+      .where('shopId', '==', shopId)
+      .where('isDeleted', '==', false);
+
+    // Filter by category
+    if (filters.categoryId) {
+      query = query.where('categoryId', '==', filters.categoryId);
+    }
+
+    // Filter by availability (owner only)
+    if (filters.isAvailable !== undefined) {
+      query = query.where('isAvailable', '==', filters.isAvailable);
+    }
+
+    const snapshot = await query.get();
+    let products = snapshot.docs.map((doc) => this.mapToEntity({ id: doc.id, ...doc.data() }));
+
+    // Client-side search
+    if (filters.q) {
+      const searchLower = filters.q.toLowerCase();
+      products = products.filter(
+        (p) => p.name.toLowerCase().includes(searchLower) || p.description.toLowerCase().includes(searchLower),
+      );
+    }
+
+    const total = products.length;
+
+    // Sort
+    this.sortProducts(products, filters.sort || ProductSortOption.NEWEST);
+
+    // Pagination
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+    const offset = (page - 1) * limit;
+    const paginatedProducts = products.slice(offset, offset + limit);
+
+    return { products: paginatedProducts, total };
+  }
+
+  async searchGlobal(
+    filters: ProductFilterDto,
+  ): Promise<{ products: ProductEntity[]; total: number }> {
+    let query: FirebaseFirestore.Query = this.firestore
+      .collection(this.collection)
+      .where('isDeleted', '==', false)
+      .where('isAvailable', '==', true);
+
+    // Filter by category
+    if (filters.categoryId) {
+      query = query.where('categoryId', '==', filters.categoryId);
+    }
+
+    // Filter by shop
+    if (filters.shopId) {
+      query = query.where('shopId', '==', filters.shopId);
+    }
+
+    const snapshot = await query.get();
+    let products = snapshot.docs.map((doc) => this.mapToEntity({ id: doc.id, ...doc.data() }));
+
+    // Client-side search
+    if (filters.q) {
+      const searchLower = filters.q.toLowerCase();
+      products = products.filter(
+        (p) => p.name.toLowerCase().includes(searchLower) || p.description.toLowerCase().includes(searchLower),
+      );
+    }
+
+    // Client-side price filter
+    if (filters.minPrice !== undefined) {
+      products = products.filter((p) => p.price >= filters.minPrice!);
+    }
+    if (filters.maxPrice !== undefined) {
+      products = products.filter((p) => p.price <= filters.maxPrice!);
+    }
+
+    const total = products.length;
+
+    // Sort
+    this.sortProducts(products, filters.sort || ProductSortOption.NEWEST);
+
+    // Pagination
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+    const offset = (page - 1) * limit;
+    const paginatedProducts = products.slice(offset, offset + limit);
+
+    return { products: paginatedProducts, total };
+  }
+
+  async update(id: string, data: Partial<ProductEntity>): Promise<void> {
+    const updateData: Record<string, unknown> = {
+      ...data,
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    await this.firestore.collection(this.collection).doc(id).update(updateData);
+  }
+
+  async toggleAvailability(id: string, isAvailable: boolean): Promise<void> {
+    await this.firestore.collection(this.collection).doc(id).update({
+      isAvailable,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  async softDelete(id: string): Promise<void> {
+    await this.firestore.collection(this.collection).doc(id).update({
+      isDeleted: true,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  async updateStats(
+    id: string,
+    stats: {
+      rating?: number;
+      totalRatings?: number;
+      soldCount?: number;
+    },
+  ): Promise<void> {
+    const updateData: Record<string, unknown> = {
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (stats.rating !== undefined) updateData.rating = stats.rating;
+    if (stats.totalRatings !== undefined) updateData.totalRatings = stats.totalRatings;
+    if (stats.soldCount !== undefined) updateData.soldCount = stats.soldCount;
+
+    await this.firestore.collection(this.collection).doc(id).update(updateData);
+  }
+
+  /**
+   * Map Firestore document to ProductEntity
+   */
+  private mapToEntity(data: FirebaseFirestore.DocumentData): ProductEntity {
+    return {
+      id: data.id,
+      shopId: data.shopId,
+      shopName: data.shopName,
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      categoryId: data.categoryId,
+      categoryName: data.categoryName,
+      imageUrl: data.imageUrl,
+      isAvailable: data.isAvailable,
+      preparationTime: data.preparationTime,
+      rating: data.rating,
+      totalRatings: data.totalRatings,
+      soldCount: data.soldCount,
+      sortOrder: data.sortOrder,
+      isDeleted: data.isDeleted,
+      createdAt: data.createdAt?.toDate?.().toISOString?.() || data.createdAt,
+      updatedAt: data.updatedAt?.toDate?.().toISOString?.() || data.updatedAt,
+    };
+  }
+
+  /**
+   * Sort products array by option
+   */
+  private sortProducts(products: ProductEntity[], sort: ProductSortOption): void {
+    switch (sort) {
+      case ProductSortOption.POPULAR:
+        products.sort((a, b) => b.soldCount - a.soldCount);
+        break;
+      case ProductSortOption.RATING:
+        products.sort((a, b) => b.rating - a.rating);
+        break;
+      case ProductSortOption.PRICE:
+        products.sort((a, b) => a.price - b.price);
+        break;
+      case ProductSortOption.NEWEST:
+      default:
+        products.sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime();
+          const dateB = new Date(b.createdAt).getTime();
+          return dateB - dateA;
+        });
+    }
+  }
+}
