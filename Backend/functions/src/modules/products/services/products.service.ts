@@ -1,0 +1,230 @@
+import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common';
+import { IProductsRepository } from '../interfaces';
+import { ProductEntity } from '../entities';
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  ProductFilterDto,
+  ToggleAvailabilityDto,
+} from '../dto';
+import { ShopsService } from '../../shops/services/shops.service';
+import { StorageService } from '../../../shared/services/storage.service';
+import { CategoriesService } from '../../categories/categories.service';
+
+@Injectable()
+export class ProductsService {
+  constructor(
+    @Inject('PRODUCTS_REPOSITORY')
+    private readonly productsRepository: IProductsRepository,
+    private readonly shopsService: ShopsService,
+    private readonly storageService: StorageService,
+    private readonly categoriesService: CategoriesService,
+  ) {}
+
+  // ==================== Owner Operations ====================
+
+  /**
+   * Create a new product
+   * PROD-001
+   */
+  async createProduct(ownerId: string, dto: CreateProductDto): Promise<ProductEntity> {
+    // Get owner's shop
+    const shop = await this.shopsService.getMyShop(ownerId);
+
+    // Get category name from Categories service
+    const category = await this.categoriesService.findById(dto.categoryId);
+    const categoryName = category.name;
+
+    return await this.productsRepository.create(shop.id, shop.name, categoryName, dto);
+  }
+
+  /**
+   * Get all products of owner's shop
+   * PROD-002
+   */
+  async getMyProducts(
+    ownerId: string,
+    filters: { categoryId?: string; isAvailable?: string; page?: number; limit?: number },
+  ): Promise<{ products: ProductEntity[]; total: number; page: number; limit: number }> {
+    const shop = await this.shopsService.getMyShop(ownerId);
+
+    const result = await this.productsRepository.findByShopId(shop.id, filters);
+
+    return {
+      ...result,
+      page: filters.page || 1,
+      limit: filters.limit || 20,
+    };
+  }
+
+  /**
+   * Get product by ID (owner must own the product)
+   * PROD-003
+   */
+  async getMyProduct(ownerId: string, productId: string): Promise<ProductEntity> {
+    const product = await this.getProductById(productId);
+    const shop = await this.shopsService.getMyShop(ownerId);
+
+    if (product.shopId !== shop.id) {
+      throw new ConflictException({
+        code: 'PRODUCT_004',
+        message: 'Bạn không phải chủ của sản phẩm này',
+        statusCode: 403,
+      });
+    }
+
+    return product;
+  }
+
+  /**
+   * Update product
+   * PROD-006 - Price Lock Rule: Cannot change price when shop is open
+   */
+  async updateProduct(ownerId: string, productId: string, dto: UpdateProductDto): Promise<void> {
+    const product = await this.getMyProduct(ownerId, productId);
+
+    // Price Lock Rule: Check if trying to change price
+    if (dto.price !== undefined && dto.price !== product.price) {
+      const shop = await this.shopsService.getShopById(product.shopId);
+
+      if (shop.isOpen) {
+        throw new ConflictException({
+          code: 'PRODUCT_003',
+          message: 'Không thể thay đổi giá khi shop đang mở cửa',
+          statusCode: 409,
+        });
+      }
+    }
+
+    // Update categoryName if categoryId changed
+    let categoryName = product.categoryName;
+    if (dto.categoryId && dto.categoryId !== product.categoryId) {
+      const category = await this.categoriesService.findById(dto.categoryId);
+      categoryName = category.name;
+    }
+
+    const updateData: Partial<ProductEntity> = {
+      ...dto,
+      categoryName,
+    };
+
+    await this.productsRepository.update(productId, updateData);
+  }
+
+  /**
+   * Toggle product availability
+   * PROD-007
+   */
+  async toggleAvailability(
+    ownerId: string,
+    productId: string,
+    dto: ToggleAvailabilityDto,
+  ): Promise<void> {
+    await this.getMyProduct(ownerId, productId);
+    await this.productsRepository.toggleAvailability(productId, dto.isAvailable);
+  }
+
+  /**
+   * Delete product (soft delete)
+   * PROD-008
+   */
+  async deleteProduct(ownerId: string, productId: string): Promise<void> {
+    await this.getMyProduct(ownerId, productId);
+    await this.productsRepository.softDelete(productId);
+  }
+
+  // ==================== Customer Operations ====================
+
+  /**
+   * Get global product feed (all shops)
+   * PROD-009
+   */
+  async getProductFeed(
+    filters: ProductFilterDto,
+  ): Promise<{ products: ProductEntity[]; total: number; page: number; limit: number }> {
+    const result = await this.productsRepository.searchGlobal(filters);
+
+    return {
+      ...result,
+      page: filters.page || 1,
+      limit: filters.limit || 20,
+    };
+  }
+
+  /**
+   * Get product detail (customer view)
+   * PROD-010
+   */
+  async getProductDetail(productId: string): Promise<ProductEntity> {
+    const product = await this.getProductById(productId);
+
+    if (product.isDeleted) {
+      throw new NotFoundException({
+        code: 'PRODUCT_001',
+        message: 'Không tìm thấy sản phẩm',
+        statusCode: 404,
+      });
+    }
+
+    return product;
+  }
+
+  // ==================== Utility Methods ====================
+
+  /**
+   * Get product by ID (internal)
+   */
+  async getProductById(productId: string): Promise<ProductEntity> {
+    const product = await this.productsRepository.findById(productId);
+
+    if (!product) {
+      throw new NotFoundException({
+        code: 'PRODUCT_001',
+        message: 'Không tìm thấy sản phẩm',
+        statusCode: 404,
+      });
+    }
+
+    return product;
+  }
+
+  /**
+   * Update product stats (for Order/Review modules)
+   */
+  async updateProductStats(
+    productId: string,
+    stats: {
+      rating?: number;
+      totalRatings?: number;
+      soldCount?: number;
+    },
+  ): Promise<void> {
+    await this.productsRepository.updateStats(productId, stats);
+  }
+
+  /**
+   * Upload product image
+   * PROD-005
+   */
+  async uploadProductImage(
+    ownerId: string,
+    productId: string,
+    buffer: Buffer,
+    mimetype: string,
+  ): Promise<string> {
+    const product = await this.getMyProduct(ownerId, productId);
+
+    // Upload to Storage
+    const imageUrl = await this.storageService.uploadProductImage(
+      product.shopId,
+      productId,
+      buffer,
+      mimetype,
+    );
+
+    // Update product imageUrl
+    await this.productsRepository.update(productId, { imageUrl });
+
+    return imageUrl;
+  }
+}
