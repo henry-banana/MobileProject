@@ -12,7 +12,7 @@ import androidx.navigation.compose.composable
 import com.example.foodapp.authentication.intro.IntroScreen
 import com.example.foodapp.authentication.login.LoginScreen
 import com.example.foodapp.data.repository.firebase.UserFirebaseRepository
-import com.example.foodapp.pages.client.profile.UserProfileScreen
+//import com.example.foodapp.pages.client.profile.UserProfileScreen
 import com.example.foodapp.authentication.roleselection.RoleSelectionScreen
 import com.example.foodapp.authentication.forgotpassword.emailinput.ForgotPasswordEmailScreen
 import com.example.foodapp.authentication.forgotpassword.verifyotp.ForgotPasswordOTPScreen
@@ -260,6 +260,7 @@ fun FoodAppNavHost(
             )
         }
 
+        /*
         composable(Screen.UserProfile.route) {
             UserProfileScreen(
                 onBackClick = { navController.navigateUp() },
@@ -271,6 +272,8 @@ fun FoodAppNavHost(
                 }
             )
         }
+
+         */
 
         composable(Screen.UserCart.route) {
             CartScreen(

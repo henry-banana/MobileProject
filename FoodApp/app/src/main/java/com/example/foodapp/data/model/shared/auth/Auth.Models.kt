@@ -26,7 +26,7 @@ data class ApiResponse @JvmOverloads constructor(
     val success: Boolean = false,
 
     @SerializedName("data")
-    val data: InnerResponse? = null,  // ← InnerResponse, không phải RegisterData
+    val data: InnerResponse? = null,
 
     @SerializedName("message")
     val message: String? = null,

@@ -1,5 +1,8 @@
 package com.example.foodapp.data.api
 
+import com.example.foodapp.data.api.shared.AuthApiService
+import com.example.foodapp.data.api.shared.OtpApiService
+import com.example.foodapp.data.api.client.ProfileApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -39,5 +42,9 @@ object ApiClient {
 
     val authApiService: AuthApiService by lazy {
         retrofit.create(AuthApiService::class.java)
+    }
+
+    val profileApiService: ProfileApiService by lazy {
+        retrofit.create(ProfileApiService::class.java)
     }
 }

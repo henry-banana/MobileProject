@@ -192,25 +192,6 @@ class UserFirebaseRepository(private val context : Context) {
     }
 
 
-
-
-    /**
-     * Gửi email reset password (cách đúng cho Forgot Password)
-     */
-    fun sendPasswordResetEmail(
-        email: String,
-        onComplete: (Boolean, String?) -> Unit
-    ) {
-        auth.sendPasswordResetEmail(email)
-            .addOnSuccessListener {
-                onComplete(true, null)
-            }
-            .addOnFailureListener { exception ->
-                onComplete(false, exception.message ?: "Gửi email thất bại")
-            }
-    }
-
-
     fun getCurrentUserWithDetails(onComplete: (Client?) -> Unit) {
         val currentUser = auth.currentUser
         if (currentUser == null) {
@@ -269,117 +250,6 @@ class UserFirebaseRepository(private val context : Context) {
                 onComplete(null)
             }
     }
-
-    fun registerWithEmail(
-        email: String,
-        password: String,
-        onComplete: (Boolean, String?) -> Unit
-    ) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid
-                    onComplete(true, userId)
-                } else {
-                    onComplete(false, task.exception?.message)
-                }
-            }
-    }
-
-    fun authWithGoogle(idToken: String, onComplete: (Boolean, String?) -> Unit) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid
-                    onComplete(true, userId)
-                } else {
-                    onComplete(false, null)
-                }
-            }
-    }
-
-    fun checkUserExists(userId: String, onComplete: (Boolean) -> Unit) {
-        val docRef = db.collection("users").document(userId)
-        docRef.get()
-            .addOnSuccessListener { document ->
-                onComplete(document.exists())
-            }
-            .addOnFailureListener {
-                onComplete(false)
-            }
-    }
-
-    fun logInWithEmail(
-        email: String,
-        password: String,
-        onComplete: (Boolean, String?) -> Unit
-    ) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                val userID = auth.currentUser?.uid
-                if (task.isSuccessful) {
-                    onComplete(true, userID)
-                } else {
-                    onComplete(false, "Sai email hoặc mật khẩu")
-                }
-            }
-    }
-
-    fun saveUserToFirestore(
-        userId: String,
-        fullName: String,
-        email: String,
-        onComplete: (Boolean, String?) -> Unit
-    ) {
-        val user = Client(
-            id = userId,
-            fullName = fullName,
-            email = email,
-            isVerify = false,
-            phone = "",
-            role = "user",
-            imageAvatar = "",
-            createdAt = System.currentTimeMillis()
-        )
-
-        db.collection("users").document(userId)
-            .set(user)
-            .addOnSuccessListener {
-                onComplete(true, null)
-            }
-            .addOnFailureListener { e ->
-                onComplete(false, e.message)
-            }
-    }
-
-    fun saveGoogleUserToFirestore(
-        userId: String,
-        displayName: String?,
-        email: String?,
-        onComplete: (Boolean, String?) -> Unit
-    ) {
-        val user = Client(
-            id = userId,
-            fullName = displayName ?: "Google User",
-            email = email ?: "",
-            isVerify = true,
-            phone = "",
-            role = "user",
-            imageAvatar = "",
-            createdAt = System.currentTimeMillis()
-        )
-
-        db.collection("users").document(userId)
-            .set(user)
-            .addOnSuccessListener {
-                onComplete(true, null)
-            }
-            .addOnFailureListener { e ->
-                onComplete(false, e.message)
-            }
-    }
-
     // Lưu vai trò user vào Firestore (RoleSelection)
     fun saveUserRole(userId: String, role: String, onComplete: (Boolean, String?) -> Unit) {
         val userRef = db.collection("users").document(userId)
@@ -455,15 +325,9 @@ class UserFirebaseRepository(private val context : Context) {
         getUserById(userId, onComplete)
     }
 
-    // Lấy tên người dùng hiện tại
     fun getCurrentUserName(onComplete: (String?) -> Unit) {
         val sharedPref = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val savedName = sharedPref.getString("user_name", null)
         onComplete(savedName)
-    }
-
-    // ========== ĐĂNG XUẤT ==========
-    fun logout() {
-        auth.signOut()
     }
 }

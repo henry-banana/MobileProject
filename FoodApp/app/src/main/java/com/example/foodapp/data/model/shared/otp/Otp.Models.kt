@@ -2,7 +2,7 @@ package com.example.foodapp.data.model.shared.otp
 
 import com.google.gson.annotations.SerializedName
 
-// Đổi tên thành ApiResult để tránh conflict với kotlin.Result
+
 sealed class ApiResult<out T> {
     data class Success<out T>(val data: T) : ApiResult<T>()
     data class Failure(val exception: Exception) : ApiResult<Nothing>()

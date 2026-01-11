@@ -1,7 +1,12 @@
-package com.example.foodapp.data.api
+package com.example.foodapp.data.api.shared
 
-
-import com.example.foodapp.data.model.shared.otp.*
+import com.example.foodapp.data.model.shared.otp.ApiResponse
+import com.example.foodapp.data.model.shared.otp.SendOtpRequest
+import com.example.foodapp.data.model.shared.otp.SendOtpResetPasswordRequest
+import com.example.foodapp.data.model.shared.otp.SendOtpResetPasswordResponse
+import com.example.foodapp.data.model.shared.otp.SendOtpResponse
+import com.example.foodapp.data.model.shared.otp.VerifyOtpRequest
+import com.example.foodapp.data.model.shared.otp.VerifyOtpResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
