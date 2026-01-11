@@ -231,7 +231,6 @@ export class AuthService {
     try {
       // Verify Google ID token with Firebase Admin
       const decodedToken = await this.firebaseService.auth.verifyIdToken(dto.idToken);
-      
       const { uid, email, name, picture, email_verified } = decodedToken;
 
       if (!email) {

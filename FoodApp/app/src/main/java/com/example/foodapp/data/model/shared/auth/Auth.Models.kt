@@ -124,3 +124,125 @@ data class ResetPasswordResponse @JvmOverloads constructor(
     @SerializedName("message")
     val message: String = ""
 )
+
+// ============= LOGIN SPECIFIC MODELS =============
+
+// DTO cho yêu cầu đăng nhập
+data class LoginRequest(
+    @SerializedName("email")
+    val email: String,
+
+    @SerializedName("password")
+    val password: String
+)
+
+// Dữ liệu từ phản hồi đăng nhập
+data class LoginResponse  @JvmOverloads constructor(
+
+    @SerializedName("success")
+    val success: Boolean? = null,
+
+    @SerializedName("user")
+    val user: UserDetail? = null,
+
+    @SerializedName("customToken")
+    val customToken: String? = null,
+
+    @SerializedName("message")
+    val message: String? = null
+) {
+    val isValid: Boolean get() = user?.isValid == true && !customToken.isNullOrBlank()
+}
+
+// Chi tiết user từ đăng nhập (đầy đủ thông tin)
+data class UserDetail @JvmOverloads constructor(
+    @SerializedName("id")
+    val id: String = "",
+
+    @SerializedName("email")
+    val email: String = "",
+
+    @SerializedName("displayName")
+    val displayName: String? = null,
+
+    @SerializedName("phone")
+    val phone: String? = null,
+
+    @SerializedName("photoUrl")
+    val photoUrl: String? = null,
+
+    @SerializedName("role")
+    val role: String = "",
+
+    @SerializedName("status")
+    val status: String = "",
+
+    @SerializedName("emailVerified")
+    val emailVerified: Boolean = false,
+
+    @SerializedName("createdAt")
+    val createdAt: String? = null
+) {
+    val isValid: Boolean get() = id.isNotBlank() && email.isNotBlank()
+    val isActive: Boolean get() = status.equals("ACTIVE", ignoreCase = true)
+    val isBanned: Boolean get() = status.equals("BANNED", ignoreCase = true)
+
+
+    fun getDisplayNameOrEmail(): String = displayName ?: email.split("@").first()
+}
+
+
+data class GoogleAuthRequest(
+    @SerializedName("idToken")
+    val idToken: String,
+
+    @SerializedName("role")
+    val role: String? = null
+)
+
+// Dữ liệu từ phản hồi đăng nhập Google
+data class GoogleAuthResponse @JvmOverloads constructor(
+    @SerializedName("success")
+    val success: Boolean? = null,
+
+    @SerializedName("user")
+    val user: GoogleUserDetail? = null,
+
+    @SerializedName("isNewUser")
+    val isNewUser: Boolean = false,
+
+    @SerializedName("message")
+    val message: String? = null
+)
+
+// Chi tiết user từ Google Sign-In
+data class GoogleUserDetail @JvmOverloads constructor(
+    @SerializedName("id")
+    val id: String = "",
+
+    @SerializedName("email")
+    val email: String = "",
+
+    @SerializedName("displayName")
+    val displayName: String? = null,
+
+    @SerializedName("photoUrl")
+    val photoUrl: String? = null,
+
+    @SerializedName("role")
+    val role: String = "",
+
+    @SerializedName("status")
+    val status: String = "",
+
+    @SerializedName("emailVerified")
+    val emailVerified: Boolean = false,
+
+    @SerializedName("provider")
+    val provider: String = "google"
+){
+    // THÊM DÒNG NÀY
+    val isValid: Boolean get() = id.isNotBlank() && email.isNotBlank()
+}
+
+

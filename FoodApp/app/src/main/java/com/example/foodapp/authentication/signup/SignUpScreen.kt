@@ -1,8 +1,5 @@
 package com.example.foodapp.authentication.signup
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,16 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.foodapp.ui.theme.PrimaryOrange
-import com.google.android.gms.auth.api.signin.GoogleSignIn
 
 @Composable
 fun SignUpScreen(
@@ -44,30 +37,7 @@ fun SignUpScreen(
 
     // Observe ViewModel states
     val signUpState by viewModel.signUpState.observeAsState(SignUpState.Idle)
-    val googleSignInState by viewModel.googleSignInState.observeAsState(GoogleSignInState.Idle)
     val saveUserState by viewModel.saveUserState.observeAsState(null)
-
-    // Google Sign-In Launcher
-    val googleSignInLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        viewModel.handleGoogleSignInResult(task)
-    }
-
-    // Handle lifecycle
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.handlePendingGoogleSignIn(context)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
 
     // Navigate on success
     LaunchedEffect(signUpState) {
@@ -82,24 +52,11 @@ fun SignUpScreen(
         }
     }
 
-    // Reset UI khi state thay đổi
-    LaunchedEffect(signUpState, googleSignInState) {
-        // Reset error khi loading bắt đầu
-        if (signUpState is SignUpState.Loading || googleSignInState is GoogleSignInState.Loading) {
-            // Có thể reset UI state nếu cần
-        }
-    }
-
     // UI Content
     SignUpContent(
         signUpState = signUpState,
-        googleSignInState = googleSignInState,
         onRegisterClick = { fullName, email, password, confirmPassword ->
             viewModel.registerWithEmail(fullName, email, password, confirmPassword)
-        },
-        onGoogleClick = {
-            val signInIntent = viewModel.getGoogleSignInClient().signInIntent
-            googleSignInLauncher.launch(signInIntent)
         },
         onLoginClicked = onLoginClicked,
         onBackClicked = {
@@ -113,9 +70,7 @@ fun SignUpScreen(
 @Composable
 fun SignUpContent(
     signUpState: SignUpState,
-    googleSignInState: GoogleSignInState,
     onRegisterClick: (String, String, String, String) -> Unit,
-    onGoogleClick: () -> Unit,
     onLoginClicked: () -> Unit,
     onBackClicked: () -> Unit
 ) {
@@ -129,10 +84,9 @@ fun SignUpContent(
     var validationError by remember { mutableStateOf<String?>(null) }
 
     // Derived state từ ViewModel
-    val isLoading = signUpState is SignUpState.Loading || googleSignInState is GoogleSignInState.Loading
-    val isSuccess = signUpState is SignUpState.Success || googleSignInState is GoogleSignInState.Success
+    val isLoading = signUpState is SignUpState.Loading
+    val isSuccess = signUpState is SignUpState.Success
     val serverErrorMessage = (signUpState as? SignUpState.Error)?.message
-        ?: (googleSignInState as? GoogleSignInState.Error)?.message
 
     // Display error
     val displayError = validationError ?: serverErrorMessage
@@ -283,63 +237,6 @@ fun SignUpContent(
                 Text("Thành công!", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             } else {
                 Text("Đăng ký", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Divider với "Hoặc"
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            HorizontalDivider(
-                modifier = Modifier.weight(1f),
-                thickness = 1.dp,
-                color = Color.LightGray
-            )
-            Text(
-                text = " Hoặc đăng ký với ",
-                color = Color.Gray,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-            HorizontalDivider(
-                modifier = Modifier.weight(1f),
-                thickness = 1.dp,
-                color = Color.LightGray
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Google Sign-In Button
-        OutlinedButton(
-            onClick = onGoogleClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(28.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Color.Black,
-                disabledContentColor = Color.Gray
-            ),
-            border = if (isLoading) {
-                null
-            } else {
-                BorderStroke(1.dp, Color.LightGray)
-            }
-        ) {
-            if (googleSignInState is GoogleSignInState.Loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Đang đăng nhập...", color = Color.Gray)
-            } else {
-                Text("Đăng nhập với Google", color = Color.Black)
             }
         }
 

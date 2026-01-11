@@ -24,13 +24,6 @@ sealed class SignUpState {
     data class Error(val message: String) : SignUpState()
 }
 
-sealed class GoogleSignInState {
-    object Idle : GoogleSignInState()
-    object Loading : GoogleSignInState()
-    object Success : GoogleSignInState()
-    data class Error(val message: String) : GoogleSignInState()
-}
-
 sealed class ValidationResult {
     object Success : ValidationResult()
     data class Error(val message: String) : ValidationResult()
@@ -45,86 +38,8 @@ class SignUpViewModel(
     private val _signUpState = MutableLiveData<SignUpState>(SignUpState.Idle)
     val signUpState: LiveData<SignUpState> = _signUpState
 
-    private val _googleSignInState = MutableLiveData<GoogleSignInState>(GoogleSignInState.Idle)
-    val googleSignInState: LiveData<GoogleSignInState> = _googleSignInState
-
     private val _saveUserState = MutableLiveData<Boolean?>(null)
     val saveUserState: LiveData<Boolean?> = _saveUserState
-
-    fun getGoogleSignInClient(): GoogleSignInClient {
-        return repository.getGoogleSignInClient()
-    }
-
-    // Handle Google Sign-In result
-    fun handleGoogleSignInResult(task: Task<GoogleSignInAccount>) {
-        try {
-            val account = task.getResult(ApiException::class.java)
-            val idToken = account.idToken
-            val displayName = account.displayName
-            val email = account.email
-
-            if (idToken != null) {
-                _googleSignInState.value = GoogleSignInState.Loading
-                authWithGoogle(idToken, displayName, email)
-            } else {
-                _googleSignInState.value = GoogleSignInState.Error("Không thể lấy token từ Google")
-            }
-        } catch (e: ApiException) {
-            Log.e("SignUpViewModel", "Google sign in failed", e)
-            val errorMessage = when (e.statusCode) {
-                10 -> "Ứng dụng chưa được cấu hình Google Sign-In"
-                12501 -> "Người dùng đã hủy đăng nhập"
-                12502 -> "Lỗi mạng hoặc timeout"
-                else -> "Đăng nhập Google thất bại (Mã lỗi: ${e.statusCode})"
-            }
-            _googleSignInState.value = GoogleSignInState.Error(errorMessage)
-        }
-    }
-
-    fun checkPendingGoogleSignIn(context: Context): Boolean {
-        val account = GoogleSignIn.getLastSignedInAccount(context)
-        return account != null && googleSignInState.value is GoogleSignInState.Loading
-    }
-
-    fun handlePendingGoogleSignIn(context: Context) {
-        if (checkPendingGoogleSignIn(context)) {
-            try {
-                val task = GoogleSignIn.getSignedInAccountFromIntent(null)
-                handleGoogleSignInResult(task)
-            } catch (e: Exception) {
-                _googleSignInState.value = GoogleSignInState.Idle
-            }
-        }
-    }
-
-    private fun authWithGoogle(idToken: String, displayName: String?, email: String?) {
-        repository.authWithGoogle(idToken) { isSuccessful, userId ->
-            if (isSuccessful && userId != null) {
-                repository.checkUserExists(userId) { exists ->
-                    if (exists) {
-                        _googleSignInState.postValue(GoogleSignInState.Success)
-                        _saveUserState.postValue(true)
-                    } else {
-                        saveGoogleUserToFirestore(userId, displayName, email)
-                    }
-                }
-            } else {
-                _googleSignInState.postValue(GoogleSignInState.Error("Xác thực Google thất bại"))
-            }
-        }
-    }
-
-    private fun saveGoogleUserToFirestore(userId: String, displayName: String?, email: String?) {
-        repository.saveGoogleUserToFirestore(userId, displayName, email) { isSuccessful, errorMessage ->
-            if (isSuccessful) {
-                _googleSignInState.postValue(GoogleSignInState.Success)
-                _saveUserState.postValue(true)
-            } else {
-                _saveUserState.postValue(false)
-                _googleSignInState.postValue(GoogleSignInState.Error(errorMessage ?: "Lỗi lưu dữ liệu Google"))
-            }
-        }
-    }
 
     fun registerWithEmail(displayName: String, email: String, password: String, confirmPassword: String) {
         // Validate input
@@ -136,8 +51,6 @@ class SignUpViewModel(
 
         viewModelScope.launch {
             _signUpState.value = SignUpState.Loading
-            Log.d("SignUpViewModel", "Bắt đầu đăng ký: $email")
-
             try {
                 val result = authRepository.register(email, displayName, password)
 
@@ -147,15 +60,12 @@ class SignUpViewModel(
 
                         // Kiểm tra outer success
                         if (apiResponse.success) {
-                            // Kiểm tra inner success và lấy dữ liệu
                             val innerSuccess = apiResponse.data?.success ?: false
                             val registerData = apiResponse.data?.data
                             val userInfo = registerData?.user
 
                             if (innerSuccess && userInfo != null && userInfo.isValid) {
 
-
-                                // 1. Lưu thông tin vào SharedPreferences
                                 saveUserInfoLocally(userInfo)
 
                                 // 2. Đăng nhập Firebase với customToken (nếu có)
@@ -214,7 +124,6 @@ class SignUpViewModel(
 
     fun resetStates() {
         _signUpState.value = SignUpState.Idle
-        _googleSignInState.value = GoogleSignInState.Idle
         _saveUserState.value = null
     }
 
