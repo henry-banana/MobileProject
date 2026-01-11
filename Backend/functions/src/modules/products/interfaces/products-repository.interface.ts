@@ -1,5 +1,5 @@
 import { ProductEntity } from '../entities';
-import { CreateProductDto, UpdateProductDto, ProductFilterDto } from '../dto';
+import { CreateProductDto, ProductFilterDto } from '../dto';
 
 /**
  * Products Repository Interface (SOLID - Dependency Inversion Principle)
@@ -25,15 +25,13 @@ export interface IProductsRepository {
    */
   findByShopId(
     shopId: string,
-    filters: ProductFilterDto,
+    filters: Omit<Partial<ProductFilterDto>, 'isAvailable'> & { isAvailable?: string | boolean },
   ): Promise<{ products: ProductEntity[]; total: number }>;
 
   /**
    * Global product search (across all shops)
    */
-  searchGlobal(
-    filters: ProductFilterDto,
-  ): Promise<{ products: ProductEntity[]; total: number }>;
+  searchGlobal(filters: ProductFilterDto): Promise<{ products: ProductEntity[]; total: number }>;
 
   /**
    * Update product

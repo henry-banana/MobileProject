@@ -26,7 +26,7 @@ import {
   CreateProductDto,
   UpdateProductDto,
   ToggleAvailabilityDto,
-  ProductFilterDto,
+  OwnerProductFilterDto,
 } from '../dto';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
@@ -45,7 +45,7 @@ import { UserRole } from '../../../core/interfaces/user.interface';
  * Tasks: PROD-001 to PROD-008
  */
 @ApiTags('Owner Products')
-@ApiBearerAuth()
+@ApiBearerAuth('firebase-auth')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(UserRole.OWNER)
 @Controller('owner/products')
@@ -108,7 +108,7 @@ export class OwnerProductsController {
     description: "Get all products of owner's shop with filters",
   })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
-  @ApiQuery({ name: 'isAvailable', required: false, type: Boolean })
+  @ApiQuery({ name: 'isAvailable', required: false, type: String, enum: ['true', 'false'] })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
   @ApiResponse({
@@ -147,7 +147,10 @@ export class OwnerProductsController {
       },
     },
   })
-  async getMyProducts(@CurrentUser('uid') ownerId: string, @Query() filters: ProductFilterDto) {
+  async getMyProducts(
+    @CurrentUser('uid') ownerId: string,
+    @Query() filters: OwnerProductFilterDto,
+  ) {
     return this.productsService.getMyProducts(ownerId, filters);
   }
 

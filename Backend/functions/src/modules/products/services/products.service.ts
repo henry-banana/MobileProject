@@ -1,15 +1,15 @@
-import {
-  Injectable,
-  Inject,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common';
 import { IProductsRepository } from '../interfaces';
 import { ProductEntity } from '../entities';
-import { CreateProductDto, UpdateProductDto, ProductFilterDto, ToggleAvailabilityDto } from '../dto';
+import {
+  CreateProductDto,
+  UpdateProductDto,
+  ProductFilterDto,
+  ToggleAvailabilityDto,
+} from '../dto';
 import { ShopsService } from '../../shops/services/shops.service';
 import { StorageService } from '../../../shared/services/storage.service';
+import { CategoriesService } from '../../categories/categories.service';
 
 @Injectable()
 export class ProductsService {
@@ -18,6 +18,7 @@ export class ProductsService {
     private readonly productsRepository: IProductsRepository,
     private readonly shopsService: ShopsService,
     private readonly storageService: StorageService,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   // ==================== Owner Operations ====================
@@ -30,9 +31,9 @@ export class ProductsService {
     // Get owner's shop
     const shop = await this.shopsService.getMyShop(ownerId);
 
-    // TODO: Get category name from Categories service
-    // For now, use categoryId as categoryName
-    const categoryName = dto.categoryId;
+    // Get category name from Categories service
+    const category = await this.categoriesService.findById(dto.categoryId);
+    const categoryName = category.name;
 
     return await this.productsRepository.create(shop.id, shop.name, categoryName, dto);
   }
@@ -43,7 +44,7 @@ export class ProductsService {
    */
   async getMyProducts(
     ownerId: string,
-    filters: ProductFilterDto,
+    filters: { categoryId?: string; isAvailable?: string; page?: number; limit?: number },
   ): Promise<{ products: ProductEntity[]; total: number; page: number; limit: number }> {
     const shop = await this.shopsService.getMyShop(ownerId);
 
@@ -79,11 +80,7 @@ export class ProductsService {
    * Update product
    * PROD-006 - Price Lock Rule: Cannot change price when shop is open
    */
-  async updateProduct(
-    ownerId: string,
-    productId: string,
-    dto: UpdateProductDto,
-  ): Promise<void> {
+  async updateProduct(ownerId: string, productId: string, dto: UpdateProductDto): Promise<void> {
     const product = await this.getMyProduct(ownerId, productId);
 
     // Price Lock Rule: Check if trying to change price
@@ -102,8 +99,8 @@ export class ProductsService {
     // Update categoryName if categoryId changed
     let categoryName = product.categoryName;
     if (dto.categoryId && dto.categoryId !== product.categoryId) {
-      // TODO: Get category name from Categories service
-      categoryName = dto.categoryId;
+      const category = await this.categoriesService.findById(dto.categoryId);
+      categoryName = category.name;
     }
 
     const updateData: Partial<ProductEntity> = {

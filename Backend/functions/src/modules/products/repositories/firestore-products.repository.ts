@@ -69,8 +69,16 @@ export class FirestoreProductsRepository implements IProductsRepository {
     }
 
     // Filter by availability (owner only)
-    if (filters.isAvailable !== undefined) {
-      query = query.where('isAvailable', '==', filters.isAvailable);
+    let isAvailableBoolean: boolean | undefined = undefined;
+    if (typeof filters.isAvailable === 'string') {
+      isAvailableBoolean =
+        filters.isAvailable === 'true' ? true : filters.isAvailable === 'false' ? false : undefined;
+    } else if (typeof filters.isAvailable === 'boolean') {
+      isAvailableBoolean = filters.isAvailable;
+    }
+
+    if (isAvailableBoolean !== undefined && isAvailableBoolean !== null) {
+      query = query.where('isAvailable', '==', isAvailableBoolean);
     }
 
     const snapshot = await query.get();
@@ -80,7 +88,9 @@ export class FirestoreProductsRepository implements IProductsRepository {
     if (filters.q) {
       const searchLower = filters.q.toLowerCase();
       products = products.filter(
-        (p) => p.name.toLowerCase().includes(searchLower) || p.description.toLowerCase().includes(searchLower),
+        (p) =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.description.toLowerCase().includes(searchLower),
       );
     }
 
@@ -123,7 +133,9 @@ export class FirestoreProductsRepository implements IProductsRepository {
     if (filters.q) {
       const searchLower = filters.q.toLowerCase();
       products = products.filter(
-        (p) => p.name.toLowerCase().includes(searchLower) || p.description.toLowerCase().includes(searchLower),
+        (p) =>
+          p.name.toLowerCase().includes(searchLower) ||
+          p.description.toLowerCase().includes(searchLower),
       );
     }
 
