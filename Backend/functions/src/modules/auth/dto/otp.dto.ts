@@ -1,10 +1,10 @@
 import { IsEmail, IsString, Length, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import {OTPType} from '../entities/otp.entity'
+import { OTPType } from '../entities/otp.entity';
 
 /**
  * Send OTP DTO
- * 
+ *
  * Request body for POST /auth/send-otp
  */
 export class SendOTPDto {
@@ -18,7 +18,7 @@ export class SendOTPDto {
 
 /**
  * Verify OTP DTO
- * 
+ *
  * Request body for POST /auth/verify-otp
  */
 export class VerifyOTPDto {
@@ -41,7 +41,7 @@ export class VerifyOTPDto {
     example: 'PASSWORD_RESET',
     description: 'Type of OTP verification',
     enum: OTPType,
-    enumName: 'OTPType'
+    enumName: 'OTPType',
   })
   @IsEnum(OTPType, { message: 'Loại OTP không hợp lệ' })
   type: OTPType; // Đổi tên thành type

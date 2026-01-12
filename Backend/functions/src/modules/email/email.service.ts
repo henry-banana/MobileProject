@@ -3,7 +3,7 @@ import sgMail from '@sendgrid/mail';
 
 /**
  * Email Service
- * 
+ *
  * Handles email sending via SendGrid.
  * Used for OTP verification, password reset, notifications, etc.
  */
@@ -203,7 +203,7 @@ export class EmailService {
       this.logger.log(`Email sent successfully to ${to}: ${subject}`);
     } catch (error: any) {
       this.logger.error(`Failed to send email to ${to}:`, error.response?.body || error.message);
-      
+
       // Don't throw error - email failure shouldn't break the flow
       // User can still use the app without email
       if (process.env.NODE_ENV === 'production') {

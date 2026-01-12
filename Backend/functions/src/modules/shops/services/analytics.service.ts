@@ -9,11 +9,7 @@ export class AnalyticsService {
   /**
    * Get shop analytics for owner dashboard
    */
-  async getShopAnalytics(
-    shopId: string,
-    from?: string,
-    to?: string,
-  ): Promise<ShopAnalyticsEntity> {
+  async getShopAnalytics(shopId: string, from?: string, to?: string): Promise<ShopAnalyticsEntity> {
     // Get orders for this shop
     let ordersQuery = this.firestore.collection('orders').where('shopId', '==', shopId);
 

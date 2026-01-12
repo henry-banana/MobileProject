@@ -15,6 +15,7 @@ import { UsersModule } from './modules/users/users.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ShopsModule } from './modules/shops/shops.module';
 import { ProductsModule } from './modules/products/products.module';
+import { ShippersModule } from './modules/shippers/shippers.module';
 // import { OrdersModule } from './modules/orders/orders.module';
 // import { PaymentsModule } from './modules/payments/payments.module';
 // import { WalletsModule } from './modules/wallets/wallets.module';
@@ -46,6 +47,7 @@ import { ProductsModule } from './modules/products/products.module';
     // EPIC 04: Marketplace Core ✅
     ShopsModule,
     ProductsModule,
+    ShippersModule,
     // Future EPICs
     // OrdersModule,
     // PaymentsModule,

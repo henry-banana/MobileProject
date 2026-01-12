@@ -2,7 +2,7 @@ import { IBaseEntity } from '../../../core/database/interfaces';
 
 /**
  * User Entity
- * 
+ *
  * Represents a user in the system.
  * Stored in Firestore collection: users
  */
@@ -11,26 +11,26 @@ export interface UserEntity extends IBaseEntity {
   displayName: string;
   phone?: string;
   photoUrl?: string;
-  
+
   // Role-based access control
   role: UserRole;
-  
+
   // Account status
   status: UserStatus;
   emailVerified: boolean;
-  
+
   // Ban information (if status === BANNED)
   bannedAt?: Date;
   bannedBy?: string; // Admin UID
   bannedReason?: string;
-  
+
   // Unban information (if previously banned)
   unbannedAt?: Date;
   unbannedBy?: string; // Admin UID
-  
+
   // Push notifications
   fcmTokens?: string[]; // Array of FCM tokens for multiple devices
-  
+
   // Additional metadata
   lastLoginAt?: Date;
   loginCount?: number;

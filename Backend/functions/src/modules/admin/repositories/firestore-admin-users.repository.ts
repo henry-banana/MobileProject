@@ -1,16 +1,8 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Firestore, Timestamp } from 'firebase-admin/firestore';
-import {
-  FirestoreBaseRepository,
-  PaginatedResult,
-  QueryOptions,
-} from '../../../core/database';
+import { FirestoreBaseRepository, PaginatedResult, QueryOptions } from '../../../core/database';
 import { IAdminUsersRepository } from '../interfaces';
-import {
-  AdminUserEntity,
-  UserRole,
-  UserStatus,
-} from '../entities';
+import { AdminUserEntity, UserRole, UserStatus } from '../entities';
 
 /**
  * FirestoreAdminUsersRepository - Firestore implementation của IAdminUsersRepository
@@ -120,10 +112,7 @@ export class FirestoreAdminUsersRepository
    * Count users by role
    */
   async countByRole(role: UserRole): Promise<number> {
-    const snapshot = await this.collection
-      .where('roles', 'array-contains', role)
-      .count()
-      .get();
+    const snapshot = await this.collection.where('roles', 'array-contains', role).count().get();
 
     return snapshot.data().count;
   }
@@ -132,10 +121,7 @@ export class FirestoreAdminUsersRepository
    * Count users by status
    */
   async countByStatus(status: UserStatus): Promise<number> {
-    const snapshot = await this.collection
-      .where('status', '==', status)
-      .count()
-      .get();
+    const snapshot = await this.collection.where('status', '==', status).count().get();
 
     return snapshot.data().count;
   }
@@ -146,10 +132,7 @@ export class FirestoreAdminUsersRepository
   async countCreatedAfter(date: Date): Promise<number> {
     const timestamp = Timestamp.fromDate(date);
 
-    const snapshot = await this.collection
-      .where('createdAt', '>=', timestamp)
-      .count()
-      .get();
+    const snapshot = await this.collection.where('createdAt', '>=', timestamp).count().get();
 
     return snapshot.data().count;
   }

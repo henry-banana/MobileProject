@@ -84,9 +84,7 @@ export class AdminService {
    * List all users with pagination and filters
    * ADMIN-006: List All Users
    */
-  async listUsers(
-    query: ListUsersQueryDto,
-  ): Promise<PaginatedResult<AdminUserEntity>> {
+  async listUsers(query: ListUsersQueryDto): Promise<PaginatedResult<AdminUserEntity>> {
     this.logger.log(`Listing users with query: ${JSON.stringify(query)}`);
 
     const { page = 1, limit = 20, role, status, search } = query;
@@ -119,9 +117,7 @@ export class AdminService {
     userId: string,
     dto: UpdateUserStatusDto,
   ): Promise<AdminUserEntity> {
-    this.logger.log(
-      `Admin ${adminId} updating user ${userId} status to ${dto.status}`,
-    );
+    this.logger.log(`Admin ${adminId} updating user ${userId} status to ${dto.status}`);
 
     // 1. Kiểm tra user tồn tại và không phải admin
     const user = await this.usersRepository.findByIdOrThrow(userId);
@@ -171,9 +167,7 @@ export class AdminService {
    * List payout requests
    * ADMIN-008: List Payout Requests
    */
-  async listPayouts(
-    query: ListPayoutsQueryDto,
-  ): Promise<PaginatedResult<AdminPayoutEntity>> {
+  async listPayouts(query: ListPayoutsQueryDto): Promise<PaginatedResult<AdminPayoutEntity>> {
     this.logger.log(`Listing payouts with query: ${JSON.stringify(query)}`);
 
     const { page = 1, limit = 20, status } = query;
@@ -196,10 +190,7 @@ export class AdminService {
    * Approve payout request
    * ADMIN-009: Approve Payout Request
    */
-  async approvePayout(
-    adminId: string,
-    payoutId: string,
-  ): Promise<AdminPayoutEntity> {
+  async approvePayout(adminId: string, payoutId: string): Promise<AdminPayoutEntity> {
     this.logger.log(`Admin ${adminId} approving payout ${payoutId}`);
 
     const payout = await this.payoutsRepository.approve(payoutId, adminId);
@@ -249,11 +240,7 @@ export class AdminService {
   ): Promise<AdminPayoutEntity> {
     this.logger.log(`Admin ${adminId} marking payout ${payoutId} as transferred`);
 
-    const payout = await this.payoutsRepository.markTransferred(
-      payoutId,
-      adminId,
-      transferNote,
-    );
+    const payout = await this.payoutsRepository.markTransferred(payoutId, adminId, transferNote);
 
     // TODO: Send notification khi có NotificationsService (EPIC 11)
     // await this.notificationsService.sendToUser(payout.userId, {
@@ -272,9 +259,7 @@ export class AdminService {
    * List all shops
    * ADMIN-012: List/Manage Shops
    */
-  async listShops(
-    query: ListShopsQueryDto,
-  ): Promise<PaginatedResult<AdminShopEntity>> {
+  async listShops(query: ListShopsQueryDto): Promise<PaginatedResult<AdminShopEntity>> {
     this.logger.log(`Listing shops with query: ${JSON.stringify(query)}`);
 
     const { page = 1, limit = 20, status, search } = query;
@@ -305,9 +290,7 @@ export class AdminService {
     shopId: string,
     dto: UpdateShopStatusDto,
   ): Promise<AdminShopEntity> {
-    this.logger.log(
-      `Admin ${adminId} updating shop ${shopId} status to ${dto.status}`,
-    );
+    this.logger.log(`Admin ${adminId} updating shop ${shopId} status to ${dto.status}`);
 
     // Validate reason for suspend/ban (compare via DTO enum)
     if (

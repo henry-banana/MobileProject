@@ -1,0 +1,80 @@
+import { IsString, IsEnum, IsNotEmpty, MaxLength, Matches } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+
+export enum VehicleType {
+  MOTORBIKE = 'MOTORBIKE',
+  CAR = 'CAR',
+  BICYCLE = 'BICYCLE',
+}
+
+export class ApplyShipperDto {
+  @ApiProperty({
+    example: 'shop_abc123',
+    description: 'ID của shop muốn apply làm shipper',
+  })
+  @IsNotEmpty({ message: 'Shop ID không được để trống' })
+  @IsString()
+  shopId: string;
+
+  @ApiProperty({
+    enum: VehicleType,
+    example: VehicleType.MOTORBIKE,
+    description: 'Loại phương tiện',
+  })
+  @IsNotEmpty({ message: 'Loại phương tiện không được để trống' })
+  @IsEnum(VehicleType, { message: 'Loại phương tiện không hợp lệ' })
+  vehicleType: VehicleType;
+
+  @ApiProperty({
+    example: '59X1-12345',
+    description: 'Biển số xe',
+  })
+  @IsNotEmpty({ message: 'Biển số xe không được để trống' })
+  @IsString()
+  @MaxLength(20, { message: 'Biển số xe không được quá 20 ký tự' })
+  vehicleNumber: string;
+
+  @ApiProperty({
+    example: '079202012345',
+    description: 'Số CMND/CCCD (12 chữ số)',
+  })
+  @IsNotEmpty({ message: 'Số CMND/CCCD không được để trống' })
+  @IsString()
+  @Matches(/^[0-9]{12}$/, {
+    message: 'Số CMND/CCCD phải là 12 chữ số',
+  })
+  idCardNumber: string;
+
+  @ApiProperty({
+    example: 'https://storage.googleapis.com/.../id_front.jpg',
+    description: 'URL ảnh mặt trước CMND/CCCD',
+  })
+  @IsNotEmpty({ message: 'Ảnh mặt trước CMND/CCCD không được để trống' })
+  @IsString()
+  idCardFrontUrl: string;
+
+  @ApiProperty({
+    example: 'https://storage.googleapis.com/.../id_back.jpg',
+    description: 'URL ảnh mặt sau CMND/CCCD',
+  })
+  @IsNotEmpty({ message: 'Ảnh mặt sau CMND/CCCD không được để trống' })
+  @IsString()
+  idCardBackUrl: string;
+
+  @ApiProperty({
+    example: 'https://storage.googleapis.com/.../license.jpg',
+    description: 'URL ảnh bằng lái xe',
+  })
+  @IsNotEmpty({ message: 'Ảnh bằng lái xe không được để trống' })
+  @IsString()
+  driverLicenseUrl: string;
+
+  @ApiProperty({
+    example: 'Tôi muốn làm shipper cho shop này',
+    description: 'Lời nhắn khi apply (tối đa 500 ký tự)',
+  })
+  @IsNotEmpty({ message: 'Lời nhắn không được để trống' })
+  @IsString()
+  @MaxLength(500, { message: 'Lời nhắn không được quá 500 ký tự' })
+  message: string;
+}

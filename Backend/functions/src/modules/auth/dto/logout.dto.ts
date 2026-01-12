@@ -3,7 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
  * Logout DTO
- * 
+ *
  * Request body for POST /auth/logout
  */
 export class LogoutDto {

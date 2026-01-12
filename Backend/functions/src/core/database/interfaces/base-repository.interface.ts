@@ -14,5 +14,4 @@ import { IWriteRepository } from './write-repository.interface';
  * - Dùng IBaseRepository khi cần cả hai
  */
 export interface IBaseRepository<T extends IBaseEntity>
-  extends IReadRepository<T>,
-    IWriteRepository<T> {}
+  extends IReadRepository<T>, IWriteRepository<T> {}

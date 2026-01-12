@@ -1,19 +1,8 @@
-import {
-  Injectable,
-  Inject,
-  ConflictException,
-  Logger,
-} from '@nestjs/common';
-import {
-  ICategoriesRepository,
-  CATEGORIES_REPOSITORY_TOKEN,
-} from './interfaces';
+import { Injectable, Inject, ConflictException, Logger } from '@nestjs/common';
+import { ICategoriesRepository, CATEGORIES_REPOSITORY_TOKEN } from './interfaces';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import {
-  CategoryEntity,
-  CategoryStatus,
-} from './entities/category.entity';
+import { CategoryEntity, CategoryStatus } from './entities/category.entity';
 import { generateSlug } from '../../shared/utils/string.utils';
 
 /**
@@ -127,10 +116,7 @@ export class CategoriesService {
 
     // Kiểm tra slug unique nếu đổi slug
     if (dto.slug) {
-      const isSlugExist = await this.categoriesRepository.isSlugExist(
-        dto.slug,
-        id,
-      );
+      const isSlugExist = await this.categoriesRepository.isSlugExist(dto.slug, id);
       if (isSlugExist) {
         throw new ConflictException(`Slug "${dto.slug}" already exists`);
       }

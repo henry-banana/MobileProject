@@ -1,8 +1,4 @@
-import {
-  IBaseRepository,
-  PaginatedResult,
-  QueryOptions,
-} from '../../../core/database';
+import { IBaseRepository, PaginatedResult, QueryOptions } from '../../../core/database';
 import { AdminUserEntity, UserRole, UserStatus } from '../entities';
 
 /**
@@ -11,8 +7,7 @@ import { AdminUserEntity, UserRole, UserStatus } from '../entities';
  * Dùng trong AdminService để quản lý users.
  * Implement sẽ ở repositories/firestore-admin-users.repository.ts
  */
-export interface IAdminUsersRepository
-  extends IBaseRepository<AdminUserEntity> {
+export interface IAdminUsersRepository extends IBaseRepository<AdminUserEntity> {
   /**
    * Tìm users với filter và pagination
    */

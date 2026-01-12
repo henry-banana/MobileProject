@@ -6,15 +6,15 @@ import { IUsersRepository } from '../interfaces';
 
 /**
  * Firestore Users Repository
- * 
+ *
  * Firestore implementation of IUsersRepository.
  * Collection: users
  */
 @Injectable()
-export class FirestoreUsersRepository 
+export class FirestoreUsersRepository
   extends FirestoreBaseRepository<UserEntity>
-  implements IUsersRepository {
-  
+  implements IUsersRepository
+{
   constructor(@Inject('FIRESTORE') firestore: Firestore) {
     super(firestore, 'users');
   }
@@ -23,10 +23,7 @@ export class FirestoreUsersRepository
    * Find user by email
    */
   async findByEmail(email: string): Promise<UserEntity | null> {
-    const snapshot = await this.collection
-      .where('email', '==', email)
-      .limit(1)
-      .get();
+    const snapshot = await this.collection.where('email', '==', email).limit(1).get();
 
     if (snapshot.empty) {
       return null;
@@ -39,10 +36,7 @@ export class FirestoreUsersRepository
    * Find user by phone number
    */
   async findByPhone(phone: string): Promise<UserEntity | null> {
-    const snapshot = await this.collection
-      .where('phone', '==', phone)
-      .limit(1)
-      .get();
+    const snapshot = await this.collection.where('phone', '==', phone).limit(1).get();
 
     if (snapshot.empty) {
       return null;

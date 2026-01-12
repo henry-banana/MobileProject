@@ -7,7 +7,7 @@ import { FirestoreService } from './firestore.service';
  *
  * Cung cấp Firebase Admin SDK services cho toàn app.
  * Global module - không cần import lại trong các feature modules.
- * 
+ *
  * FIRESTORE token: Inject trực tiếp Firestore instance cho repositories
  */
 @Global()
@@ -21,7 +21,9 @@ import { FirestoreService } from './firestore.service';
       useFactory: (firebaseService: FirebaseService) => {
         // Ensure firestore is initialized
         if (!firebaseService.firestore) {
-          throw new Error('Firestore not initialized. Make sure FirebaseService.onModuleInit() has run.');
+          throw new Error(
+            'Firestore not initialized. Make sure FirebaseService.onModuleInit() has run.',
+          );
         }
         return firebaseService.firestore;
       },
@@ -31,4 +33,3 @@ import { FirestoreService } from './firestore.service';
   exports: [FirebaseService, FirestoreService, 'FIRESTORE'],
 })
 export class FirebaseModule {}
-

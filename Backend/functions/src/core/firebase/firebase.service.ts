@@ -66,9 +66,9 @@ export class FirebaseService {
    */
   private findServiceAccount(): string | null {
     const possiblePaths = [
-      path.join(process.cwd(), 'service-account.json'),        // Backend/service-account.json
-      path.join(process.cwd(), '../service-account.json'),     // functions/../service-account.json
-      path.join(process.cwd(), '../../service-account.json'),  // Fallback
+      path.join(process.cwd(), 'service-account.json'), // Backend/service-account.json
+      path.join(process.cwd(), '../service-account.json'), // functions/../service-account.json
+      path.join(process.cwd(), '../../service-account.json'), // Fallback
     ];
 
     for (const p of possiblePaths) {

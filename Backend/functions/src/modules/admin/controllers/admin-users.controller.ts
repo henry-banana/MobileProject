@@ -1,27 +1,8 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Param,
-  Body,
-  Query,
-  UseGuards,
-  Req,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { Controller, Get, Put, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard, AdminGuard } from '../../../core/guards';
 import { AdminService } from '../admin.service';
-import {
-  ListUsersQueryDto,
-  UpdateUserStatusDto,
-  UserStatus,
-} from '../dto';
+import { ListUsersQueryDto, UpdateUserStatusDto, UserStatus } from '../dto';
 
 /**
  * Admin Users Controller
@@ -99,10 +80,7 @@ export class AdminUsersController {
     await this.adminService.updateUserStatus(adminId, userId, dto);
     return {
       success: true,
-      message:
-        dto.status === UserStatus.BANNED
-          ? 'User đã bị ban'
-          : 'User đã được unban',
+      message: dto.status === UserStatus.BANNED ? 'User đã bị ban' : 'User đã được unban',
     };
   }
 }

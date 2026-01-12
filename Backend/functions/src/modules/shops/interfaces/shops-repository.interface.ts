@@ -44,12 +44,15 @@ export interface IShopsRepository {
   /**
    * Update shop statistics
    */
-  updateStats(shopId: string, stats: {
-    totalOrders?: number;
-    totalRevenue?: number;
-    rating?: number;
-    totalRatings?: number;
-  }): Promise<void>;
+  updateStats(
+    shopId: string,
+    stats: {
+      totalOrders?: number;
+      totalRevenue?: number;
+      rating?: number;
+      totalRatings?: number;
+    },
+  ): Promise<void>;
 }
 
 export const SHOPS_REPOSITORY = 'SHOPS_REPOSITORY';
