@@ -8,29 +8,35 @@ import {
   IsOptional,
   Matches,
 } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateShopDto {
+  @ApiProperty({ example: 'Quán Phở Việt', description: 'Tên shop' })
   @IsString()
   @IsNotEmpty({ message: 'Tên shop không được để trống' })
   @MinLength(3, { message: 'Tên shop phải có ít nhất 3 ký tự' })
   @MaxLength(100, { message: 'Tên shop không được quá 100 ký tự' })
   name: string;
 
+  @ApiProperty({ example: 'Phở ngon nhất KTX', description: 'Mô tả shop' })
   @IsString()
   @IsNotEmpty({ message: 'Mô tả không được để trống' })
   @MaxLength(500, { message: 'Mô tả không được quá 500 ký tự' })
   description: string;
 
+  @ApiProperty({ example: 'Tòa A, Tầng 1', description: 'Địa chỉ shop' })
   @IsString()
   @IsNotEmpty({ message: 'Địa chỉ không được để trống' })
   @MaxLength(200, { message: 'Địa chỉ không được quá 200 ký tự' })
   address: string;
 
+  @ApiProperty({ example: '0901234567', description: 'Số điện thoại shop' })
   @IsString()
   @IsNotEmpty({ message: 'Số điện thoại không được để trống' })
   @Matches(/^[0-9]{10}$/, { message: 'Số điện thoại phải là 10 chữ số' })
   phone: string;
 
+  @ApiProperty({ example: '07:00', description: 'Giờ mở cửa (HH:mm)' })
   @IsString()
   @IsNotEmpty({ message: 'Giờ mở cửa không được để trống' })
   @Matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, {
@@ -38,6 +44,7 @@ export class CreateShopDto {
   })
   openTime: string;
 
+  @ApiProperty({ example: '21:00', description: 'Giờ đóng cửa (HH:mm)' })
   @IsString()
   @IsNotEmpty({ message: 'Giờ đóng cửa không được để trống' })
   @Matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, {
@@ -45,18 +52,28 @@ export class CreateShopDto {
   })
   closeTime: string;
 
+  @ApiProperty({ example: 5000, description: 'Phí ship (VNĐ), tối thiểu 3,000đ' })
   @IsNumber()
   @Min(3000, { message: 'Phí ship tối thiểu 3,000đ' })
   shipFeePerOrder: number;
 
+  @ApiProperty({ example: 20000, description: 'Đơn hàng tối thiểu (VNĐ)' })
   @IsNumber()
   @Min(10000, { message: 'Đơn tối thiểu phải từ 10,000đ' })
   minOrderAmount: number;
 
+  @ApiPropertyOptional({
+    example: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
+    description: 'URL ảnh bìa shop',
+  })
   @IsOptional()
   @IsString()
   coverImageUrl?: string;
 
+  @ApiPropertyOptional({
+    example: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5',
+    description: 'URL logo shop',
+  })
   @IsOptional()
   @IsString()
   logoUrl?: string;
