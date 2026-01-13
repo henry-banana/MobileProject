@@ -12,7 +12,6 @@ import { UsersService } from '../users/users.service';
 import { ShopsService } from '../shops/services/shops.service';
 import { StorageService } from '../../shared/services/storage.service';
 import { ApplyShipperDto } from './dto/apply-shipper.dto';
-import { ApplyShipperWithFilesDto } from './dto/apply-shipper-with-files.dto';
 import { RejectApplicationDto } from './dto/reject-application.dto';
 import { ShipperApplicationEntity, ApplicationStatus } from './entities/shipper-application.entity';
 import { ShipperEntity } from './entities/shipper.entity';
@@ -29,52 +28,10 @@ export class ShippersService {
     private readonly firestore: Firestore,
   ) {}
 
-  // SHIP-002: Apply to be Shipper
-  async applyShipper(userId: string, dto: ApplyShipperDto): Promise<ShipperApplicationEntity> {
-    const user = await this.usersService.getProfile(userId);
-
-    // Check if already shipper
-    if (user.role === 'SHIPPER') {
-      throw new ConflictException('SHIPPER_001: Bạn đã là shipper rồi');
-    }
-
-    // Validate shop exists first
-    const shop = await this.shopsService.getShopById(dto.shopId);
-
-    // Check if already applied (PENDING)
-    const existingApp = await this.shippersRepository.findPendingApplication(userId, dto.shopId);
-    if (existingApp) {
-      throw new ConflictException('SHIPPER_005: Bạn đã nộp đơn cho shop này rồi');
-    }
-
-    // Create application
-    const application = await this.shippersRepository.createApplication({
-      userId,
-      userName: user.displayName,
-      userPhone: user.phone || '',
-      userAvatar: user.avatarUrl || '',
-      shopId: dto.shopId,
-      shopName: shop.name,
-      vehicleType: dto.vehicleType,
-      vehicleNumber: dto.vehicleNumber,
-      idCardNumber: dto.idCardNumber,
-      idCardFrontUrl: dto.idCardFrontUrl,
-      idCardBackUrl: dto.idCardBackUrl,
-      driverLicenseUrl: dto.driverLicenseUrl,
-      message: dto.message,
-      status: ApplicationStatus.PENDING,
-    });
-
-    // TODO: Notify owner
-    // await this.notificationService.sendToOwner(dto.shopId, { ... });
-
-    return application;
-  }
-
   // SHIP-002: Apply to be Shipper with Files
-  async applyShipperWithFiles(
+  async applyShipper(
     userId: string,
-    dto: ApplyShipperWithFilesDto,
+    dto: ApplyShipperDto,
     idCardFrontFile: Express.Multer.File,
     idCardBackFile: Express.Multer.File,
     driverLicenseFile: Express.Multer.File,

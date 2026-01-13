@@ -1,4 +1,10 @@
-import { IsString, IsEnum, IsNotEmpty, MaxLength, Matches } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsNotEmpty,
+  MaxLength,
+  Matches,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum VehicleType {
@@ -46,28 +52,25 @@ export class ApplyShipperDto {
   idCardNumber: string;
 
   @ApiProperty({
-    example: 'https://storage.googleapis.com/.../id_front.jpg',
-    description: 'URL ảnh mặt trước CMND/CCCD',
+    type: 'string',
+    format: 'binary',
+    description: 'Ảnh mặt trước CMND/CCCD',
   })
-  @IsNotEmpty({ message: 'Ảnh mặt trước CMND/CCCD không được để trống' })
-  @IsString()
-  idCardFrontUrl: string;
+  idCardFront: any;
 
   @ApiProperty({
-    example: 'https://storage.googleapis.com/.../id_back.jpg',
-    description: 'URL ảnh mặt sau CMND/CCCD',
+    type: 'string',
+    format: 'binary',
+    description: 'Ảnh mặt sau CMND/CCCD',
   })
-  @IsNotEmpty({ message: 'Ảnh mặt sau CMND/CCCD không được để trống' })
-  @IsString()
-  idCardBackUrl: string;
+  idCardBack: any;
 
   @ApiProperty({
-    example: 'https://storage.googleapis.com/.../license.jpg',
-    description: 'URL ảnh bằng lái xe',
+    type: 'string',
+    format: 'binary',
+    description: 'Ảnh bằng lái xe',
   })
-  @IsNotEmpty({ message: 'Ảnh bằng lái xe không được để trống' })
-  @IsString()
-  driverLicenseUrl: string;
+  driverLicense: any;
 
   @ApiProperty({
     example: 'Tôi muốn làm shipper cho shop này',

@@ -2,7 +2,7 @@ import { Controller, Post, Get, Delete, Body, Param, UseGuards, Req, UseIntercep
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ShippersService } from './shippers.service';
-import { ApplyShipperWithFilesDto } from './dto/apply-shipper-with-files.dto';
+import { ApplyShipperDto } from './dto/apply-shipper.dto';
 import { ShipperApplicationEntity } from './entities/shipper-application.entity';
 import { AuthGuard } from '../../core/guards/auth.guard';
 
@@ -63,7 +63,7 @@ export class ShipperApplicationsController {
   @ApiConsumes('multipart/form-data')
   async applyShipper(
     @Req() req: Express.Request & { user: { uid: string } },
-    @Body() dto: ApplyShipperWithFilesDto,
+    @Body() dto: ApplyShipperDto,
     @UploadedFiles()
     files: {
       idCardFront?: Express.Multer.File[];
@@ -76,7 +76,7 @@ export class ShipperApplicationsController {
       throw new BadRequestException('Vui lòng upload đầy đủ 3 ảnh: CMND/CCCD mặt trước, mặt sau và bằng lái xe');
     }
 
-    return this.shippersService.applyShipperWithFiles(
+    return this.shippersService.applyShipper(
       req.user.uid,
       dto,
       files.idCardFront[0],

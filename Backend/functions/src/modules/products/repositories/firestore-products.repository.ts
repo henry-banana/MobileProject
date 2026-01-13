@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Firestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { IProductsRepository } from '../interfaces';
 import { ProductEntity } from '../entities';
-import { CreateProductDto, ProductFilterDto, ProductSortOption } from '../dto';
+import { ProductFilterDto, ProductSortOption } from '../dto';
 
 @Injectable()
 export class FirestoreProductsRepository implements IProductsRepository {
@@ -14,7 +14,14 @@ export class FirestoreProductsRepository implements IProductsRepository {
     shopId: string,
     shopName: string,
     categoryName: string,
-    data: CreateProductDto,
+    data: {
+      name: string;
+      description: string;
+      price: number;
+      categoryId: string;
+      imageUrl: string;
+      preparationTime: number;
+    },
   ): Promise<ProductEntity> {
     const productRef = this.firestore.collection(this.collection).doc();
     const now = Timestamp.now();

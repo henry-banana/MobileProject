@@ -3,9 +3,7 @@ import { IProductsRepository } from '../interfaces';
 import { ProductEntity } from '../entities';
 import {
   CreateProductDto,
-  CreateProductWithFileDto,
   UpdateProductDto,
-  UpdateProductWithFileDto,
   ProductFilterDto,
   ToggleAvailabilityDto,
 } from '../dto';
@@ -26,27 +24,12 @@ export class ProductsService {
   // ==================== Owner Operations ====================
 
   /**
-   * Create a new product
-   * PROD-001
-   */
-  async createProduct(ownerId: string, dto: CreateProductDto): Promise<ProductEntity> {
-    // Get owner's shop
-    const shop = await this.shopsService.getMyShop(ownerId);
-
-    // Get category name from Categories service
-    const category = await this.categoriesService.findById(dto.categoryId);
-    const categoryName = category.name;
-
-    return await this.productsRepository.create(shop.id, shop.name, categoryName, dto);
-  }
-
-  /**
    * Create a new product with file upload
    * PROD-001
    */
-  async createProductWithFile(
+  async createProduct(
     ownerId: string,
-    dto: CreateProductWithFileDto,
+    dto: CreateProductDto,
     imageFile: Express.Multer.File,
   ): Promise<ProductEntity> {
     // Get owner's shop
@@ -85,12 +68,12 @@ export class ProductsService {
     }
 
     // Create product with uploaded URL
-    const createDto: CreateProductDto = {
+    const createData = {
       ...dto,
       imageUrl,
     };
 
-    return await this.productsRepository.create(shop.id, shop.name, categoryName, createDto);
+    return await this.productsRepository.create(shop.id, shop.name, categoryName, createData);
   }
 
   /**
@@ -132,47 +115,13 @@ export class ProductsService {
   }
 
   /**
-   * Update product
+   * Update product with optional file upload
    * PROD-006 - Price Lock Rule: Cannot change price when shop is open
    */
-  async updateProduct(ownerId: string, productId: string, dto: UpdateProductDto): Promise<void> {
-    const product = await this.getMyProduct(ownerId, productId);
-
-    // Price Lock Rule: Check if trying to change price
-    if (dto.price !== undefined && dto.price !== product.price) {
-      const shop = await this.shopsService.getShopById(product.shopId);
-
-      if (shop.isOpen) {
-        throw new ConflictException({
-          code: 'PRODUCT_003',
-          message: 'Không thể thay đổi giá khi shop đang mở cửa',
-          statusCode: 409,
-        });
-      }
-    }
-
-    // Update categoryName if categoryId changed
-    let categoryName = product.categoryName;
-    if (dto.categoryId && dto.categoryId !== product.categoryId) {
-      const category = await this.categoriesService.findById(dto.categoryId);
-      categoryName = category.name;
-    }
-
-    const updateData: Partial<ProductEntity> = {
-      ...dto,
-      categoryName,
-    };
-
-    await this.productsRepository.update(productId, updateData);
-  }
-
-  /**   * Update product with optional file upload
-   * PROD-006
-   */
-  async updateProductWithFile(
+  async updateProduct(
     ownerId: string,
     productId: string,
-    dto: UpdateProductWithFileDto,
+    dto: UpdateProductDto,
     imageFile?: Express.Multer.File,
   ): Promise<void> {
     const product = await this.getMyProduct(ownerId, productId);

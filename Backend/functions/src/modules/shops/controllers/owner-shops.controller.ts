@@ -21,7 +21,7 @@ import { CurrentUser } from '../../../core/decorators/current-user.decorator';
 import { UserRole } from '../../../core/interfaces/user.interface';
 import { ShopsService } from '../services/shops.service';
 import { AnalyticsService } from '../services/analytics.service';
-import { CreateShopWithFilesDto, UpdateShopWithFilesDto, ToggleShopStatusDto } from '../dto';
+import { CreateShopDto, UpdateShopDto, ToggleShopStatusDto } from '../dto';
 
 /**
  * Owner Shops Controller
@@ -121,7 +121,7 @@ export class OwnerShopsController {
   async createShop(
     @CurrentUser('uid') ownerId: string,
     @CurrentUser('displayName') ownerName: string,
-    @Body() dto: CreateShopWithFilesDto,
+    @Body() dto: CreateShopDto,
     @UploadedFiles()
     files: {
       coverImage?: Express.Multer.File[];
@@ -133,7 +133,7 @@ export class OwnerShopsController {
       throw new BadRequestException('Vui lòng upload đầy đủ 2 ảnh: Ảnh bìa và Logo');
     }
 
-    return this.shopsService.createShopWithFiles(
+    return this.shopsService.createShop(
       ownerId,
       ownerName,
       dto,
@@ -197,14 +197,14 @@ export class OwnerShopsController {
   })
   async updateShop(
     @CurrentUser('uid') ownerId: string,
-    @Body() dto: UpdateShopWithFilesDto,
+    @Body() dto: UpdateShopDto,
     @UploadedFiles()
     files?: {
       coverImage?: Express.Multer.File[];
       logo?: Express.Multer.File[];
     },
   ) {
-    await this.shopsService.updateShopWithFiles(
+    await this.shopsService.updateShop(
       ownerId,
       dto,
       files?.coverImage?.[0],

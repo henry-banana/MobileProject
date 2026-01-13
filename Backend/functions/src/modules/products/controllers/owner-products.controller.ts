@@ -24,8 +24,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from '../services';
 import {
-  CreateProductWithFileDto,
-  UpdateProductWithFileDto,
+  CreateProductDto,
+  UpdateProductDto,
   ToggleAvailabilityDto,
   OwnerProductFilterDto,
 } from '../dto';
@@ -97,13 +97,13 @@ export class OwnerProductsController {
   })
   async createProduct(
     @CurrentUser('uid') ownerId: string,
-    @Body() dto: CreateProductWithFileDto,
+    @Body() dto: CreateProductDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     if (!file) {
       throw new BadRequestException('Vui lòng upload ảnh sản phẩm');
     }
-    return this.productsService.createProductWithFile(ownerId, dto, file);
+    return this.productsService.createProduct(ownerId, dto, file);
   }
 
   /**
@@ -232,10 +232,10 @@ export class OwnerProductsController {
   async updateProduct(
     @CurrentUser('uid') ownerId: string,
     @Param('id') productId: string,
-    @Body() dto: UpdateProductWithFileDto,
+    @Body() dto: UpdateProductDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    await this.productsService.updateProductWithFile(ownerId, productId, dto, file);
+    await this.productsService.updateProduct(ownerId, productId, dto, file);
     return { message: 'Cập nhật sản phẩm thành công' };
   }
 

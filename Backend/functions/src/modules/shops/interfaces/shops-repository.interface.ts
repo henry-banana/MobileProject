@@ -1,5 +1,4 @@
 import { ShopEntity } from '../entities/shop.entity';
-import { CreateShopDto, UpdateShopDto } from '../dto';
 
 /**
  * Shop Repository Interface
@@ -9,7 +8,20 @@ export interface IShopsRepository {
   /**
    * Create a new shop
    */
-  create(ownerId: string, ownerName: string, data: CreateShopDto): Promise<ShopEntity>;
+  create(
+    ownerId: string,
+    ownerName: string,
+    data: {
+      name: string;
+      description: string;
+      address: string;
+      phone: string;
+      coverImageUrl: string;
+      logoUrl: string;
+      openTime: string;
+      closeTime: string;
+    },
+  ): Promise<ShopEntity>;
 
   /**
    * Find shop by ID
@@ -24,7 +36,7 @@ export interface IShopsRepository {
   /**
    * Update shop
    */
-  update(shopId: string, data: Partial<UpdateShopDto>): Promise<ShopEntity>;
+  update(shopId: string, data: Record<string, any>): Promise<ShopEntity>;
 
   /**
    * Toggle shop open/close status

@@ -5,10 +5,9 @@ import {
   Min,
   MaxLength,
   MinLength,
-  IsOptional,
   Matches,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateShopDto {
   @ApiProperty({ example: 'Quán Phở Việt', description: 'Tên shop' })
@@ -62,19 +61,17 @@ export class CreateShopDto {
   @Min(10000, { message: 'Đơn tối thiểu phải từ 10,000đ' })
   minOrderAmount: number;
 
-  @ApiPropertyOptional({
-    example: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
-    description: 'URL ảnh bìa shop',
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    description: 'Ảnh bìa shop',
   })
-  @IsOptional()
-  @IsString()
-  coverImageUrl?: string;
+  coverImage: any;
 
-  @ApiPropertyOptional({
-    example: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5',
-    description: 'URL logo shop',
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    description: 'Logo shop',
   })
-  @IsOptional()
-  @IsString()
-  logoUrl?: string;
+  logo: any;
 }

@@ -3,8 +3,6 @@ import {
   IsNotEmpty,
   IsNumber,
   Min,
-  IsOptional,
-  IsUrl,
   MaxLength,
   IsInt,
 } from 'class-validator';
@@ -37,13 +35,11 @@ export class CreateProductDto {
   categoryId: string;
 
   @ApiProperty({
-    example: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445',
-    description: 'Product image URL',
-    required: false,
+    type: 'string',
+    format: 'binary',
+    description: 'Product image',
   })
-  @IsOptional()
-  @IsUrl({}, { message: 'URL hình ảnh không hợp lệ' })
-  imageUrl?: string;
+  image: any;
 
   @ApiProperty({ example: 15, description: 'Preparation time in minutes' })
   @IsInt({ message: 'Thời gian chuẩn bị phải là số nguyên' })

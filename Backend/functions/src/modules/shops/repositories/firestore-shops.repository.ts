@@ -2,7 +2,6 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Firestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { IShopsRepository } from '../interfaces';
 import { ShopEntity, ShopStatus, SubscriptionStatus } from '../entities/shop.entity';
-import { CreateShopDto, UpdateShopDto } from '../dto';
 
 @Injectable()
 export class FirestoreShopsRepository implements IShopsRepository {
@@ -10,7 +9,20 @@ export class FirestoreShopsRepository implements IShopsRepository {
 
   constructor(@Inject('FIRESTORE') private readonly firestore: Firestore) {}
 
-  async create(ownerId: string, ownerName: string, data: CreateShopDto): Promise<ShopEntity> {
+  async create(
+    ownerId: string,
+    ownerName: string,
+    data: {
+      name: string;
+      description: string;
+      address: string;
+      phone: string;
+      coverImageUrl: string;
+      logoUrl: string;
+      openTime: string;
+      closeTime: string;
+    },
+  ): Promise<ShopEntity> {
     const shopRef = this.firestore.collection(this.collection).doc();
     const now = Timestamp.now();
     const trialEndDate = new Date();
@@ -60,7 +72,7 @@ export class FirestoreShopsRepository implements IShopsRepository {
     return this.mapToEntity(snapshot.docs[0].data());
   }
 
-  async update(shopId: string, data: Partial<UpdateShopDto>): Promise<ShopEntity> {
+  async update(shopId: string, data: Record<string, any>): Promise<ShopEntity> {
     const updateData: Record<string, any> = {
       ...data,
       updatedAt: FieldValue.serverTimestamp(),

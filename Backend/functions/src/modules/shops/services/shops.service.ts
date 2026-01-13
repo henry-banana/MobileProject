@@ -8,12 +8,7 @@ import {
 import { IShopsRepository, SHOPS_REPOSITORY } from '../interfaces';
 import { ShopEntity, SubscriptionStatus } from '../entities/shop.entity';
 import { ShopCustomerEntity, ShopCustomerDetailEntity } from '../entities/shop-customer.entity';
-import {
-  CreateShopDto,
-  CreateShopWithFilesDto,
-  UpdateShopDto,
-  UpdateShopWithFilesDto,
-} from '../dto';
+import { CreateShopDto } from '../dto';
 import { StorageService } from '../../../shared/services/storage.service';
 
 @Injectable()
@@ -27,40 +22,13 @@ export class ShopsService {
   // ==================== Owner Operations ====================
 
   /**
-   * Create a new shop
-   * Business Rule: 1 Owner = 1 Shop
-   */
-  async createShop(ownerId: string, ownerName: string, dto: CreateShopDto): Promise<ShopEntity> {
-    // Check if owner already has a shop
-    const existingShop = await this.shopsRepository.findByOwnerId(ownerId);
-    if (existingShop) {
-      throw new ConflictException({
-        code: 'SHOP_001',
-        message: 'Bạn đã có shop rồi. Mỗi chủ shop chỉ được tạo 1 shop.',
-        statusCode: 409,
-      });
-    }
-
-    // Validate time range
-    if (dto.openTime >= dto.closeTime) {
-      throw new BadRequestException({
-        code: 'SHOP_002',
-        message: 'Giờ đóng cửa phải sau giờ mở cửa',
-        statusCode: 400,
-      });
-    }
-
-    return this.shopsRepository.create(ownerId, ownerName, dto);
-  }
-
-  /**
    * Create a new shop with file uploads
    * Business Rule: 1 Owner = 1 Shop
    */
-  async createShopWithFiles(
+  async createShop(
     ownerId: string,
     ownerName: string,
-    dto: CreateShopWithFilesDto,
+    dto: CreateShopDto,
     coverImageFile: Express.Multer.File,
     logoFile: Express.Multer.File,
   ): Promise<ShopEntity> {
@@ -114,25 +82,20 @@ export class ShopsService {
           coverImageFile.buffer,
           coverImageFile.mimetype,
         ),
-        this.storageService.uploadShopImage(
-          tempShopId,
-          'logo',
-          logoFile.buffer,
-          logoFile.mimetype,
-        ),
+        this.storageService.uploadShopImage(tempShopId, 'logo', logoFile.buffer, logoFile.mimetype),
       ]);
     } catch (error) {
       throw new BadRequestException('Upload ảnh thất bại. Vui lòng thử lại');
     }
 
     // Create shop with uploaded URLs
-    const createDto: CreateShopDto = {
+    const createData = {
       ...dto,
       coverImageUrl,
       logoUrl,
     };
 
-    return this.shopsRepository.create(ownerId, ownerName, createDto);
+    return this.shopsRepository.create(ownerId, ownerName, createData);
   }
 
   /**
@@ -151,33 +114,11 @@ export class ShopsService {
   }
 
   /**
-   * Update shop information
-   */
-  async updateShop(ownerId: string, dto: UpdateShopDto): Promise<void> {
-    const shop = await this.getMyShop(ownerId);
-
-    // Validate time range if both provided
-    if (dto.openTime || dto.closeTime) {
-      const openTime = dto.openTime || shop.openTime;
-      const closeTime = dto.closeTime || shop.closeTime;
-      if (openTime >= closeTime) {
-        throw new BadRequestException({
-          code: 'SHOP_002',
-          message: 'Giờ đóng cửa phải sau giờ mở cửa',
-          statusCode: 400,
-        });
-      }
-    }
-
-    await this.shopsRepository.update(shop.id, dto);
-  }
-
-  /**
    * Update shop information with optional file uploads
    */
-  async updateShopWithFiles(
+  async updateShop(
     ownerId: string,
-    data: Partial<UpdateShopWithFilesDto>,
+    data: Record<string, any>,
     coverImageFile?: Express.Multer.File,
     logoFile?: Express.Multer.File,
   ): Promise<void> {
@@ -197,7 +138,7 @@ export class ShopsService {
     }
 
     // Prepare update data
-    const updateData: Partial<UpdateShopDto> = { ...data };
+    const updateData: Record<string, any> = { ...data };
 
     // Handle file uploads if provided
     if (coverImageFile || logoFile) {
@@ -253,11 +194,11 @@ export class ShopsService {
         let urlIndex = 0;
 
         if (coverImageFile) {
-          updateData.coverImageUrl = uploadedUrls[urlIndex++];
+          (updateData as any).coverImageUrl = uploadedUrls[urlIndex++];
         }
 
         if (logoFile) {
-          updateData.logoUrl = uploadedUrls[urlIndex++];
+          (updateData as any).logoUrl = uploadedUrls[urlIndex++];
         }
       } catch (error) {
         throw new BadRequestException('Upload ảnh thất bại. Vui lòng thử lại');
@@ -265,91 +206,6 @@ export class ShopsService {
     }
 
     await this.shopsRepository.update(shop.id, updateData);
-  }
-
-  /**
-    logoFile?: Express.Multer.File,
-  ): Promise<ShopEntity> {
-    const shop = await this.getMyShop(ownerId);
-
-    // Validate time range if both provided
-    if (data.openTime && data.closeTime && data.openTime >= data.closeTime) {
-      throw new BadRequestException({
-        code: 'SHOP_002',
-        message: 'Giờ đóng cửa phải sau giờ mở cửa',
-        statusCode: 400,
-      });
-    }
-
-    // Prepare update data
-    const updateData: Partial<UpdateShopDto> = { ...data };
-
-    // Handle file uploads if provided
-    if (coverImageFile || logoFile) {
-      // Validate image types
-      const validMimeTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-
-      if (coverImageFile && !validMimeTypes.includes(coverImageFile.mimetype)) {
-        throw new BadRequestException('Chỉ chấp nhận file ảnh bìa định dạng JPG, JPEG, PNG');
-      }
-
-      if (logoFile && !validMimeTypes.includes(logoFile.mimetype)) {
-        throw new BadRequestException('Chỉ chấp nhận file logo định dạng JPG, JPEG, PNG');
-      }
-
-      // Validate image sizes (max 5MB each)
-      const maxSize = 5 * 1024 * 1024; // 5MB
-
-      if (coverImageFile && coverImageFile.size > maxSize) {
-        throw new BadRequestException('Kích thước ảnh bìa không được vượt quá 5MB');
-      }
-
-      if (logoFile && logoFile.size > maxSize) {
-        throw new BadRequestException('Kích thước logo không được vượt quá 5MB');
-      }
-
-      // Upload new images
-      try {
-        const uploadPromises: Promise<string>[] = [];
-
-        if (coverImageFile) {
-          uploadPromises.push(
-            this.storageService.uploadShopImage(
-              shop.id,
-              'coverImage',
-              coverImageFile.buffer,
-              coverImageFile.mimetype,
-            ),
-          );
-        }
-
-        if (logoFile) {
-          uploadPromises.push(
-            this.storageService.uploadShopImage(
-              shop.id,
-              'logo',
-              logoFile.buffer,
-              logoFile.mimetype,
-            ),
-          );
-        }
-
-        const uploadedUrls = await Promise.all(uploadPromises);
-        let urlIndex = 0;
-
-        if (coverImageFile) {
-          updateData.coverImageUrl = uploadedUrls[urlIndex++];
-        }
-
-        if (logoFile) {
-          updateData.logoUrl = uploadedUrls[urlIndex++];
-        }
-      } catch (error) {
-        throw new BadRequestException('Upload ảnh thất bại. Vui lòng thử lại');
-      }
-    }
-
-    return this.shopsRepository.update(shop.id, updateData);
   }
 
   /**   * Toggle shop open/close status

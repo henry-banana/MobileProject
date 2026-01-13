@@ -26,9 +26,12 @@ export class FirestoreShippersRepository implements IShippersRepository {
     await docRef.set(applicationData);
 
     const doc = await docRef.get();
+    const docData = doc.data()!;
+    
     return new ShipperApplicationEntity({
       id: doc.id,
-      ...doc.data(),
+      ...docData,
+      createdAt: docData.createdAt?.toDate?.() || docData.createdAt,
     } as ShipperApplicationEntity);
   }
 

@@ -1,5 +1,5 @@
 import { ProductEntity } from '../entities';
-import { CreateProductDto, ProductFilterDto } from '../dto';
+import { ProductFilterDto } from '../dto';
 
 /**
  * Products Repository Interface (SOLID - Dependency Inversion Principle)
@@ -12,7 +12,14 @@ export interface IProductsRepository {
     shopId: string,
     shopName: string,
     categoryName: string,
-    data: CreateProductDto,
+    data: {
+      name: string;
+      description: string;
+      price: number;
+      categoryId: string;
+      imageUrl: string;
+      preparationTime: number;
+    },
   ): Promise<ProductEntity>;
 
   /**
