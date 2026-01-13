@@ -8,8 +8,12 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiConsumes } from '@nestjs/swagger';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
 import { Roles } from '../../../core/decorators/roles.decorator';
@@ -17,7 +21,7 @@ import { CurrentUser } from '../../../core/decorators/current-user.decorator';
 import { UserRole } from '../../../core/interfaces/user.interface';
 import { ShopsService } from '../services/shops.service';
 import { AnalyticsService } from '../services/analytics.service';
-import { CreateShopDto, UpdateShopDto, ToggleShopStatusDto } from '../dto';
+import { CreateShopWithFilesDto, UpdateShopWithFilesDto, ToggleShopStatusDto } from '../dto';
 
 /**
  * Owner Shops Controller
@@ -107,16 +111,35 @@ export class OwnerShopsController {
       },
     },
   })
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'coverImage', maxCount: 1 },
+      { name: 'logo', maxCount: 1 },
+    ]),
+  )
+  @ApiConsumes('multipart/form-data')
   async createShop(
     @CurrentUser('uid') ownerId: string,
     @CurrentUser('displayName') ownerName: string,
-    @Body() dto: CreateShopDto,
+    @Body() dto: CreateShopWithFilesDto,
+    @UploadedFiles()
+    files: {
+      coverImage?: Express.Multer.File[];
+      logo?: Express.Multer.File[];
+    },
   ) {
-    const shop = await this.shopsService.createShop(ownerId, ownerName, dto);
-    return {
-      success: true,
-      data: shop,
-    };
+    // Validate files
+    if (!files?.coverImage?.[0] || !files?.logo?.[0]) {
+      throw new BadRequestException('Vui lòng upload đầy đủ 2 ảnh: Ảnh bìa và Logo');
+    }
+
+    return this.shopsService.createShopWithFiles(
+      ownerId,
+      ownerName,
+      dto,
+      files.coverImage[0],
+      files.logo[0],
+    );
   }
 
   /**
@@ -157,16 +180,36 @@ export class OwnerShopsController {
    * SHOP-004
    */
   @Put()
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'coverImage', maxCount: 1 },
+      { name: 'logo', maxCount: 1 },
+    ]),
+  )
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Update shop',
-    description: 'Update shop information (name, description, operating hours, etc.)',
+    description: 'Update shop information (name, description, operating hours, images, etc.)',
   })
   @ApiResponse({
     status: 200,
     description: 'Shop updated successfully',
   })
-  async updateShop(@CurrentUser('uid') ownerId: string, @Body() dto: UpdateShopDto) {
-    await this.shopsService.updateShop(ownerId, dto);
+  async updateShop(
+    @CurrentUser('uid') ownerId: string,
+    @Body() dto: UpdateShopWithFilesDto,
+    @UploadedFiles()
+    files?: {
+      coverImage?: Express.Multer.File[];
+      logo?: Express.Multer.File[];
+    },
+  ) {
+    await this.shopsService.updateShopWithFiles(
+      ownerId,
+      dto,
+      files?.coverImage?.[0],
+      files?.logo?.[0],
+    );
     return { message: 'Cập nhật shop thành công' };
   }
 
