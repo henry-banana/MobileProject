@@ -201,22 +201,13 @@ export class ShippersService {
     ownerId: string,
     status?: ApplicationStatus,
   ): Promise<ShipperApplicationEntity[]> {
-    const owner = await this.usersService.getProfile(ownerId);
-
-    if (!owner.shopId) {
-      throw new ForbiddenException('Bạn chưa có shop');
-    }
-
-    return this.shippersRepository.findShopApplications(owner.shopId, status);
+    const shop = await this.shopsService.getMyShop(ownerId);
+    return this.shippersRepository.findShopApplications(shop.id, status);
   }
 
   // SHIP-006: Approve Application ⭐
   async approveApplication(ownerId: string, applicationId: string): Promise<void> {
-    const owner = await this.usersService.getProfile(ownerId);
-
-    if (!owner.shopId) {
-      throw new ForbiddenException('Bạn chưa có shop');
-    }
+    const shop = await this.shopsService.getMyShop(ownerId);
 
     const app = await this.shippersRepository.findApplicationById(applicationId);
 
@@ -225,7 +216,7 @@ export class ShippersService {
     }
 
     // Validate ownership
-    if (app.shopId !== owner.shopId) {
+    if (app.shopId !== shop.id) {
       throw new ForbiddenException('Bạn không có quyền duyệt đơn này');
     }
 
@@ -269,11 +260,7 @@ export class ShippersService {
     applicationId: string,
     dto: RejectApplicationDto,
   ): Promise<void> {
-    const owner = await this.usersService.getProfile(ownerId);
-
-    if (!owner.shopId) {
-      throw new ForbiddenException('Bạn chưa có shop');
-    }
+    const shop = await this.shopsService.getMyShop(ownerId);
 
     const app = await this.shippersRepository.findApplicationById(applicationId);
 
@@ -282,7 +269,7 @@ export class ShippersService {
     }
 
     // Validate ownership
-    if (app.shopId !== owner.shopId) {
+    if (app.shopId !== shop.id) {
       throw new ForbiddenException('Bạn không có quyền từ chối đơn này');
     }
 
@@ -304,13 +291,9 @@ export class ShippersService {
 
   // SHIP-008: List Shop Shippers
   async listShopShippers(ownerId: string): Promise<ShipperEntity[]> {
-    const owner = await this.usersService.getProfile(ownerId);
+    const shop = await this.shopsService.getMyShop(ownerId);
 
-    if (!owner.shopId) {
-      throw new ForbiddenException('Bạn chưa có shop');
-    }
-
-    const shippers = await this.shippersRepository.findShippersByShop(owner.shopId);
+    const shippers = await this.shippersRepository.findShippersByShop(shop.id);
 
     return shippers.map(
       (shipper) =>
@@ -326,16 +309,12 @@ export class ShippersService {
 
   // SHIP-009: Remove Shipper
   async removeShipper(ownerId: string, shipperId: string): Promise<void> {
-    const owner = await this.usersService.getProfile(ownerId);
-
-    if (!owner.shopId) {
-      throw new ForbiddenException('Bạn chưa có shop');
-    }
+    const shop = await this.shopsService.getMyShop(ownerId);
 
     const shipper = await this.usersService.getProfile(shipperId);
 
     // Validate ownership
-    if (shipper.shipperInfo?.shopId !== owner.shopId) {
+    if (shipper.shipperInfo?.shopId !== shop.id) {
       throw new ForbiddenException('Shipper này không thuộc shop của bạn');
     }
 

@@ -39,9 +39,12 @@ export class FirestoreShippersRepository implements IShippersRepository {
       return null;
     }
 
+    const data = doc.data()!;
     return new ShipperApplicationEntity({
       id: doc.id,
-      ...doc.data(),
+      ...data,
+      createdAt: data.createdAt?.toDate?.() || data.createdAt,
+      reviewedAt: data.reviewedAt?.toDate?.() || data.reviewedAt,
     } as ShipperApplicationEntity);
   }
 
@@ -62,9 +65,12 @@ export class FirestoreShippersRepository implements IShippersRepository {
     }
 
     const doc = snapshot.docs[0];
+    const data = doc.data();
     return new ShipperApplicationEntity({
       id: doc.id,
-      ...doc.data(),
+      ...data,
+      createdAt: data.createdAt?.toDate?.() || data.createdAt,
+      reviewedAt: data.reviewedAt?.toDate?.() || data.reviewedAt,
     } as ShipperApplicationEntity);
   }
 
@@ -75,13 +81,15 @@ export class FirestoreShippersRepository implements IShippersRepository {
       .orderBy('createdAt', 'desc')
       .get();
 
-    return snapshot.docs.map(
-      (doc) =>
-        new ShipperApplicationEntity({
-          id: doc.id,
-          ...doc.data(),
-        } as ShipperApplicationEntity),
-    );
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return new ShipperApplicationEntity({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        reviewedAt: data.reviewedAt?.toDate?.() || data.reviewedAt,
+      } as ShipperApplicationEntity);
+    });
   }
 
   async findShopApplications(
@@ -98,13 +106,15 @@ export class FirestoreShippersRepository implements IShippersRepository {
 
     const snapshot = await query.orderBy('createdAt', 'desc').get();
 
-    return snapshot.docs.map(
-      (doc) =>
-        new ShipperApplicationEntity({
-          id: doc.id,
-          ...doc.data(),
-        } as ShipperApplicationEntity),
-    );
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return new ShipperApplicationEntity({
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.() || data.createdAt,
+        reviewedAt: data.reviewedAt?.toDate?.() || data.reviewedAt,
+      } as ShipperApplicationEntity);
+    });
   }
 
   async updateApplicationStatus(

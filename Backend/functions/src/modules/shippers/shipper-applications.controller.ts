@@ -70,20 +70,19 @@ export class ShipperApplicationsController {
       idCardBack?: Express.Multer.File[];
       driverLicense?: Express.Multer.File[];
     },
-  ): Promise<{ success: boolean; data: ShipperApplicationEntity }> {
+  ): Promise<ShipperApplicationEntity> {
     // Validate files
     if (!files?.idCardFront?.[0] || !files?.idCardBack?.[0] || !files?.driverLicense?.[0]) {
       throw new BadRequestException('Vui lòng upload đầy đủ 3 ảnh: CMND/CCCD mặt trước, mặt sau và bằng lái xe');
     }
 
-    const application = await this.shippersService.applyShipperWithFiles(
+    return this.shippersService.applyShipperWithFiles(
       req.user.uid,
       dto,
       files.idCardFront[0],
       files.idCardBack[0],
       files.driverLicense[0],
     );
-    return { success: true, data: application };
   }
 
   @Get('me')
@@ -115,9 +114,8 @@ export class ShipperApplicationsController {
   })
   async getMyApplications(
     @Req() req: Express.Request & { user: { uid: string } },
-  ): Promise<{ success: boolean; data: ShipperApplicationEntity[] }> {
-    const applications = await this.shippersService.getMyApplications(req.user.uid);
-    return { success: true, data: applications };
+  ): Promise<ShipperApplicationEntity[]> {
+    return this.shippersService.getMyApplications(req.user.uid);
   }
 
   @Delete(':id')
@@ -149,8 +147,8 @@ export class ShipperApplicationsController {
   async cancelApplication(
     @Req() req: Express.Request & { user: { uid: string } },
     @Param('id') id: string,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ message: string }> {
     await this.shippersService.cancelApplication(req.user.uid, id);
-    return { success: true, message: 'Đã hủy đơn xin làm shipper' };
+    return { message: 'Hủy đơn thành công' };
   }
 }
