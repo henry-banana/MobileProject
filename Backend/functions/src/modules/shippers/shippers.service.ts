@@ -243,8 +243,14 @@ export class ShippersService {
         shipperInfo: {
           shopId: app.shopId,
           shopName: app.shopName,
+          vehicleType: app.vehicleType,
+          vehicleNumber: app.vehicleNumber,
           status: 'ACTIVE',
           isOnline: false,
+          rating: 5.0,
+          totalDeliveries: 0,
+          currentOrders: [],
+          joinedAt: FieldValue.serverTimestamp(),
         },
         updatedAt: FieldValue.serverTimestamp(),
       });
