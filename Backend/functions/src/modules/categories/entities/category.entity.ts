@@ -61,15 +61,10 @@ export interface CategoryEntity {
  * CreateCategoryData - Data để tạo category mới
  * Không bao gồm id, createdAt, updatedAt (tự động generate)
  */
-export type CreateCategoryData = Omit<
-  CategoryEntity,
-  'id' | 'createdAt' | 'updatedAt'
->;
+export type CreateCategoryData = Omit<CategoryEntity, 'id' | 'createdAt' | 'updatedAt'>;
 
 /**
  * UpdateCategoryData - Data để update category
  * Tất cả fields đều optional
  */
-export type UpdateCategoryData = Partial<
-  Omit<CategoryEntity, 'id' | 'createdAt' | 'updatedAt'>
->;
+export type UpdateCategoryData = Partial<Omit<CategoryEntity, 'id' | 'createdAt' | 'updatedAt'>>;

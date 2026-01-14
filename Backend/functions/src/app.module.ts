@@ -13,8 +13,9 @@ import { AuthModule } from './modules/auth/auth.module';
 // Feature modules - EPIC 03
 import { UsersModule } from './modules/users/users.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
-// import { ShopsModule } from './modules/shops/shops.module';
-// import { ProductsModule } from './modules/products/products.module';
+import { ShopsModule } from './modules/shops/shops.module';
+import { ProductsModule } from './modules/products/products.module';
+import { ShippersModule } from './modules/shippers/shippers.module';
 // import { OrdersModule } from './modules/orders/orders.module';
 // import { PaymentsModule } from './modules/payments/payments.module';
 // import { WalletsModule } from './modules/wallets/wallets.module';
@@ -31,7 +32,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 
     // EPIC 02: Auth ✅
     AuthModule,
-    
+
     // ============================================
     // Feature modules
     // ============================================
@@ -43,9 +44,11 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
     UsersModule,
     FavoritesModule,
 
+    // EPIC 04: Marketplace Core ✅
+    ShopsModule,
+    ProductsModule,
+    ShippersModule,
     // Future EPICs
-    // ShopsModule,
-    // ProductsModule,
     // OrdersModule,
     // PaymentsModule,
     // WalletsModule,

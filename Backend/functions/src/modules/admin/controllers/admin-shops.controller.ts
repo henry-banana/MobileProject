@@ -1,27 +1,8 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Param,
-  Body,
-  Query,
-  UseGuards,
-  Req,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { Controller, Get, Put, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard, AdminGuard } from '../../../core/guards';
 import { AdminService } from '../admin.service';
-import {
-  ListShopsQueryDto,
-  UpdateShopStatusDto,
-  ShopAdminStatus,
-} from '../dto';
+import { ListShopsQueryDto, UpdateShopStatusDto, ShopAdminStatus } from '../dto';
 
 /**
  * Admin Shops Controller

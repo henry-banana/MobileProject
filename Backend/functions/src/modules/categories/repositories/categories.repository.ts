@@ -103,9 +103,7 @@ export class CategoriesRepository {
    * Lấy tất cả categories (cho Admin)
    */
   async findAll(): Promise<CategoryEntity[]> {
-    const snapshot = await this.collection
-      .orderBy('displayOrder', 'asc')
-      .get();
+    const snapshot = await this.collection.orderBy('displayOrder', 'asc').get();
 
     return snapshot.docs.map((doc) => ({
       id: doc.id,
@@ -189,10 +187,7 @@ export class CategoriesRepository {
    * Lấy displayOrder lớn nhất hiện tại
    */
   async getMaxDisplayOrder(): Promise<number> {
-    const snapshot = await this.collection
-      .orderBy('displayOrder', 'desc')
-      .limit(1)
-      .get();
+    const snapshot = await this.collection.orderBy('displayOrder', 'desc').limit(1).get();
 
     if (snapshot.empty) {
       return 0;

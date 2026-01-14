@@ -11,7 +11,7 @@ import { UserRole, IUser } from '../interfaces/user.interface';
  *
  * Usage:
  *   @UseGuards(AuthGuard, RolesGuard)
- *   @Roles(UserRole.ADMIN, UserRole.SELLER)
+ *   @Roles(UserRole.ADMIN, UserRole.OWNER)
  *   @Controller('admin')
  */
 @Injectable()
@@ -39,9 +39,7 @@ export class RolesGuard implements CanActivate {
     const hasRole = requiredRoles.includes(user.role);
 
     if (!hasRole) {
-      throw new ForbiddenException(
-        `Access denied. Required roles: ${requiredRoles.join(', ')}`,
-      );
+      throw new ForbiddenException(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
     }
 
     return true;

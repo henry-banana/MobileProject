@@ -1,10 +1,6 @@
 import { Injectable, Inject, Logger, ConflictException } from '@nestjs/common';
 import { Firestore, Timestamp } from 'firebase-admin/firestore';
-import {
-  FirestoreBaseRepository,
-  PaginatedResult,
-  QueryOptions,
-} from '../../../core/database';
+import { FirestoreBaseRepository, PaginatedResult, QueryOptions } from '../../../core/database';
 import { IAdminPayoutsRepository } from '../interfaces';
 import { AdminPayoutEntity, PayoutStatus } from '../entities';
 
@@ -80,10 +76,7 @@ export class FirestoreAdminPayoutsRepository
   /**
    * Approve payout
    */
-  async approve(
-    payoutId: string,
-    adminId: string,
-  ): Promise<AdminPayoutEntity> {
+  async approve(payoutId: string, adminId: string): Promise<AdminPayoutEntity> {
     this.logger.log(`Approving payout ${payoutId}`);
 
     const payout = await this.findByIdOrThrow(payoutId);
@@ -105,11 +98,7 @@ export class FirestoreAdminPayoutsRepository
   /**
    * Reject payout
    */
-  async reject(
-    payoutId: string,
-    adminId: string,
-    reason: string,
-  ): Promise<AdminPayoutEntity> {
+  async reject(payoutId: string, adminId: string, reason: string): Promise<AdminPayoutEntity> {
     this.logger.log(`Rejecting payout ${payoutId}`);
 
     const payout = await this.findByIdOrThrow(payoutId);
@@ -177,9 +166,7 @@ export class FirestoreAdminPayoutsRepository
   async sumPendingAmount(): Promise<number> {
     // Firestore không hỗ trợ SUM aggregation trực tiếp
     // Phải fetch all pending payouts và sum client-side
-    const snapshot = await this.collection
-      .where('status', '==', PayoutStatus.PENDING)
-      .get();
+    const snapshot = await this.collection.where('status', '==', PayoutStatus.PENDING).get();
 
     let total = 0;
     snapshot.docs.forEach((doc) => {

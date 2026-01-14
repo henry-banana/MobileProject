@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { UserRole } from '../interfaces/user.interface';
 
 /**
@@ -36,9 +31,7 @@ export class AdminGuard implements CanActivate {
     const role = user.role;
 
     if (role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'Access denied. Admin privileges required.',
-      );
+      throw new ForbiddenException('Access denied. Admin privileges required.');
     }
 
     return true;

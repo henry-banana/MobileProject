@@ -35,9 +35,9 @@ export class ConfigService {
   private loadEnvFile(): void {
     // Các vị trí có thể có .env (ưu tiên theo thứ tự)
     const possiblePaths = [
-      path.join(process.cwd(), '.env'),           // Backend/.env (khi chạy từ Backend/)
-      path.join(process.cwd(), '../.env'),        // functions/../.env = Backend/.env
-      path.join(process.cwd(), '../../.env'),     // Fallback
+      path.join(process.cwd(), '.env'), // Backend/.env (khi chạy từ Backend/)
+      path.join(process.cwd(), '../.env'), // functions/../.env = Backend/.env
+      path.join(process.cwd(), '../../.env'), // Fallback
     ];
 
     for (const envPath of possiblePaths) {

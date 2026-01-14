@@ -1,11 +1,6 @@
 import { Inject, NotFoundException } from '@nestjs/common';
 import { Firestore, Timestamp } from 'firebase-admin/firestore';
-import {
-  IBaseEntity,
-  IBaseRepository,
-  PaginatedResult,
-  QueryOptions,
-} from '../interfaces';
+import { IBaseEntity, IBaseRepository, PaginatedResult, QueryOptions } from '../interfaces';
 
 /**
  * FirestoreBaseRepository - Abstract base class cho Firestore repositories
@@ -33,9 +28,7 @@ import {
  * }
  * ```
  */
-export abstract class FirestoreBaseRepository<T extends IBaseEntity>
-  implements IBaseRepository<T>
-{
+export abstract class FirestoreBaseRepository<T extends IBaseEntity> implements IBaseRepository<T> {
   protected readonly collection: FirebaseFirestore.CollectionReference;
 
   constructor(
@@ -69,9 +62,7 @@ export abstract class FirestoreBaseRepository<T extends IBaseEntity>
     const entity = await this.findById(id);
 
     if (!entity) {
-      throw new NotFoundException(
-        `${this.collectionName} with ID "${id}" not found`,
-      );
+      throw new NotFoundException(`${this.collectionName} with ID "${id}" not found`);
     }
 
     return entity;
@@ -102,10 +93,7 @@ export abstract class FirestoreBaseRepository<T extends IBaseEntity>
 
     // Apply orderBy
     if (options?.orderBy) {
-      query = query.orderBy(
-        options.orderBy.field as string,
-        options.orderBy.direction,
-      );
+      query = query.orderBy(options.orderBy.field as string, options.orderBy.direction);
     }
 
     // Apply pagination
@@ -171,9 +159,7 @@ export abstract class FirestoreBaseRepository<T extends IBaseEntity>
   /**
    * Tìm một entity theo điều kiện
    */
-  protected async findOneWhere(
-    where: Partial<Record<keyof T, any>>,
-  ): Promise<T | null> {
+  protected async findOneWhere(where: Partial<Record<keyof T, any>>): Promise<T | null> {
     let query: FirebaseFirestore.Query = this.collection;
 
     for (const [field, value] of Object.entries(where)) {
@@ -218,10 +204,7 @@ export abstract class FirestoreBaseRepository<T extends IBaseEntity>
   /**
    * Tạo entity với ID cụ thể
    */
-  async createWithId(
-    id: string,
-    data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<T> {
+  async createWithId(id: string, data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T> {
     const now = Timestamp.now();
 
     const docData = {
@@ -241,17 +224,12 @@ export abstract class FirestoreBaseRepository<T extends IBaseEntity>
   /**
    * Update entity
    */
-  async update(
-    id: string,
-    data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>,
-  ): Promise<T> {
+  async update(id: string, data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>): Promise<T> {
     const docRef = this.collection.doc(id);
     const doc = await docRef.get();
 
     if (!doc.exists) {
-      throw new NotFoundException(
-        `${this.collectionName} with ID "${id}" not found`,
-      );
+      throw new NotFoundException(`${this.collectionName} with ID "${id}" not found`);
     }
 
     const updateData = {
@@ -276,9 +254,7 @@ export abstract class FirestoreBaseRepository<T extends IBaseEntity>
     const doc = await docRef.get();
 
     if (!doc.exists) {
-      throw new NotFoundException(
-        `${this.collectionName} with ID "${id}" not found`,
-      );
+      throw new NotFoundException(`${this.collectionName} with ID "${id}" not found`);
     }
 
     await docRef.delete();
@@ -292,9 +268,7 @@ export abstract class FirestoreBaseRepository<T extends IBaseEntity>
     const doc = await docRef.get();
 
     if (!doc.exists) {
-      throw new NotFoundException(
-        `${this.collectionName} with ID "${id}" not found`,
-      );
+      throw new NotFoundException(`${this.collectionName} with ID "${id}" not found`);
     }
 
     await docRef.update({

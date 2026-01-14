@@ -1,8 +1,4 @@
-import {
-  IBaseRepository,
-  PaginatedResult,
-  QueryOptions,
-} from '../../../core/database';
+import { IBaseRepository, PaginatedResult, QueryOptions } from '../../../core/database';
 import { AdminPayoutEntity, PayoutStatus } from '../entities';
 
 /**
@@ -11,8 +7,7 @@ import { AdminPayoutEntity, PayoutStatus } from '../entities';
  * Dùng trong AdminService để quản lý payout requests.
  * Implement sẽ ở repositories/firestore-admin-payouts.repository.ts
  */
-export interface IAdminPayoutsRepository
-  extends IBaseRepository<AdminPayoutEntity> {
+export interface IAdminPayoutsRepository extends IBaseRepository<AdminPayoutEntity> {
   /**
    * Tìm payouts với filter và pagination
    */
@@ -32,11 +27,7 @@ export interface IAdminPayoutsRepository
   /**
    * Reject payout
    */
-  reject(
-    payoutId: string,
-    adminId: string,
-    reason: string,
-  ): Promise<AdminPayoutEntity>;
+  reject(payoutId: string, adminId: string, reason: string): Promise<AdminPayoutEntity>;
 
   /**
    * Mark as transferred

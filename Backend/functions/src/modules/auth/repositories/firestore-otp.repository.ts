@@ -6,15 +6,15 @@ import { IOTPRepository } from '../interfaces';
 
 /**
  * Firestore OTP Repository
- * 
+ *
  * Firestore implementation of IOTPRepository.
  * Collection: otps
  */
 @Injectable()
-export class FirestoreOTPRepository 
+export class FirestoreOTPRepository
   extends FirestoreBaseRepository<OTPEntity>
-  implements IOTPRepository {
-  
+  implements IOTPRepository
+{
   constructor(@Inject('FIRESTORE') firestore: Firestore) {
     super(firestore, 'otps');
   }
@@ -68,7 +68,7 @@ export class FirestoreOTPRepository
       .get();
 
     const batch = this.firestore.batch();
-    snapshot.docs.forEach(doc => {
+    snapshot.docs.forEach((doc) => {
       batch.delete(doc.ref);
     });
 
@@ -80,16 +80,14 @@ export class FirestoreOTPRepository
    */
   async deleteExpired(): Promise<number> {
     const now = Timestamp.now();
-    const snapshot = await this.collection
-      .where('expiresAt', '<', now.toDate())
-      .get();
+    const snapshot = await this.collection.where('expiresAt', '<', now.toDate()).get();
 
     if (snapshot.empty) {
       return 0;
     }
 
     const batch = this.firestore.batch();
-    snapshot.docs.forEach(doc => {
+    snapshot.docs.forEach((doc) => {
       batch.delete(doc.ref);
     });
 
@@ -102,7 +100,7 @@ export class FirestoreOTPRepository
    */
   async hasRecentRequest(email: string, type: OTPType, seconds: number): Promise<boolean> {
     const cutoffTime = new Date(Date.now() - seconds * 1000);
-    
+
     const snapshot = await this.collection
       .where('email', '==', email)
       .where('type', '==', type)

@@ -1,28 +1,8 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Param,
-  Body,
-  Query,
-  UseGuards,
-  Req,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard, AdminGuard } from '../../../core/guards';
 import { AdminService } from '../admin.service';
-import {
-  ListPayoutsQueryDto,
-  RejectPayoutDto,
-  MarkTransferredDto,
-  PayoutStatus,
-} from '../dto';
+import { ListPayoutsQueryDto, RejectPayoutDto, MarkTransferredDto, PayoutStatus } from '../dto';
 
 /**
  * Admin Payouts Controller
@@ -45,7 +25,9 @@ export class AdminPayoutsController {
    * ADMIN-008: List Payout Requests
    */
   @Get()
-  @ApiOperation({ summary: 'Lấy danh sách payout requests (⛔ BLOCKED — cần: WalletModule, OrderModule)' })
+  @ApiOperation({
+    summary: 'Lấy danh sách payout requests (⛔ BLOCKED — cần: WalletModule, OrderModule)',
+  })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: PayoutStatus })
@@ -86,10 +68,7 @@ export class AdminPayoutsController {
   @ApiResponse({ status: 200, description: 'Payout đã được approve' })
   @ApiResponse({ status: 404, description: 'Payout không tồn tại' })
   @ApiResponse({ status: 409, description: 'Payout đã được xử lý' })
-  async approvePayout(
-    @Req() req: any,
-    @Param('payoutId') payoutId: string,
-  ) {
+  async approvePayout(@Req() req: any, @Param('payoutId') payoutId: string) {
     const adminId = req.user.uid;
     await this.adminService.approvePayout(adminId, payoutId);
     return {
@@ -140,11 +119,7 @@ export class AdminPayoutsController {
     @Body() dto: MarkTransferredDto,
   ) {
     const adminId = req.user.uid;
-    await this.adminService.markPayoutTransferred(
-      adminId,
-      payoutId,
-      dto.transferNote,
-    );
+    await this.adminService.markPayoutTransferred(adminId, payoutId, dto.transferNote);
     return {
       success: true,
       message: 'Đã đánh dấu payout là transferred',

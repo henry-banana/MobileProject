@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * Forgot Password DTO
- * 
+ *
  * Request body for POST /auth/forgot-password
  */
 export class ForgotPasswordDto {
@@ -17,7 +17,7 @@ export class ForgotPasswordDto {
 
 /**
  * Reset Password DTO
- * 
+ *
  * Request body for POST /auth/reset-password
  */
 export class ResetPasswordDto {
@@ -39,7 +39,7 @@ export class ResetPasswordDto {
 
 /**
  * Change Password DTO
- * 
+ *
  * Request body for PUT /auth/change-password
  */
 export class ChangePasswordDto {

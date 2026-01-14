@@ -65,10 +65,7 @@ export class FirestoreCategoriesRepository
    * Lấy displayOrder lớn nhất
    */
   async getMaxDisplayOrder(): Promise<number> {
-    const snapshot = await this.collection
-      .orderBy('displayOrder', 'desc')
-      .limit(1)
-      .get();
+    const snapshot = await this.collection.orderBy('displayOrder', 'desc').limit(1).get();
 
     if (snapshot.empty) {
       return 0;
@@ -101,9 +98,7 @@ export class FirestoreCategoriesRepository
    * Override findAll để sắp xếp theo displayOrder
    */
   async findAll(): Promise<CategoryEntity[]> {
-    const snapshot = await this.collection
-      .orderBy('displayOrder', 'asc')
-      .get();
+    const snapshot = await this.collection.orderBy('displayOrder', 'asc').get();
 
     return snapshot.docs.map((doc) => this.mapDocToEntity(doc));
   }

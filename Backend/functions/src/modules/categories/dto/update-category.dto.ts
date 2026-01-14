@@ -1,12 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsEnum,
-  IsInt,
-  Min,
-  MaxLength,
-  Matches,
-} from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsInt, Min, MaxLength, Matches } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CategoryStatus } from '../entities/category.entity';
 

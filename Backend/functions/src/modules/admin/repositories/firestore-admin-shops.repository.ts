@@ -1,10 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Firestore, Timestamp } from 'firebase-admin/firestore';
-import {
-  FirestoreBaseRepository,
-  PaginatedResult,
-  QueryOptions,
-} from '../../../core/database';
+import { FirestoreBaseRepository, PaginatedResult, QueryOptions } from '../../../core/database';
 import { IAdminShopsRepository } from '../interfaces';
 import { AdminShopEntity, ShopStatus } from '../entities';
 
@@ -105,10 +101,7 @@ export class FirestoreAdminShopsRepository
    * Count shops by status
    */
   async countByStatus(status: ShopStatus): Promise<number> {
-    const snapshot = await this.collection
-      .where('status', '==', status)
-      .count()
-      .get();
+    const snapshot = await this.collection.where('status', '==', status).count().get();
 
     return snapshot.data().count;
   }
@@ -117,10 +110,7 @@ export class FirestoreAdminShopsRepository
    * Count pending approval shops
    */
   async countPendingApproval(): Promise<number> {
-    const snapshot = await this.collection
-      .where('status', '==', ShopStatus.PENDING)
-      .count()
-      .get();
+    const snapshot = await this.collection.where('status', '==', ShopStatus.PENDING).count().get();
 
     return snapshot.data().count;
   }

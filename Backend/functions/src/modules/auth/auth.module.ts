@@ -1,25 +1,19 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import {
-  USERS_REPOSITORY_TOKEN,
-  OTP_REPOSITORY_TOKEN,
-} from './interfaces';
-import {
-  FirestoreUsersRepository,
-  FirestoreOTPRepository,
-} from './repositories';
+import { USERS_REPOSITORY_TOKEN, OTP_REPOSITORY_TOKEN } from './interfaces';
+import { FirestoreUsersRepository, FirestoreOTPRepository } from './repositories';
 
 /**
  * Auth Module
- * 
+ *
  * Handles authentication operations:
  * - Email/password registration
  * - Google Sign-In
  * - OTP verification
  * - Password reset
  * - Logout
- * 
+ *
  * Dependency Injection:
  * - USERS_REPOSITORY_TOKEN -> FirestoreUsersRepository
  * - OTP_REPOSITORY_TOKEN -> FirestoreOTPRepository

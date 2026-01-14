@@ -4,7 +4,7 @@ import { UserRole } from '../entities';
 
 /**
  * Google Auth DTO
- * 
+ *
  * Request body for POST /auth/google
  */
 export class GoogleAuthDto {

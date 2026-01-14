@@ -57,10 +57,7 @@ export class FirestoreService {
   /**
    * Find document by ID
    */
-  async findById<T extends BaseDocument>(
-    collectionName: string,
-    id: string,
-  ): Promise<T | null> {
+  async findById<T extends BaseDocument>(collectionName: string, id: string): Promise<T | null> {
     const doc = await this.db.collection(collectionName).doc(id).get();
     if (!doc.exists) return null;
     return { id: doc.id, ...doc.data() } as T;
@@ -113,10 +110,7 @@ export class FirestoreService {
     field: string,
     value: unknown,
   ): Promise<T[]> {
-    const snapshot = await this.db
-      .collection(collectionName)
-      .where(field, '==', value)
-      .get();
+    const snapshot = await this.db.collection(collectionName).where(field, '==', value).get();
 
     return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as T);
   }
@@ -189,11 +183,7 @@ export class FirestoreService {
   /**
    * Count documents in collection (with optional filter)
    */
-  async count(
-    collectionName: string,
-    field?: string,
-    value?: unknown,
-  ): Promise<number> {
+  async count(collectionName: string, field?: string, value?: unknown): Promise<number> {
     let query: Query<DocumentData> = this.db.collection(collectionName);
 
     if (field && value !== undefined) {

@@ -1,18 +1,5 @@
-import {
-  Controller,
-  Post,
-  Put,
-  Body,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Post, Put, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '../../core/guards';
 import { CurrentUser } from '../../core/decorators';
@@ -33,7 +20,7 @@ import {
 
 /**
  * Auth Controller
- * 
+ *
  * Handles all authentication endpoints:
  * - Registration
  * - Login
@@ -50,17 +37,18 @@ export class AuthController {
   /**
    * POST /auth/register
    * Register new user with email/password
-   * 
+   *
    * AUTH-003
    */
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Register new user',
-    description: 'Create a new user account with email and password. Returns custom token for client-side Firebase sign-in.',
+    description:
+      'Create a new user account with email and password. Returns custom token for client-side Firebase sign-in.',
   })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'User registered successfully',
     type: RegisterResponseDto,
   })
@@ -80,12 +68,13 @@ export class AuthController {
    */
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Login with email/password',
-    description: 'Authenticate user with email and password. Returns custom token for client-side Firebase sign-in.',
+    description:
+      'Authenticate user with email and password. Returns custom token for client-side Firebase sign-in.',
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Login successful',
     type: LoginResponseDto,
     example: {
@@ -116,14 +105,15 @@ export class AuthController {
   /**
    * POST /auth/google
    * Sign in with Google
-   * 
+   *
    * AUTH-004
    */
   @Post('google')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Google Sign-In',
-    description: 'Authenticate with Google ID token. Creates new user if first time, otherwise returns existing user.',
+    description:
+      'Authenticate with Google ID token. Creates new user if first time, otherwise returns existing user.',
   })
   @ApiResponse({
     status: 200,
@@ -142,17 +132,21 @@ export class AuthController {
   /**
    * POST /auth/send-otp
    * Send OTP to email for verification
-   * 
+   *
    * AUTH-005
    */
   @Post('send-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Send OTP to email',
-    description: 'Generate and send 6-digit OTP code to email. Valid for 5 minutes. Rate limited to 1 request per 60 seconds.',
+    description:
+      'Generate and send 6-digit OTP code to email. Valid for 5 minutes. Rate limited to 1 request per 60 seconds.',
   })
   @ApiResponse({ status: 200, description: 'OTP sent successfully' })
-  @ApiResponse({ status: 429, description: 'Too many requests. Please wait before requesting again.' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests. Please wait before requesting again.',
+  })
   async sendOTP(@Body() dto: SendOTPDto) {
     const result = await this.authService.sendOTP(dto);
     return {
@@ -164,7 +158,7 @@ export class AuthController {
   /**
    * POST /auth/verify-otp
    * Verify OTP code
-   * 
+   *
    * AUTH-005
    */
   @Post('verify-otp')
@@ -187,7 +181,7 @@ export class AuthController {
   /**
    * POST /auth/forgot-password
    * Request password reset OTP
-   * 
+   *
    * AUTH-006
    */
   @Post('forgot-password')
@@ -210,7 +204,7 @@ export class AuthController {
   /**
    * POST /auth/reset-password
    * Reset password with OTP
-   * 
+   *
    * AUTH-006
    */
   @Post('reset-password')
@@ -233,7 +227,7 @@ export class AuthController {
   /**
    * PUT /auth/change-password
    * Change password (authenticated)
-   * 
+   *
    * AUTH-007
    */
   @Put('change-password')
@@ -247,10 +241,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 400, description: 'Invalid old password' })
-  async changePassword(
-    @CurrentUser() user: any,
-    @Body() dto: ChangePasswordDto,
-  ) {
+  async changePassword(@CurrentUser() user: any, @Body() dto: ChangePasswordDto) {
     const result = await this.authService.changePassword(user.uid, dto);
     return {
       success: true,
@@ -261,7 +252,7 @@ export class AuthController {
   /**
    * POST /auth/logout
    * Logout - remove FCM token
-   * 
+   *
    * AUTH-008
    */
   @Post('logout')
@@ -270,14 +261,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Logout',
-    description: 'Remove FCM token from user devices. Note: Firebase Auth tokens cannot be invalidated server-side.',
+    description:
+      'Remove FCM token from user devices. Note: Firebase Auth tokens cannot be invalidated server-side.',
   })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async logout(
-    @CurrentUser() user: any,
-    @Body() dto: LogoutDto,
-  ) {
+  async logout(@CurrentUser() user: any, @Body() dto: LogoutDto) {
     const result = await this.authService.logout(user.uid, dto);
     return {
       success: true,

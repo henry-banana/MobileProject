@@ -1,8 +1,4 @@
-import {
-  IBaseRepository,
-  PaginatedResult,
-  QueryOptions,
-} from '../../../core/database';
+import { IBaseRepository, PaginatedResult, QueryOptions } from '../../../core/database';
 import { AdminShopEntity, ShopStatus } from '../entities';
 
 /**
@@ -11,8 +7,7 @@ import { AdminShopEntity, ShopStatus } from '../entities';
  * Dùng trong AdminService để quản lý shops.
  * Implement sẽ ở repositories/firestore-admin-shops.repository.ts
  */
-export interface IAdminShopsRepository
-  extends IBaseRepository<AdminShopEntity> {
+export interface IAdminShopsRepository extends IBaseRepository<AdminShopEntity> {
   /**
    * Tìm shops với filter và pagination
    */

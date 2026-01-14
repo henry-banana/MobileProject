@@ -10,7 +10,12 @@ import {
 } from '@nestjs/common';
 import { FirebaseService } from '../../core/firebase/firebase.service';
 import { EmailService } from '../email/email.service';
-import { IUsersRepository, IOTPRepository, USERS_REPOSITORY_TOKEN, OTP_REPOSITORY_TOKEN } from './interfaces';
+import {
+  IUsersRepository,
+  IOTPRepository,
+  USERS_REPOSITORY_TOKEN,
+  OTP_REPOSITORY_TOKEN,
+} from './interfaces';
 import {
   RegisterDto,
   LoginDto,
@@ -27,7 +32,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 /**
  * Auth Service
- * 
+ *
  * Handles all authentication operations:
  * - Registration (email/password)
  * - Login (email/password)
@@ -49,7 +54,7 @@ export class AuthService {
 
   /**
    * Login with email/password
-   * 
+   *
    * Flow:
    * 1. Verify credentials with Firebase Auth
    * 2. Get user from Firestore
@@ -67,7 +72,7 @@ export class AuthService {
       // Check user status
       if (user.status === UserStatus.BANNED) {
         throw new UnauthorizedException(
-          `Tài khoản đã bị khóa${user.bannedReason ? `: ${user.bannedReason}` : ''}`
+          `Tài khoản đã bị khóa${user.bannedReason ? `: ${user.bannedReason}` : ''}`,
         );
       }
 
@@ -75,7 +80,7 @@ export class AuthService {
       // Note: Firebase Admin SDK doesn't have direct password verification
       // We use signInWithEmailAndPassword via REST API
       const signInUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FIREBASE_API_KEY}`;
-      
+
       const response = await fetch(signInUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,7 +93,10 @@ export class AuthService {
 
       if (!response.ok) {
         const error: any = await response.json();
-        if (error.error?.message === 'INVALID_PASSWORD' || error.error?.message === 'EMAIL_NOT_FOUND') {
+        if (
+          error.error?.message === 'INVALID_PASSWORD' ||
+          error.error?.message === 'EMAIL_NOT_FOUND'
+        ) {
           throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
         }
         throw new UnauthorizedException('Đăng nhập thất bại');
@@ -126,7 +134,7 @@ export class AuthService {
 
   /**
    * Register new user with email/password
-   * 
+   *
    * AUTH-003
    */
   async register(dto: RegisterDto) {
@@ -149,8 +157,8 @@ export class AuthService {
       let phoneNumber: string | undefined;
       if (dto.phone) {
         // Convert Vietnamese phone: 0901234567 -> +84901234567
-        phoneNumber = dto.phone.startsWith('+') 
-          ? dto.phone 
+        phoneNumber = dto.phone.startsWith('+')
+          ? dto.phone
           : dto.phone.startsWith('0')
             ? `+84${dto.phone.substring(1)}`
             : `+${dto.phone}`;
@@ -188,12 +196,11 @@ export class AuthService {
 
       // Generate custom token for client to sign in
       const customToken = await this.firebaseService.auth.createCustomToken(userRecord.uid);
-  // Send welcome email (don't await - run in background)
-      this.emailService.sendWelcomeEmail(dto.email, dto.displayName).catch(err => {
+      // Send welcome email (don't await - run in background)
+      this.emailService.sendWelcomeEmail(dto.email, dto.displayName).catch((err) => {
         console.error('Failed to send welcome email:', err);
       });
 
-      
       return {
         user: {
           id: userRecord.uid,
@@ -218,9 +225,9 @@ export class AuthService {
 
   /**
    * Google Sign-In
-   * 
+   *
    * AUTH-004
-   * 
+   *
    * Flow:
    * 1. Mobile app gets Google ID token from Firebase SDK
    * 2. Send token to backend
@@ -244,7 +251,7 @@ export class AuthService {
       if (!user) {
         // New user - create in Firestore
         const role = dto.role || UserRole.CUSTOMER;
-        
+
         // Set custom claims
         await this.firebaseService.auth.setCustomUserClaims(uid, { role });
 
@@ -296,7 +303,7 @@ export class AuthService {
 
   /**
    * Send OTP to email
-   * 
+   *
    * AUTH-005
    */
   async sendOTP(dto: SendOTPDto) {
@@ -321,7 +328,7 @@ export class AuthService {
 
     // Save OTP to Firestore
     const expiresAt = new Date(Date.now() + OTP_CONFIG.EXPIRY_MINUTES * 60 * 1000);
-    
+
     await this.otpRepository.create({
       email,
       code,
@@ -343,7 +350,7 @@ export class AuthService {
 
   /**
    * Verify OTP
-   * 
+   *
    * AUTH-005
    */
   async verifyOTP(dto: VerifyOTPDto) {
@@ -356,10 +363,9 @@ export class AuthService {
       throw new NotFoundException('Không tìm thấy OTP. Vui lòng gửi lại OTP.');
     }
     // Check if expired (convert Firestore Timestamp to Date)
-    const expiresAt = otp.expiresAt instanceof Date 
-      ? otp.expiresAt 
-      : (otp.expiresAt as any).toDate();
-    
+    const expiresAt =
+      otp.expiresAt instanceof Date ? otp.expiresAt : (otp.expiresAt as any).toDate();
+
     if (new Date() > expiresAt) {
       throw new BadRequestException('OTP đã hết hạn. Vui lòng gửi lại OTP.');
     }
@@ -396,7 +402,7 @@ export class AuthService {
 
   /**
    * Send password reset OTP
-   * 
+   *
    * AUTH-006
    */
   async forgotPassword(dto: ForgotPasswordDto) {
@@ -441,7 +447,7 @@ export class AuthService {
 
   /**
    * Reset password with OTP
-   * 
+   *
    * AUTH-006
    */
   async resetPassword(dto: ResetPasswordDto) {
@@ -465,12 +471,12 @@ export class AuthService {
 
   /**
    * Change password (authenticated user)
-   * 
+   *
    * AUTH-007
    */
   async changePassword(userId: string, dto: ChangePasswordDto) {
     const { newPassword } = dto;
-    
+
     const user = await this.usersRepository.findById(userId);
     if (!user) {
       throw new NotFoundException('User không tồn tại');
@@ -479,10 +485,10 @@ export class AuthService {
     // Verify old password by attempting to sign in
     // Note: Firebase Admin SDK doesn't have a direct way to verify password
     // This is a workaround - client should ideally reauthenticate before changing password
-    
+
     // For now, we'll just update the password
     // TODO: Consider requiring reauthentication on client side before calling this
-    
+
     await this.firebaseService.auth.updateUser(userId, {
       password: newPassword,
     });
@@ -494,7 +500,7 @@ export class AuthService {
 
   /**
    * Logout - remove FCM token
-   * 
+   *
    * AUTH-008
    */
   async logout(userId: string, dto: LogoutDto) {

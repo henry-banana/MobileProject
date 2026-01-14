@@ -2,10 +2,10 @@ import { IBaseEntity } from '../../../core/database/interfaces';
 
 /**
  * OTP Entity
- * 
+ *
  * Represents a one-time password for email verification or password reset.
  * Stored in Firestore collection: otps
- * 
+ *
  * TTL: 5 minutes
  */
 export interface OTPEntity extends IBaseEntity {
