@@ -21,14 +21,12 @@ import com.example.foodapp.pages.client.home.ProductState
 import com.example.foodapp.pages.client.home.UserNameState
 import com.example.foodapp.pages.client.components.UserBottomNav
 import com.example.foodapp.pages.client.components.UserCategoryList
-import com.example.foodapp.pages.client.components.UserHeader
 import com.example.foodapp.pages.client.components.UserProductCard
-import com.example.foodapp.pages.client.components.UserSearchBar
 
 @Composable
 fun UserHomeScreen(
     navController: NavHostController,
-    onProductClick: (Product) -> Unit,
+    onProductClick: (String) -> Unit, // Đã sửa thành String (ID)
     onProfileClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -48,15 +46,10 @@ fun UserHomeScreen(
     // Gọi API khi vào màn hình
     LaunchedEffect(Unit) {
         viewModel.fetchUserName()
-        viewModel.getProducts() // Lấy sản phẩm lần đầu
+        viewModel.getProducts()
     }
 
-    // Xử lý khi search - Đã sử dụng trong UserSearchBar
-    val onSearch: (String) -> Unit = { query ->
-        viewModel.searchProducts(query)
-    }
-
-    // Gọi hàm Content để hiển thị giao diện
+    // Giao diện chính
     UserHomeContent(
         navController = navController,
         nameState = nameState,
@@ -66,13 +59,12 @@ fun UserHomeScreen(
         hasMore = hasMore,
         onProductClick = onProductClick,
         onProfileClick = onProfileClick,
-        onSearch = onSearch,
+        onSearch = { query -> viewModel.searchProducts(query) },
         onRefresh = { viewModel.refresh() },
         onLoadMore = { viewModel.loadMoreProducts() }
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun UserHomeContent(
     navController: NavHostController,
@@ -81,7 +73,7 @@ fun UserHomeContent(
     products: List<Product>,
     isLoadingMore: Boolean,
     hasMore: Boolean,
-    onProductClick: (Product) -> Unit,
+    onProductClick: (String) -> Unit, // Đã sửa thành String
     onProfileClick: () -> Unit,
     onSearch: (String) -> Unit,
     onRefresh: () -> Unit,
@@ -103,18 +95,12 @@ fun UserHomeContent(
                 .padding(padding),
             contentPadding = PaddingValues(8.dp)
         ) {
-            // Phần Header và Danh mục (Chiếm 2 cột)
+            // Header và Search
             item(span = { GridItemSpan(2) }) {
                 Column {
-                    // Lựa chọn 1: Hiển thị trực tiếp
                     SimpleUserHeader(nameState = nameState)
-
-                    // Lựa chọn 2: Sử dụng SearchBar với callback
                     UserSearchBarWithCallback(onSearch = onSearch)
-
-                    // Tạm thời sử dụng CategoryList
                     UserCategoryList()
-
                     Text(
                         text = "Món ăn phổ biến",
                         fontWeight = FontWeight.Bold,
@@ -124,147 +110,113 @@ fun UserHomeContent(
                 }
             }
 
-            // Xử lý các trạng thái loading/error/empty
+            // Trạng thái hiển thị danh sách sản phẩm
             when (productState) {
                 is ProductState.Loading -> {
                     item(span = { GridItemSpan(2) }) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator()
                         }
                     }
                 }
                 is ProductState.Error -> {
                     item(span = { GridItemSpan(2) }) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(text = "Đã xảy ra lỗi")
-                                Text(text = (productState as ProductState.Error).message)
-                                Button(onClick = onRefresh) {
-                                    Text("Thử lại")
-                                }
-                            }
-                        }
+                        ErrorView(message = productState.message, onRetry = onRefresh)
                     }
                 }
                 is ProductState.Empty -> {
                     item(span = { GridItemSpan(2) }) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(text = "Không tìm thấy sản phẩm nào")
-                                Button(onClick = onRefresh) {
-                                    Text("Làm mới")
-                                }
-                            }
-                        }
+                        EmptyView(onRefresh = onRefresh)
                     }
                 }
                 is ProductState.Success -> {
-                    // Danh sách sản phẩm
+                    // Danh sách sản phẩm chính
                     items(products) { product ->
                         UserProductCard(
                             product = product,
-                            onClick = { onProductClick(product) }
+                            onClick = { onProductClick(product.id) } // Chỉ truyền ID khi click
                         )
                     }
 
-                    // Load more indicator
-                    if (isLoadingMore) {
-                        item(span = { GridItemSpan(2) }) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        }
-                    } else if (hasMore && products.isNotEmpty()) {
-                        item(span = { GridItemSpan(2) }) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                TextButton(onClick = onLoadMore) {
-                                    Text("Xem thêm sản phẩm")
-                                }
-                            }
-                        }
+                    // Nút "Xem thêm" hoặc Loading khi load phân trang
+                    item(span = { GridItemSpan(2) }) {
+                        LoadMoreSection(
+                            isLoadingMore = isLoadingMore,
+                            hasMore = hasMore,
+                            onLoadMore = onLoadMore
+                        )
                     }
                 }
-                else -> {
-                    // ProductState.Idle - không hiển thị gì
-                }
+                else -> {}
             }
         }
     }
 }
 
-// Component hiển thị header đơn giản
 @Composable
 fun SimpleUserHeader(nameState: UserNameState) {
     val userName = when (nameState) {
         is UserNameState.Success -> nameState.userName
         is UserNameState.Loading -> "Đang tải..."
-        is UserNameState.Error -> "Khách"
-        is UserNameState.Empty -> "Khách"
         else -> "Khách"
     }
-
-    // Hiển thị header đơn giản
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Xin chào, $userName!",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
+    Text(
+        text = "Xin chào, $userName!",
+        fontSize = 18.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(16.dp)
+    )
 }
 
-// SearchBar với callback
 @Composable
 fun UserSearchBarWithCallback(onSearch: (String) -> Unit) {
     var searchText by remember { mutableStateOf("") }
-
     OutlinedTextField(
         value = searchText,
         onValueChange = { searchText = it },
         placeholder = { Text("Tìm kiếm món ăn...") },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         trailingIcon = {
             IconButton(onClick = { onSearch(searchText) }) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Tìm kiếm"
-                )
+                Icon(Icons.Default.Search, contentDescription = "Tìm kiếm")
             }
         }
     )
+}
+
+@Composable
+fun ErrorView(message: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().height(200.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Lỗi: $message")
+        Button(onClick = onRetry) { Text("Thử lại") }
+    }
+}
+
+@Composable
+fun EmptyView(onRefresh: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().height(200.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Không có sản phẩm nào")
+        Button(onClick = onRefresh) { Text("Làm mới") }
+    }
+}
+
+@Composable
+fun LoadMoreSection(isLoadingMore: Boolean, hasMore: Boolean, onLoadMore: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+        if (isLoadingMore) {
+            CircularProgressIndicator(modifier = Modifier.size(30.dp))
+        } else if (hasMore) {
+            TextButton(onClick = onLoadMore) {
+                Text("Xem thêm sản phẩm")
+            }
+        }
+    }
 }

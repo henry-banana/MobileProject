@@ -52,10 +52,11 @@ data class Product(
     val preparationTime: Int = 15,
     val isDeleted: Boolean = false,
     val createdAt: String? = null,
-    val updatedAt: String? = null
+    val updatedAt: String? = null,
+
+    val isFavorite: Boolean = false
 ) : Parcelable {
 
-    // Helper methods
     val displayPrice: String get() = price
     val hasLocalImage: Boolean get() = imageRes != null
     val hasRemoteImage: Boolean get() = !imageUrl.isNullOrBlank()
@@ -100,7 +101,8 @@ data class Product(
                 preparationTime = apiModel.preparationTime ?: 15,
                 isDeleted = apiModel.isDeleted,
                 createdAt = apiModel.createdAt,
-                updatedAt = apiModel.updatedAt
+                updatedAt = apiModel.updatedAt,
+                isFavorite = false  // ← THÊM DÒNG NÀY
             )
         }
 
@@ -121,7 +123,8 @@ data class Product(
                 totalRatings = 120,
                 soldCount = 500,
                 isAvailable = true,
-                preparationTime = 20
+                preparationTime = 20,
+                isFavorite = false  // ← THÊM DÒNG NÀY
             )
         }
     }
@@ -140,6 +143,11 @@ data class Product(
             rating = newRating,
             totalRatings = newTotalRatings
         )
+    }
+
+    // THÊM: Copy với trạng thái yêu thích mới
+    fun copyWithFavorite(isFavorite: Boolean): Product {
+        return this.copy(isFavorite = isFavorite)
     }
 }
 

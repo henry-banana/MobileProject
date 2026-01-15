@@ -131,5 +131,60 @@ class ProfileRepository {
     }
 
 
+    suspend fun createAddress(addressRequest: CreateAddressRequest): ApiResult<AddressData> {
+        return withContext(Dispatchers.IO) {
+            try {
+                println("DEBUG: [Repository] Starting createAddress...")
+                println("DEBUG: [Repository] Address request:")
+                println("DEBUG: [Repository]   - label: ${addressRequest.label}")
+                println("DEBUG: [Repository]   - fullAddress: ${addressRequest.fullAddress}")
+                println("DEBUG: [Repository]   - building: ${addressRequest.building}")
+                println("DEBUG: [Repository]   - room: ${addressRequest.room}")
+                println("DEBUG: [Repository]   - note: ${addressRequest.note}")
+                println("DEBUG: [Repository]   - isDefault: ${addressRequest.isDefault}")
+
+                val response = profileService.createAddress(addressRequest)
+                println("DEBUG: [Repository] Create Address API Response - isSuccessful: ${response.isSuccessful}")
+                println("DEBUG: [Repository] Create Address API Response - code: ${response.code()}")
+
+                if (response.isSuccessful) {
+                    val addressResponse = response.body()
+                    println("DEBUG: [Repository] Address response: success=${addressResponse?.success}")
+
+                    if (addressResponse?.success == true) {
+                        val addressData = addressResponse.data
+                        println("DEBUG: [Repository] Address created successfully!")
+                        println("DEBUG: [Repository]   - Address ID: ${addressData.id}")
+                        println("DEBUG: [Repository]   - Label: ${addressData.label}")
+                        println("DEBUG: [Repository]   - Full Address: ${addressData.fullAddress}")
+                        println("DEBUG: [Repository]   - Is Default: ${addressData.isDefault}")
+                        println("DEBUG: [Repository]   - Created At: ${addressData.createdAt}")
+
+                        ApiResult.Success(addressData)
+                    } else {
+                        println("DEBUG: [Repository] Address creation failed: ${addressResponse?.message}")
+                        ApiResult.Failure(Exception(addressResponse?.message ?: "Address creation failed"))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    println("DEBUG: [Repository] Create Address API Error - ${response.code()}: $errorBody")
+                    ApiResult.Failure(
+                        Exception("Lỗi ${response.code()}: ${errorBody ?: response.message()}")
+                    )
+                }
+            } catch (e: IOException) {
+                println("DEBUG: [Repository] Create Address IOException: ${e.message}")
+                ApiResult.Failure(Exception("Lỗi kết nối khi tạo địa chỉ: ${e.message}"))
+            } catch (e: HttpException) {
+                println("DEBUG: [Repository] Create Address HttpException: ${e.message}")
+                ApiResult.Failure(Exception("Lỗi server khi tạo địa chỉ: ${e.message}"))
+            } catch (e: Exception) {
+                println("DEBUG: [Repository] Create Address Exception: ${e.message}")
+                ApiResult.Failure(Exception("Lỗi không xác định khi tạo địa chỉ: ${e.message}"))
+            }
+        }
+    }
+
+
 
 }

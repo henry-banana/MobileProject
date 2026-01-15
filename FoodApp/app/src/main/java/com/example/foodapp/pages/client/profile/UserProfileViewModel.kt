@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.foodapp.data.model.Client
+import com.example.foodapp.data.model.client.DeliveryAddress
 import com.google.firebase.messaging.FirebaseMessaging
-import com.example.foodapp.data.model.client.profile.*
+import com.example.foodapp.data.model.client.profile.* // Đã có ApiResult trong này
 import com.example.foodapp.data.repository.shared.AuthRepository
-import com.example.foodapp.data.model.client.profile.ApiResult
 import com.example.foodapp.data.repository.firebase.AuthManager
 import com.example.foodapp.data.repository.client.profile.ProfileRepository
 import kotlinx.coroutines.launch
@@ -40,6 +40,14 @@ sealed class ChangePasswordState {
     data class Error(val message: String) : ChangePasswordState()
 }
 
+// Thêm state cho thêm địa chỉ
+sealed class CreateAddressState {
+    object Idle : CreateAddressState()
+    object Loading : CreateAddressState()
+    data class Success(val message: String) : CreateAddressState()
+    data class Error(val message: String) : CreateAddressState()
+}
+
 class ProfileViewModel(
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository,
@@ -57,6 +65,10 @@ class ProfileViewModel(
     // State cho việc đổi mật khẩu
     private val _changePasswordState = MutableLiveData<ChangePasswordState>(ChangePasswordState.Idle)
     val changePasswordState: LiveData<ChangePasswordState> = _changePasswordState
+
+    // State cho việc thêm địa chỉ
+    private val _createAddressState = MutableLiveData<CreateAddressState>(CreateAddressState.Idle)
+    val createAddressState: LiveData<CreateAddressState> = _createAddressState
 
     // State cho logout
     private val _logoutState = MutableLiveData<Boolean>(false)
@@ -165,6 +177,90 @@ class ProfileViewModel(
         return phone.matches(phoneRegex)
     }
 
+    // Hàm thêm địa chỉ mới
+    // Hàm thêm địa chỉ mới
+    fun createAddress(
+        label: String,
+        fullAddress: String,
+        building: String? = null,
+        room: String? = null,
+        note: String? = null,
+        isDefault: Boolean = false
+    ) {
+        viewModelScope.launch {
+            _createAddressState.value = CreateAddressState.Loading
+
+            try {
+                // Tạo request
+                val request = CreateAddressRequest(
+                    label = label,
+                    fullAddress = fullAddress,
+                    building = building,
+                    room = room,
+                    note = note,
+                    isDefault = isDefault
+                )
+
+                println("DEBUG: [ViewModel] Create address request: $request")
+
+                val result = profileRepository.createAddress(request)
+
+                when (result) {
+                    is ApiResult.Success -> {
+                        val addressData = result.data
+                        println("DEBUG: [ViewModel] Address created successfully: ${addressData}")
+
+                        // Cập nhật lại danh sách địa chỉ của người dùng
+                        val currentUser = _currentUser.value
+                        currentUser?.let { user ->
+                            val newAddress = DeliveryAddress(
+                                id = addressData.id,
+                                label = addressData.label,
+                                fullAddress = addressData.fullAddress,
+                                isDefault = addressData.isDefault,
+                                note = note ?: ""
+                            )
+
+                            val updatedAddresses = user.addresses?.toMutableList() ?: mutableListOf()
+                            updatedAddresses.add(newAddress)
+
+                            if (isDefault) {
+                                updatedAddresses.forEach {
+                                    if (it is DeliveryAddress) {
+
+                                    }
+                                }
+                            }
+
+                            val updatedUser = user.copy(
+                                addresses = updatedAddresses
+                            )
+                            _currentUser.value = updatedUser
+                            _userState.value = ProfileState.Success(updatedUser)
+                        }
+
+                        _createAddressState.value = CreateAddressState.Success("Thêm địa chỉ thành công")
+                        println("DEBUG: [ViewModel] Create address state set to success")
+                    }
+
+                    is ApiResult.Failure -> {
+                        val errorMessage = result.exception.message ?: "Thêm địa chỉ thất bại"
+                        _createAddressState.value = CreateAddressState.Error(errorMessage)
+                        println("DEBUG: [ViewModel] Create address failed: $errorMessage")
+                    }
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.message ?: "Lỗi không xác định khi thêm địa chỉ"
+                _createAddressState.value = CreateAddressState.Error(errorMessage)
+                println("DEBUG: [ViewModel] Create address exception: $errorMessage")
+            }
+        }
+    }
+
+    // Reset create address state
+    fun resetCreateAddressState() {
+        _createAddressState.value = CreateAddressState.Idle
+    }
 
     // Factory cho ViewModel
     class Factory(private val context: Context) : ViewModelProvider.Factory {

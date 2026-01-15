@@ -12,7 +12,7 @@ import com.example.foodapp.data.model.client.product.ProductFilterDto
 import com.example.foodapp.data.model.shared.product.Product
 import com.example.foodapp.data.model.client.product.ApiResult
 import com.example.foodapp.data.repository.firebase.UserFirebaseRepository
-import com.example.foodapp.data.repository.product.ProductRepository
+import com.example.foodapp.data.repository.client.products.ProductRepository
 import kotlinx.coroutines.launch
 
 // ============== PRODUCT STATES ==============

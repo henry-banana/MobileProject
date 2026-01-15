@@ -1,3 +1,4 @@
+// ProductModels.kt - SỬA MODEL CHO CHI TIẾT SẢN PHẨM
 package com.example.foodapp.data.model.client.product
 
 import com.example.foodapp.data.model.shared.product.*
@@ -8,10 +9,22 @@ sealed class ApiResult<out T> {
     data class Failure(val exception: Exception) : ApiResult<Nothing>()
 }
 
+
+
+data class AddToFavoriteResponse @JvmOverloads constructor(
+    @SerializedName("success")
+    val success: Boolean = false,
+
+    @SerializedName("message")
+    val message: String = ""
+) {
+    val isSuccess: Boolean get() = success
+}
+
 // ============== PRODUCT API RESPONSE MODELS ==============
 
 /**
- * Wrapper response cho Product API
+ * Wrapper response cho Product API (danh sách sản phẩm)
  * Format: {
  *   "success": boolean,
  *   "data": ProductListData,
@@ -33,6 +46,31 @@ data class ProductApiResponse @JvmOverloads constructor(
     val timestamp: String? = null
 ) {
     val isValid: Boolean get() = success && data != null
+}
+
+/**
+ * Response cho chi tiết sản phẩm từ API
+ * Format: {
+ *   "success": boolean,
+ *   "data": ProductApiModel,  // ← CHÚ Ý: data là ProductApiModel trực tiếp, không phải ProductListData
+ *   "message": string,
+ *   "timestamp": string
+ * }
+ */
+data class ProductDetailApiResponse @JvmOverloads constructor(
+    @SerializedName("success")
+    val success: Boolean = false,
+
+    @SerializedName("data")
+    val data: ProductApiModel? = null,  // ← ProductApiModel trực tiếp
+
+    @SerializedName("message")
+    val message: String? = null,
+
+    @SerializedName("timestamp")
+    val timestamp: String? = null
+) {
+    val isValid: Boolean get() = success && data != null && data.isValid
 }
 
 /**
@@ -253,22 +291,6 @@ data class ProductDetailRequest(
     @SerializedName("id")
     val productId: String
 )
-
-/**
- * Response cho chi tiết sản phẩm
- */
-data class ProductDetailResponse @JvmOverloads constructor(
-    @SerializedName("success")
-    val success: Boolean = false,
-
-    @SerializedName("data")
-    val product: ProductApiModel? = null,
-
-    @SerializedName("message")
-    val message: String? = null
-) {
-    val isValid: Boolean get() = success && product != null && product.isValid
-}
 
 // ============== EXTENSIONS (nên để trong file riêng) ==============
 

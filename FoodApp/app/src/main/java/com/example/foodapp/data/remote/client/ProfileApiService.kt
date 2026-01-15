@@ -7,6 +7,7 @@ import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.PUT
 import retrofit2.http.GET
+import retrofit2.http.POST
 
 interface ProfileApiService {
 
@@ -15,5 +16,8 @@ interface ProfileApiService {
 
     @PUT("me")
     suspend fun updateMe(@Body request: UpdateProfileRequest): Response<UpdateProfileResponse>
+
+    @POST("me/addresses")
+    suspend fun createAddress(@Body request: CreateAddressRequest): Response<CreateAddressResponse>
 
 }

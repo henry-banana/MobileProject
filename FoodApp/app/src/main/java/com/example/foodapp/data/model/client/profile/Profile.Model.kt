@@ -2,12 +2,13 @@ package com.example.foodapp.data.model.client.profile
 
 import com.google.gson.annotations.SerializedName
 
+// ========== API RESULT ==========
 sealed class ApiResult<out T> {
     data class Success<out T>(val data: T) : ApiResult<T>()
     data class Failure(val exception: Exception) : ApiResult<Nothing>()
 }
 
-
+// ========== PROFILE MODELS ==========
 data class OuterProfileResponse(
     @SerializedName("success")
     val success: Boolean,
@@ -70,8 +71,7 @@ data class UserAddress(
     val isDefault: Boolean = false
 )
 
-//-------------UPDATE PROFILE-----------------
-
+// ========== UPDATE PROFILE MODELS ==========
 data class UpdateProfileRequest(
     @SerializedName("displayName")
     val displayName: String? = null,
@@ -82,7 +82,6 @@ data class UpdateProfileRequest(
     @SerializedName("avatarUrl")
     val avatarUrl: String? = null
 )
-
 
 data class UpdateProfileResponse(
     @SerializedName("success")
@@ -95,7 +94,6 @@ data class UpdateProfileResponse(
     val data: UpdatedUserData
 )
 
-// Dữ liệu user được update
 data class UpdatedUserData(
     @SerializedName("id")
     val id: String,
@@ -117,6 +115,67 @@ data class UpdatedUserData(
 
     @SerializedName("status")
     val status: String,
+
+    @SerializedName("createdAt")
+    val createdAt: String,
+
+    @SerializedName("updatedAt")
+    val updatedAt: String
+)
+
+// ========== CREATE ADDRESS MODELS ==========
+data class CreateAddressRequest(
+    @SerializedName("label")
+    val label: String,
+
+    @SerializedName("fullAddress")
+    val fullAddress: String,
+
+    @SerializedName("building")
+    val building: String? = null,
+
+    @SerializedName("room")
+    val room: String? = null,
+
+    @SerializedName("note")
+    val note: String? = null,
+
+    @SerializedName("isDefault")
+    val isDefault: Boolean = false
+)
+
+data class CreateAddressResponse(
+    @SerializedName("success")
+    val success: Boolean,
+
+    @SerializedName("message")
+    val message: String,
+
+    @SerializedName("data")
+    val data: AddressData
+)
+
+data class AddressData(
+    @SerializedName("id")
+    val id: String,
+
+    @SerializedName("label")
+    val label: String,
+
+    @SerializedName("fullAddress")
+    val fullAddress: String,
+
+    @SerializedName("building")
+    val building: String?,
+
+    @SerializedName("room")
+    val room: String?,
+
+    @SerializedName("note")
+    val note: String?,
+
+    @SerializedName("isDefault")
+    val isDefault: Boolean,
 
     @SerializedName("createdAt")
     val createdAt: String,
