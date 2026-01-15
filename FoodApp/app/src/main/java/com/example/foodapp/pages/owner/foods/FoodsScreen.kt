@@ -61,7 +61,7 @@ fun FoodsScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     // Các danh sách categories và filtered foods
-    val categories = viewModel.categories
+    val categories = uiState.categories
     val filteredFoods = remember(uiState.foods, uiState.selectedCategory, uiState.searchQuery) {
         viewModel.getFilteredFoods()
     }
