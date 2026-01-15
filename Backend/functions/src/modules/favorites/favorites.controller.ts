@@ -45,10 +45,7 @@ export class FavoritesController {
   @ApiResponse({ status: 409, description: 'Already in favorites' })
   async addFavorite(@CurrentUser() user: any, @Param('productId') productId: string) {
     await this.favoritesService.addFavorite(user.uid, productId);
-    return {
-      success: true,
-      message: 'Đã thêm vào yêu thích',
-    };
+    return { message: 'Đã thêm vào yêu thích' };
   }
 
   /**
@@ -65,10 +62,7 @@ export class FavoritesController {
   @ApiResponse({ status: 404, description: 'Not in favorites' })
   async removeFavorite(@CurrentUser() user: any, @Param('productId') productId: string) {
     await this.favoritesService.removeFavorite(user.uid, productId);
-    return {
-      success: true,
-      message: 'Đã xóa khỏi yêu thích',
-    };
+    return { message: 'Đã xóa khỏi yêu thích' };
   }
 
   /**
@@ -113,16 +107,11 @@ export class FavoritesController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const result = await this.favoritesService.listFavorites(
+    return this.favoritesService.listFavorites(
       user.uid,
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 20,
     );
-    return {
-      success: true,
-      data: result.data,
-      pagination: result.pagination,
-    };
   }
 
   /**
@@ -148,11 +137,6 @@ export class FavoritesController {
   })
   async checkFavorite(@CurrentUser() user: any, @Param('productId') productId: string) {
     const isFavorited = await this.favoritesService.isFavorited(user.uid, productId);
-    return {
-      success: true,
-      data: {
-        isFavorited,
-      },
-    };
+    return { isFavorited };
   }
 }

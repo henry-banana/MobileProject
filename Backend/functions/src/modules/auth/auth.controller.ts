@@ -57,11 +57,7 @@ export class AuthController {
   @ApiResponse({ status: 409, description: 'Email or phone already exists' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   async register(@Body() dto: RegisterDto) {
-    const result = await this.authService.register(dto);
-    return {
-      success: true,
-      data: result,
-    };
+    return this.authService.register(dto);
   }
 
   /**
@@ -97,11 +93,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials or account banned' })
   async login(@Body() dto: LoginDto) {
-    const result = await this.authService.login(dto);
-    return {
-      success: true,
-      data: result,
-    };
+    return this.authService.login(dto);
   }
 
   /**
@@ -124,11 +116,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid Google token' })
   async googleSignIn(@Body() dto: GoogleAuthDto) {
-    const result = await this.authService.googleSignIn(dto);
-    return {
-      success: true,
-      data: result,
-    };
+    return this.authService.googleSignIn(dto);
   }
 
   /**
@@ -150,11 +138,7 @@ export class AuthController {
     description: 'Too many requests. Please wait before requesting again.',
   })
   async sendOTP(@Body() dto: SendOTPDto) {
-    const result = await this.authService.sendOTP(dto);
-    return {
-      success: true,
-      ...result,
-    };
+    return this.authService.sendOTP(dto);
   }
 
   /**
@@ -173,11 +157,7 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid OTP or expired' })
   @ApiResponse({ status: 404, description: 'OTP not found' })
   async verifyOTP(@Body() dto: VerifyOTPDto) {
-    const result = await this.authService.verifyOTP(dto);
-    return {
-      success: true,
-      ...result,
-    };
+    return this.authService.verifyOTP(dto);
   }
 
   /**
@@ -196,11 +176,7 @@ export class AuthController {
   @ApiResponse({ status: 404, description: 'Email not found' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    const result = await this.authService.forgotPassword(dto);
-    return {
-      success: true,
-      ...result,
-    };
+    return this.authService.forgotPassword(dto);
   }
 
   /**
@@ -219,11 +195,7 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid OTP' })
   @ApiResponse({ status: 404, description: 'OTP not found or user not found' })
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    const result = await this.authService.resetPassword(dto);
-    return {
-      success: true,
-      ...result,
-    };
+    return this.authService.resetPassword(dto);
   }
 
   /**
@@ -244,11 +216,7 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 400, description: 'Invalid old password' })
   async changePassword(@CurrentUser() user: any, @Body() dto: ChangePasswordDto) {
-    const result = await this.authService.changePassword(user.uid, dto);
-    return {
-      success: true,
-      ...result,
-    };
+    return this.authService.changePassword(user.uid, dto);
   }
 
   /**
@@ -269,11 +237,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logout(@CurrentUser() user: any, @Body() dto: LogoutDto) {
-    const result = await this.authService.logout(user.uid, dto);
-    return {
-      success: true,
-      ...result,
-    };
+    return this.authService.logout(user.uid, dto);
   }
 
   /**
@@ -298,10 +262,6 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async setRole(@CurrentUser() user: any, @Body() dto: SetRoleDto) {
-    const result = await this.authService.setRole(user.uid, dto.role);
-    return {
-      success: true,
-      ...result,
-    };
+    return this.authService.setRole(user.uid, dto.role);
   }
 }

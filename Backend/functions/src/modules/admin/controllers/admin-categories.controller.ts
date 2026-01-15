@@ -46,12 +46,7 @@ export class AdminCategoriesController {
   @ApiResponse({ status: 401, description: 'Chưa xác thực' })
   @ApiResponse({ status: 403, description: 'Không có quyền Admin' })
   async create(@Body() dto: CreateCategoryDto) {
-    const category = await this.categoriesService.create(dto);
-    return {
-      success: true,
-      message: 'Category created successfully',
-      data: category,
-    };
+    return this.categoriesService.create(dto);
   }
 
   /**
@@ -67,11 +62,7 @@ export class AdminCategoriesController {
   @ApiResponse({ status: 401, description: 'Chưa xác thực' })
   @ApiResponse({ status: 403, description: 'Không có quyền Admin' })
   async findAll() {
-    const categories = await this.categoriesService.findAll();
-    return {
-      success: true,
-      data: categories,
-    };
+    return this.categoriesService.findAll();
   }
 
   /**
@@ -88,11 +79,7 @@ export class AdminCategoriesController {
   @ApiResponse({ status: 403, description: 'Không có quyền Admin' })
   @ApiResponse({ status: 404, description: 'Category không tồn tại' })
   async findOne(@Param('id') id: string) {
-    const category = await this.categoriesService.findById(id);
-    return {
-      success: true,
-      data: category,
-    };
+    return this.categoriesService.findById(id);
   }
 
   /**
@@ -111,12 +98,7 @@ export class AdminCategoriesController {
   @ApiResponse({ status: 404, description: 'Category không tồn tại' })
   @ApiResponse({ status: 409, description: 'Slug đã tồn tại' })
   async update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
-    const category = await this.categoriesService.update(id, dto);
-    return {
-      success: true,
-      message: 'Category updated successfully',
-      data: category,
-    };
+    return this.categoriesService.update(id, dto);
   }
 
   /**
@@ -136,9 +118,6 @@ export class AdminCategoriesController {
   @ApiResponse({ status: 409, description: 'Không thể xóa category có products' })
   async remove(@Param('id') id: string) {
     await this.categoriesService.delete(id);
-    return {
-      success: true,
-      message: 'Category deleted successfully',
-    };
+    return { message: 'Category deleted successfully' };
   }
 }

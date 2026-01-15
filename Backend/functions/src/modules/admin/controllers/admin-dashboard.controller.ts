@@ -63,11 +63,7 @@ export class AdminDashboardController {
     },
   })
   async getDashboard() {
-    const stats = await this.adminService.getDashboardStats();
-    return {
-      success: true,
-      data: stats,
-    };
+    return this.adminService.getDashboardStats();
   }
 
   /**
@@ -78,11 +74,7 @@ export class AdminDashboardController {
   @ApiOperation({ summary: 'Thống kê users chi tiết' })
   @ApiResponse({ status: 200, description: 'User stats' })
   async getUserStats() {
-    const stats = await this.adminService.getUserStats();
-    return {
-      success: true,
-      data: stats,
-    };
+    return this.adminService.getUserStats();
   }
 
   /**
@@ -93,11 +85,7 @@ export class AdminDashboardController {
   @ApiOperation({ summary: 'Thống kê orders chi tiết' })
   @ApiResponse({ status: 200, description: 'Order stats' })
   async getOrderStats() {
-    const stats = await this.adminService.getOrderStats();
-    return {
-      success: true,
-      data: stats,
-    };
+    return this.adminService.getOrderStats();
   }
 
   /**
@@ -108,10 +96,6 @@ export class AdminDashboardController {
   @ApiOperation({ summary: 'Thống kê revenue chi tiết' })
   @ApiResponse({ status: 200, description: 'Revenue stats' })
   async getRevenueStats() {
-    const stats = await this.adminService.getRevenueStats();
-    return {
-      success: true,
-      data: stats,
-    };
+    return this.adminService.getRevenueStats();
   }
 }

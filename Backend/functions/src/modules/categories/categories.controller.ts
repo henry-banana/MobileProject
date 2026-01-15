@@ -28,11 +28,7 @@ export class CategoriesController {
     description: 'Danh sách categories',
   })
   async findActive() {
-    const categories = await this.categoriesService.findActive();
-    return {
-      success: true,
-      data: categories,
-    };
+    return this.categoriesService.findActive();
   }
 
   /**
@@ -55,9 +51,6 @@ export class CategoriesController {
       category = await this.categoriesService.findById(idOrSlug);
     }
 
-    return {
-      success: true,
-      data: category,
-    };
+    return category;
   }
 }

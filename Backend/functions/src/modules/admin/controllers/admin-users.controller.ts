@@ -35,12 +35,7 @@ export class AdminUsersController {
   @ApiResponse({ status: 401, description: 'Chưa xác thực' })
   @ApiResponse({ status: 403, description: 'Không có quyền Admin' })
   async listUsers(@Query() query: ListUsersQueryDto) {
-    const result = await this.adminService.listUsers(query);
-    return {
-      success: true,
-      data: result.data,
-      meta: result.meta,
-    };
+    return this.adminService.listUsers(query);
   }
 
   /**
@@ -52,11 +47,7 @@ export class AdminUsersController {
   @ApiResponse({ status: 200, description: 'Chi tiết user' })
   @ApiResponse({ status: 404, description: 'User không tồn tại' })
   async getUser(@Param('userId') userId: string) {
-    const user = await this.adminService.getUserById(userId);
-    return {
-      success: true,
-      data: user,
-    };
+    return this.adminService.getUserById(userId);
   }
 
   /**
@@ -79,7 +70,6 @@ export class AdminUsersController {
     const adminId = req.user.uid;
     await this.adminService.updateUserStatus(adminId, userId, dto);
     return {
-      success: true,
       message: dto.status === UserStatus.BANNED ? 'User đã bị ban' : 'User đã được unban',
     };
   }
