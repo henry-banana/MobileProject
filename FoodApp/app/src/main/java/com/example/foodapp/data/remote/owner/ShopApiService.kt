@@ -47,7 +47,7 @@ interface ShopApiService {
      * Lấy thông tin shop của owner hiện tại
      */
     @GET("owner/shop")
-    suspend fun getMyShop(): Response<Shop>
+    suspend fun getMyShop(): Response<CreateShopResponse>
     
     /**
      * PUT /owner/shop
@@ -57,4 +57,24 @@ interface ShopApiService {
     suspend fun updateShop(
         @Body request: CreateShopRequest
     ): Response<Map<String, String>>
+    
+    /**
+     * PUT /owner/shop
+     * Cập nhật thông tin shop với ảnh (Multipart)
+     * Tất cả fields đều optional
+     */
+    @Multipart
+    @PUT("owner/shop")
+    suspend fun updateShopWithImages(
+        @Part("name") name: RequestBody? = null,
+        @Part("description") description: RequestBody? = null,
+        @Part("address") address: RequestBody? = null,
+        @Part("phone") phone: RequestBody? = null,
+        @Part("openTime") openTime: RequestBody? = null,
+        @Part("closeTime") closeTime: RequestBody? = null,
+        @Part("shipFeePerOrder") shipFeePerOrder: RequestBody? = null,
+        @Part("minOrderAmount") minOrderAmount: RequestBody? = null,
+        @Part coverImage: MultipartBody.Part? = null,
+        @Part logo: MultipartBody.Part? = null
+    ): Response<okhttp3.ResponseBody>
 }

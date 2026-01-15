@@ -146,7 +146,12 @@ class ShopRepository(private val context: Context) {
             try {
                 val response = apiService.getMyShop()
                 if (response.isSuccessful && response.body() != null) {
-                    Result.success(response.body()!!)
+                    val shopResponse = response.body()!!
+                    if (shopResponse.success) {
+                        Result.success(shopResponse.data)
+                    } else {
+                        Result.failure(Exception("Không thể lấy thông tin shop"))
+                    }
                 } else {
                     val errorBody = response.errorBody()?.string()
                     Result.failure(Exception(errorBody ?: "Không tìm thấy shop"))
@@ -164,6 +169,63 @@ class ShopRepository(private val context: Context) {
         return withContext(Dispatchers.IO) {
             try {
                 val response = apiService.updateShop(request)
+                if (response.isSuccessful) {
+                    Result.success("Cập nhật shop thành công")
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception(errorBody ?: "Cập nhật thất bại"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+    
+    /**
+     * Cập nhật thông tin shop với ảnh (Multipart)
+     * Tất cả fields đều optional
+     */
+    suspend fun updateShopWithImages(
+        name: String? = null,
+        description: String? = null,
+        address: String? = null,
+        phone: String? = null,
+        openTime: String? = null,
+        closeTime: String? = null,
+        shipFeePerOrder: Int? = null,
+        minOrderAmount: Int? = null,
+        coverImageUri: Uri? = null,
+        logoUri: Uri? = null
+    ): Result<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Convert text fields to RequestBody (only if not null)
+                val namePart = name?.toRequestBody("text/plain".toMediaType())
+                val descriptionPart = description?.toRequestBody("text/plain".toMediaType())
+                val addressPart = address?.toRequestBody("text/plain".toMediaType())
+                val phonePart = phone?.toRequestBody("text/plain".toMediaType())
+                val openTimePart = openTime?.toRequestBody("text/plain".toMediaType())
+                val closeTimePart = closeTime?.toRequestBody("text/plain".toMediaType())
+                val shipFeePart = shipFeePerOrder?.toString()?.toRequestBody("text/plain".toMediaType())
+                val minOrderPart = minOrderAmount?.toString()?.toRequestBody("text/plain".toMediaType())
+                
+                // Convert URIs to MultipartBody.Part (only if not null)
+                val coverImagePart = coverImageUri?.let { uriToMultipartPart(it, "coverImage") }
+                val logoPart = logoUri?.let { uriToMultipartPart(it, "logo") }
+                
+                val response = apiService.updateShopWithImages(
+                    name = namePart,
+                    description = descriptionPart,
+                    address = addressPart,
+                    phone = phonePart,
+                    openTime = openTimePart,
+                    closeTime = closeTimePart,
+                    shipFeePerOrder = shipFeePart,
+                    minOrderAmount = minOrderPart,
+                    coverImage = coverImagePart,
+                    logo = logoPart
+                )
+                
                 if (response.isSuccessful) {
                     Result.success("Cập nhật shop thành công")
                 } else {

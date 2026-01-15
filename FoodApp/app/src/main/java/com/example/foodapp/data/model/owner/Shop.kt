@@ -7,25 +7,25 @@ import com.google.gson.annotations.SerializedName
  */
 data class Shop(
     @SerializedName("id")
-    val id: String,
+    val id: String?,
     
     @SerializedName("ownerId")
-    val ownerId: String,
+    val ownerId: String?,
     
     @SerializedName("ownerName")
-    val ownerName: String,
+    val ownerName: String?,
     
     @SerializedName("name")
-    val name: String,
+    val name: String?,
     
     @SerializedName("description")
-    val description: String,
+    val description: String?,
     
     @SerializedName("address")
-    val address: String,
+    val address: String?,
     
     @SerializedName("phone")
-    val phone: String,
+    val phone: String?,
     
     @SerializedName("coverImageUrl")
     val coverImageUrl: String? = null,
@@ -34,34 +34,34 @@ data class Shop(
     val logoUrl: String? = null,
     
     @SerializedName("openTime")
-    val openTime: String,
+    val openTime: String?,
     
     @SerializedName("closeTime")
-    val closeTime: String,
+    val closeTime: String?,
     
     @SerializedName("shipFeePerOrder")
-    val shipFeePerOrder: Int,
+    val shipFeePerOrder: Int?,
     
     @SerializedName("minOrderAmount")
-    val minOrderAmount: Int,
+    val minOrderAmount: Int?,
     
     @SerializedName("isOpen")
-    val isOpen: Boolean,
+    val isOpen: Boolean?,
     
     @SerializedName("status")
-    val status: String,
+    val status: String?,
     
     @SerializedName("rating")
-    val rating: Double,
+    val rating: Double?,
     
     @SerializedName("totalRatings")
-    val totalRatings: Int,
+    val totalRatings: Int?,
     
     @SerializedName("totalOrders")
-    val totalOrders: Int,
+    val totalOrders: Int?,
     
     @SerializedName("totalRevenue")
-    val totalRevenue: Double,
+    val totalRevenue: Double?,
     
     @SerializedName("subscription")
     val subscription: Subscription,

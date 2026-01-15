@@ -1,4 +1,4 @@
-package com.example.foodapp.pages.owner.settings
+package com.example.foodapp.pages.owner.shopmanagement
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -23,12 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.foodapp.pages.owner.shopmanagement.ShopManagementViewModel
+import com.example.foodapp.ui.theme.PrimaryOrange
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StoreInfoScreen(navController: androidx.navigation.NavHostController? = null) {
+fun ShopManagementScreen(navController: androidx.navigation.NavHostController? = null) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val viewModel: ShopManagementViewModel = viewModel(
         factory = object : androidx.lifecycle.ViewModelProvider.Factory {
@@ -56,7 +56,31 @@ fun StoreInfoScreen(navController: androidx.navigation.NavHostController? = null
     }
     
     Scaffold(
-        // topBar removed as requested
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Quản lý cửa hàng",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    if (navController != null) {
+                        IconButton(onClick = { navController.navigateUp() }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Quay lại",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = PrimaryOrange,
+                    titleContentColor = Color.White
+                )
+            )
+        }
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(
@@ -65,13 +89,13 @@ fun StoreInfoScreen(navController: androidx.navigation.NavHostController? = null
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(color = PrimaryOrange)
             }
         } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(Color(0xFFF5F5F5))
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
@@ -222,7 +246,7 @@ fun StoreInfoScreen(navController: androidx.navigation.NavHostController? = null
                         .fillMaxWidth()
                         .height(56.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
+                        containerColor = PrimaryOrange,
                         disabledContainerColor = Color.LightGray
                     ),
                     shape = RoundedCornerShape(16.dp),
@@ -264,7 +288,7 @@ fun SectionCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -277,7 +301,7 @@ fun SectionCard(
                 text = title,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = Color(0xFF333333)
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -305,12 +329,12 @@ fun ShopTextField(
             value = value,
             onValueChange = onValueChange,
             label = { Text(label) },
-            placeholder = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            placeholder = { Text(placeholder, color = Color.Gray) },
             leadingIcon = {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    tint = if (error != null) Color.Red else PrimaryOrange
                 )
             },
             isError = error != null,
@@ -319,11 +343,11 @@ fun ShopTextField(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                errorBorderColor = MaterialTheme.colorScheme.error,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                focusedBorderColor = PrimaryOrange,
+                unfocusedBorderColor = Color(0xFFE0E0E0),
+                errorBorderColor = Color.Red,
+                focusedLabelColor = PrimaryOrange,
+                unfocusedLabelColor = Color.Gray
             )
         )
         
@@ -361,12 +385,12 @@ fun UpdateImageCard(
                 text = label,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color.Gray
             )
             
             if (newImageUri != null) {
                 TextButton(onClick = { onImageSelected(null) }) {
-                    Text("Hủy", color = MaterialTheme.colorScheme.error)
+                    Text("Hủy", color = Color.Red)
                 }
             }
         }
@@ -380,9 +404,9 @@ fun UpdateImageCard(
                 .clickable { launcher.launch("image/*") },
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                containerColor = Color(0xFFF5F5F5)
             ),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            border = BorderStroke(1.dp, Color(0xFFE0E0E0))
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -402,7 +426,7 @@ fun UpdateImageCard(
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(8.dp)
-                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
+                                .background(PrimaryOrange, RoundedCornerShape(4.dp))
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
@@ -430,13 +454,13 @@ fun UpdateImageCard(
                             Icon(
                                 imageVector = Icons.Default.AddPhotoAlternate,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = Color.Gray,
                                 modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "Chọn $label",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.Gray
                             )
                         }
                     }
@@ -452,7 +476,7 @@ fun ErrorCard(message: String) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
+            containerColor = Color(0xFFFFEBEE)
         )
     ) {
         Row(
@@ -464,13 +488,13 @@ fun ErrorCard(message: String) {
             Icon(
                 imageVector = Icons.Default.Error,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer,
+                tint = Color(0xFFD32F2F),
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = message,
-                color = MaterialTheme.colorScheme.onErrorContainer,
+                color = Color(0xFFD32F2F),
                 fontSize = 14.sp
             )
         }
