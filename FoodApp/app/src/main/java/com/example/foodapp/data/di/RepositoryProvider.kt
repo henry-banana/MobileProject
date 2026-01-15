@@ -181,6 +181,17 @@ object RepositoryProvider {
         }
     }
     
+    // ==================== OWNER CATEGORY REPOSITORY ====================
+    
+    fun getCategoryRepository(): OwnerCategoryRepository {
+        // Use Real Repository for Category API integration (Public API)
+        return com.example.foodapp.data.repository.owner.categories.RealCategoryRepository(
+            com.example.foodapp.data.remote.api.ApiClient.createService(
+                com.example.foodapp.data.remote.admin.CategoriesApiService::class.java
+            )
+        )
+    }
+    
     // ==================== API SERVICE (cho Real Repository) ====================
     
     /**

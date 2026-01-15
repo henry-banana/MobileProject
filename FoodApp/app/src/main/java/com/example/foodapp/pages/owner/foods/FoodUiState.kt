@@ -26,5 +26,11 @@ data class FoodUiState(
     val showAddDialog: Boolean = false,
 
     // Query tìm kiếm món ăn theo tên
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    
+    // Danh sách categories từ API
+    val categories: List<String> = listOf("Tất cả"),
+    
+    // Trạng thái loading categories
+    val categoriesLoading: Boolean = false
 )

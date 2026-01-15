@@ -24,6 +24,7 @@ class FoodsViewModel : ViewModel() {
 
     // ✅ SỬ DỤNG DI - Lấy repository từ RepositoryProvider
     private val foodRepository = RepositoryProvider.getFoodsRepository()
+    private val categoryRepository = RepositoryProvider.getCategoryRepository()
 
     // StateFlow nội bộ, chỉ ViewModel mới có quyền chỉnh sửa.
     private val _uiState = MutableStateFlow(FoodUiState())
@@ -31,12 +32,10 @@ class FoodsViewModel : ViewModel() {
     // StateFlow công khai, chỉ cho phép đọc từ bên ngoài (UI).
     val uiState: StateFlow<FoodUiState> = _uiState.asStateFlow()
 
-    // Danh sách các category có thể lọc
-    val categories = listOf("Tất cả", "Cơm", "Phở/Bún", "Đồ uống", "Ăn vặt")
-
     init {
         // Ngay khi ViewModel được tạo, bắt đầu lắng nghe sự thay đổi từ Repository.
         loadFoods()
+        loadCategories()
     }
 
     /**
@@ -50,6 +49,36 @@ class FoodsViewModel : ViewModel() {
                 // Cập nhật StateFlow với danh sách món ăn mới nhất.
                 _uiState.update { currentState ->
                     currentState.copy(foods = foods)
+                }
+            }
+        }
+    }
+
+    /**
+     * Lấy danh sách categories từ API
+     */
+    private fun loadCategories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(categoriesLoading = true) }
+            
+            val result = categoryRepository.getCategories()
+            result.onSuccess { categories ->
+                // Thêm "Tất cả" vào đầu danh sách
+                val categoryNames = listOf("Tất cả") + categories.map { it.name }
+                _uiState.update { 
+                    it.copy(
+                        categories = categoryNames,
+                        categoriesLoading = false
+                    )
+                }
+            }.onFailure { error ->
+                // Nếu lỗi, dùng danh sách mặc định
+                _uiState.update { 
+                    it.copy(
+                        categories = listOf("Tất cả"),
+                        categoriesLoading = false,
+                        errorMessage = error.message
+                    )
                 }
             }
         }
