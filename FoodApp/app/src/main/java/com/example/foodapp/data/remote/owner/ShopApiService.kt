@@ -77,4 +77,14 @@ interface ShopApiService {
         @Part coverImage: MultipartBody.Part? = null,
         @Part logo: MultipartBody.Part? = null
     ): Response<okhttp3.ResponseBody>
+
+    /**
+     * GET /owner/shop/dashboard
+     * Lấy thống kê dashboard
+     */
+    @GET("owner/shop/dashboard")
+    suspend fun getShopDashboard(
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null
+    ): Response<com.example.foodapp.data.model.owner.GetDashboardResponse>
 }
