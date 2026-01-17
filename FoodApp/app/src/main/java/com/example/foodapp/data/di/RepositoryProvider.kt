@@ -198,6 +198,16 @@ object RepositoryProvider {
         )
     }
     
+    // ==================== USER PROFILE REPOSITORY ====================
+    
+    fun getUserProfileRepository(): com.example.foodapp.data.repository.user.base.UserProfileRepository {
+        return com.example.foodapp.data.repository.user.profile.RealUserProfileRepository(
+            com.example.foodapp.data.remote.api.ApiClient.createService(
+                com.example.foodapp.data.remote.user.UserProfileApiService::class.java
+            )
+        )
+    }
+    
     // ==================== API SERVICE (cho Real Repository) ====================
     
     /**
