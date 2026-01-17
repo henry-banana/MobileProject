@@ -33,12 +33,7 @@ export class AdminPayoutsController {
   @ApiQuery({ name: 'status', required: false, enum: PayoutStatus })
   @ApiResponse({ status: 200, description: 'Danh sách payouts' })
   async listPayouts(@Query() query: ListPayoutsQueryDto) {
-    const result = await this.adminService.listPayouts(query);
-    return {
-      success: true,
-      data: result.data,
-      meta: result.meta,
-    };
+    return this.adminService.listPayouts(query);
   }
 
   /**
@@ -50,11 +45,7 @@ export class AdminPayoutsController {
   @ApiResponse({ status: 200, description: 'Chi tiết payout' })
   @ApiResponse({ status: 404, description: 'Payout không tồn tại' })
   async getPayout(@Param('payoutId') payoutId: string) {
-    const payout = await this.adminService.getPayoutById(payoutId);
-    return {
-      success: true,
-      data: payout,
-    };
+    return this.adminService.getPayoutById(payoutId);
   }
 
   /**
@@ -71,10 +62,7 @@ export class AdminPayoutsController {
   async approvePayout(@Req() req: any, @Param('payoutId') payoutId: string) {
     const adminId = req.user.uid;
     await this.adminService.approvePayout(adminId, payoutId);
-    return {
-      success: true,
-      message: 'Payout đã được approve',
-    };
+    return { message: 'Payout đã được approve' };
   }
 
   /**
@@ -96,10 +84,7 @@ export class AdminPayoutsController {
   ) {
     const adminId = req.user.uid;
     await this.adminService.rejectPayout(adminId, payoutId, dto.reason);
-    return {
-      success: true,
-      message: 'Payout đã bị reject',
-    };
+    return { message: 'Payout đã bị reject' };
   }
 
   /**
@@ -120,9 +105,6 @@ export class AdminPayoutsController {
   ) {
     const adminId = req.user.uid;
     await this.adminService.markPayoutTransferred(adminId, payoutId, dto.transferNote);
-    return {
-      success: true,
-      message: 'Đã đánh dấu payout là transferred',
-    };
+    return { message: 'Đã đánh dấu payout là transferred' };
   }
 }

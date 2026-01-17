@@ -9,15 +9,8 @@ sealed class ApiResult<out T> {
 }
 
 // ========== PROFILE MODELS ==========
-data class OuterProfileResponse(
-    @SerializedName("success")
-    val success: Boolean,
-
-    @SerializedName("data")
-    val data: InnerProfileResponse? = null,
-)
-
-data class InnerProfileResponse(
+// API /api/me trả về: { "success": true, "data": { "id": "...", ... } }
+data class ProfileResponse(
     @SerializedName("success")
     val success: Boolean,
 
@@ -25,7 +18,10 @@ data class InnerProfileResponse(
     val data: UserProfileData? = null,
 
     @SerializedName("message")
-    val message: String? = null
+    val message: String? = null,
+
+    @SerializedName("timestamp")
+    val timestamp: String? = null
 )
 
 data class UserProfileData(
@@ -50,8 +46,17 @@ data class UserProfileData(
     @SerializedName("status")
     val status: String? = null,
 
+    @SerializedName("emailVerified")
+    val emailVerified: Boolean? = null,
+
+    @SerializedName("fcmTokens")
+    val fcmTokens: List<String>? = null,
+
     @SerializedName("createdAt")
     val createdAt: String? = null,
+
+    @SerializedName("updatedAt")
+    val updatedAt: String? = null,
 
     @SerializedName("addresses")
     val addresses: List<UserAddress>? = null
@@ -83,44 +88,45 @@ data class UpdateProfileRequest(
     val avatarUrl: String? = null
 )
 
+// API update profile có thể trả về: { "success": true, "message": "...", "data": { ... } }
 data class UpdateProfileResponse(
     @SerializedName("success")
     val success: Boolean,
 
     @SerializedName("message")
-    val message: String,
+    val message: String? = null,
 
     @SerializedName("data")
-    val data: UpdatedUserData
+    val data: UpdatedUserData? = null
 )
 
 data class UpdatedUserData(
     @SerializedName("id")
-    val id: String,
+    val id: String? = null,
 
     @SerializedName("email")
-    val email: String,
+    val email: String? = null,
 
     @SerializedName("displayName")
-    val displayName: String,
+    val displayName: String? = null,
 
     @SerializedName("phone")
-    val phone: String,
+    val phone: String? = null,
 
     @SerializedName("avatarUrl")
-    val avatarUrl: String,
+    val avatarUrl: String? = null,
 
     @SerializedName("role")
-    val role: String,
+    val role: String? = null,
 
     @SerializedName("status")
-    val status: String,
+    val status: String? = null,
 
     @SerializedName("createdAt")
-    val createdAt: String,
+    val createdAt: String? = null,
 
     @SerializedName("updatedAt")
-    val updatedAt: String
+    val updatedAt: String? = null
 )
 
 // ========== CREATE ADDRESS MODELS ==========
@@ -149,69 +155,57 @@ data class CreateAddressResponse(
     val success: Boolean,
 
     @SerializedName("message")
-    val message: String,
+    val message: String? = null,
 
     @SerializedName("data")
-    val data: AddressData
+    val data: AddressData? = null
 )
 
 data class AddressData(
     @SerializedName("id")
-    val id: String,
+    val id: String? = null,
 
     @SerializedName("label")
-    val label: String,
+    val label: String? = null,
 
     @SerializedName("fullAddress")
-    val fullAddress: String,
+    val fullAddress: String? = null,
 
     @SerializedName("building")
-    val building: String?,
+    val building: String? = null,
 
     @SerializedName("room")
-    val room: String?,
+    val room: String? = null,
 
     @SerializedName("note")
-    val note: String?,
+    val note: String? = null,
 
     @SerializedName("isDefault")
-    val isDefault: Boolean,
+    val isDefault: Boolean = false,
 
     @SerializedName("createdAt")
-    val createdAt: String,
+    val createdAt: String? = null,
 
     @SerializedName("updatedAt")
-    val updatedAt: String
+    val updatedAt: String? = null
 )
 
 // ========== GET ADDRESSES RESPONSE MODELS ==========
-
-/**
- * Response chính cho API GET /me/addresses
- * Format: { "success": true, "data": { "success": true, "data": [array] } }
- */
+// API /api/me/addresses trả về: { "success": true, "data": [] }
 data class GetAddressesResponse(
     @SerializedName("success")
     val success: Boolean,
 
     @SerializedName("data")
-    val data: InnerAddressData? = null  // Đây là một object, không phải List
+    val data: List<AddressResponse>? = null,  // Data là array trực tiếp
+
+    @SerializedName("message")
+    val message: String? = null,
+
+    @SerializedName("timestamp")
+    val timestamp: String? = null
 )
 
-/**
- * Inner data structure - chứa mảng addresses thực sự
- */
-data class InnerAddressData(
-    @SerializedName("success")
-    val success: Boolean,
-
-    @SerializedName("data")
-    val data: List<AddressResponse>? = null
-)
-
-/**
- * Model chi tiết cho địa chỉ - mapping với AddressEntity của backend
- */
 data class AddressResponse(
     @SerializedName("id")
     val id: String? = null,
@@ -242,4 +236,54 @@ data class AddressResponse(
 
     @SerializedName("updatedAt")
     val updatedAt: String? = null
+)
+
+// ========== DELETE ADDRESS RESPONSE ==========
+data class DeleteAddressResponse(
+    @SerializedName("success")
+    val success: Boolean,
+
+    @SerializedName("message")
+    val message: String? = null
+)
+
+// ========== UPDATE ADDRESS MODELS ==========
+data class UpdateAddressRequest(
+    @SerializedName("label")
+    val label: String? = null,
+
+    @SerializedName("fullAddress")
+    val fullAddress: String? = null,
+
+    @SerializedName("building")
+    val building: String? = null,
+
+    @SerializedName("room")
+    val room: String? = null,
+
+    @SerializedName("note")
+    val note: String? = null,
+
+    @SerializedName("isDefault")
+    val isDefault: Boolean? = null
+)
+
+data class UpdateAddressResponse(
+    @SerializedName("success")
+    val success: Boolean,
+
+    @SerializedName("message")
+    val message: String? = null,
+
+    @SerializedName("data")
+    val data: AddressData? = null
+)
+
+// ========== SET DEFAULT ADDRESS RESPONSE ==========
+data class SetDefaultAddressResponse(
+    @SerializedName("success")
+    val success: Boolean,
+
+    @SerializedName("message")
+    val message: String? = null
 )

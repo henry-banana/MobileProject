@@ -39,7 +39,6 @@ class SignUpViewModel(
 
     private val _saveUserState = MutableLiveData<Boolean?>(null)
     val saveUserState: LiveData<Boolean?> = _saveUserState
-
     fun registerWithEmail(displayName: String, email: String, password: String, confirmPassword: String) {
         // Validate input
         val validationResult = validateInput(displayName, email, password, confirmPassword)
@@ -51,62 +50,60 @@ class SignUpViewModel(
         viewModelScope.launch {
             _signUpState.value = SignUpState.Loading
             try {
+                // Gọi repository với model mới
                 val result = authRepository.register(email, displayName, password)
 
                 when (result) {
                     is ApiResult.Success -> {
-                        val apiResponse = result.data
+                        // result.data bây giờ là AuthData (không phải ApiResponse nữa)
+                        val authData = result.data
 
-                        // Kiểm tra outer success
-                        if (apiResponse.success) {
-                            val innerSuccess = apiResponse.data?.success ?: false
-                            val registerData = apiResponse.data?.data
-                            val userInfo = registerData?.user
+                        // Kiểm tra nếu authData hợp lệ
+                        if (authData.isValid) {
+                            val userInfo = authData.user
+                            val customToken = authData.customToken
 
-                            if (innerSuccess && userInfo != null && userInfo.isValid) {
+                            // SỬA: Dùng AuthManager để lưu user info
+                            authManager.saveUserInfo(
+                                userId = userInfo.id,
+                                email = userInfo.email,
+                                name = userInfo.displayName,
+                                role = userInfo.role,
+                                status = userInfo.status
+                            )
 
-                                // SỬA: Dùng AuthManager để lưu user info
-                                authManager.saveUserInfo(
-                                    userId = userInfo.id,
-                                    email = userInfo.email,
-                                    name = userInfo.displayName,
-                                    role = userInfo.role,
-                                    status = userInfo.status
-                                )
+                            if (customToken.isNotBlank()) {
+                                authManager.signInWithCustomToken(customToken) { isSuccessful, idToken, error ->
+                                    if (isSuccessful) {
+                                        if (!idToken.isNullOrEmpty()) {
+                                            // SỬA: Dùng AuthManager để lưu token với expiry time
+                                            authManager.saveFirebaseToken(idToken)
 
-                                val customToken = registerData.customToken
-                                if (!customToken.isNullOrEmpty()) {
-                                    authManager.signInWithCustomToken(customToken) { isSuccessful, idToken, error ->
-                                        if (isSuccessful) {
-                                            if (!idToken.isNullOrEmpty()) {
-                                                // SỬA: Dùng AuthManager để lưu token với expiry time
-                                                authManager.saveFirebaseToken(idToken)
+                                            Log.d("SignUpViewModel", "✅ Đăng ký & lưu token thành công")
+                                            Log.d("SignUpViewModel", "User ID: ${userInfo.id}")
+                                            Log.d("SignUpViewModel", "Email: ${userInfo.email}")
+                                            Log.d("SignUpViewModel", "Role: ${userInfo.role}")
 
-                                                Log.d("SignUpViewModel", "✅ Đăng ký & lưu token thành công")
+                                            // Debug: In thông tin token
+                                            authManager.debugTokenInfo()
 
-                                                // Debug: In thông tin token
-                                                authManager.debugTokenInfo()
-                                            } else {
-                                                Log.w("SignUpViewModel", "⚠ Firebase ID Token trống")
-                                            }
+                                            _signUpState.postValue(SignUpState.Success)
                                         } else {
-                                            Log.w("SignUpViewModel", "⚠ Không thể sign in Firebase: $error")
+                                            Log.w("SignUpViewModel", "⚠ Firebase ID Token trống")
+                                            _signUpState.postValue(SignUpState.Success) // Vẫn success vì đã có user info
                                         }
-                                        _signUpState.postValue(SignUpState.Success)
+                                    } else {
+                                        Log.w("SignUpViewModel", "⚠ Không thể sign in Firebase: $error")
+                                        _signUpState.postValue(SignUpState.Success) // Vẫn success vì đã có user info
                                     }
-                                } else {
-                                    Log.w("SignUpViewModel", "⚠ Custom token trống từ backend")
-                                    _signUpState.value = SignUpState.Success
                                 }
                             } else {
-                                val errorMsg = apiResponse.data?.message ?: "Không nhận được thông tin người dùng"
-                                Log.w("SignUpViewModel", "❌ Inner failure: $errorMsg")
-                                _signUpState.value = SignUpState.Error(errorMsg)
+                                Log.w("SignUpViewModel", "⚠ Custom token trống từ backend")
+                                _signUpState.value = SignUpState.Success // Đã có user info từ API
                             }
                         } else {
-                            val errorMsg = apiResponse.message ?: "Đăng ký thất bại"
-                            Log.e("SignUpViewModel", "❌ Outer failure: $errorMsg")
-                            _signUpState.value = SignUpState.Error(errorMsg)
+                            Log.e("SignUpViewModel", "❌ AuthData không hợp lệ")
+                            _signUpState.value = SignUpState.Error("Dữ liệu người dùng không hợp lệ")
                         }
                     }
 
@@ -117,6 +114,7 @@ class SignUpViewModel(
                     }
                 }
             } catch (e: Exception) {
+                Log.e("SignUpViewModel", "❌ Exception: ${e.message}", e)
                 _signUpState.value = SignUpState.Error("Lỗi không xác định: ${e.message}")
             }
         }

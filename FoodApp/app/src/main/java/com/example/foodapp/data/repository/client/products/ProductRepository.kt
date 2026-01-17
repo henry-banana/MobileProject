@@ -11,10 +11,7 @@ import com.example.foodapp.data.model.shared.product.Product
 import com.example.foodapp.data.remote.client.response.product.ApiResult
 import com.example.foodapp.data.remote.client.response.product.FavoriteProductsApiResponse
 import com.example.foodapp.data.remote.client.response.product.FavoriteQueryParams
-import com.example.foodapp.data.remote.client.response.product.getInnerData
-import com.example.foodapp.data.remote.client.response.product.getProductIds
-import com.example.foodapp.data.remote.client.response.product.toProductList
-
+import com.example.foodapp.data.remote.client.response.product.CheckFavoriteResponse
 import javax.inject.Inject
 
 class ProductRepository @Inject constructor(
@@ -190,7 +187,7 @@ class ProductRepository @Inject constructor(
     // ============== SỬA CÁC HÀM LẤY DANH SÁCH YÊU THÍCH ==============
 
     /**
-     * Lấy danh sách sản phẩm yêu thích với phân trang (API Response wrapper)
+     * Lấy danh sách sản phẩm yêu thích với phân trang
      * @param page Trang hiện tại (bắt đầu từ 1)
      * @param limit Số lượng sản phẩm mỗi trang
      */
@@ -207,14 +204,19 @@ class ProductRepository @Inject constructor(
                 println("DEBUG: [ProductRepository] Get favorites API Response success: ${apiResponse.success}")
 
                 if (apiResponse.isValid) {
-                    val innerData = apiResponse.getInnerData()
-                    val productCount = innerData?.data?.size ?: 0
+                    val productCount = apiResponse.data?.data?.size ?: 0
                     println("DEBUG: [ProductRepository] Successfully got $productCount favorite products")
                     ApiResult.Success(apiResponse)
                 } else {
-                    val errorMessage = "Không thể lấy danh sách yêu thích"
-                    println("DEBUG: [ProductRepository] Error: $errorMessage")
-                    ApiResult.Failure(Exception(errorMessage))
+                    // Nếu API trả về success=true nhưng không có data, vẫn trả về response
+                    if (apiResponse.success) {
+                        println("DEBUG: [ProductRepository] No favorite products found")
+                        ApiResult.Success(apiResponse)
+                    } else {
+                        val errorMessage = apiResponse.message ?: "Không thể lấy danh sách yêu thích"
+                        println("DEBUG: [ProductRepository] Error: $errorMessage")
+                        ApiResult.Failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: IOException) {
                 println("DEBUG: [ProductRepository] IOException: ${e.message}")
@@ -255,14 +257,25 @@ class ProductRepository @Inject constructor(
 
                 val apiResponse = productService.getFavoriteProducts(params.page, params.limit)
 
-                if (apiResponse.isValid) {  // SỬA: Bỏ điều kiện apiResponse.pagination != null
-                    val products = apiResponse.toProductList()
+                if (apiResponse.isValid) {
+                    // Chuyển đổi sang list Product
+                    val products = if (apiResponse.data != null && apiResponse.data!!.data != null) {
+                        apiResponse.data!!.data.map { it.toProduct() }
+                    } else {
+                        emptyList()
+                    }
                     println("DEBUG: [ProductRepository] Successfully got ${products.size} favorite products")
                     ApiResult.Success(products)
                 } else {
-                    val errorMessage = "Không thể lấy danh sách yêu thích"
-                    println("DEBUG: [ProductRepository] Error: $errorMessage")
-                    ApiResult.Failure(Exception(errorMessage))
+                    // Nếu API trả về success=true nhưng không có data, coi như empty list
+                    if (apiResponse.success) {
+                        println("DEBUG: [ProductRepository] No favorite products found (empty list)")
+                        ApiResult.Success(emptyList())
+                    } else {
+                        val errorMessage = apiResponse.message ?: "Không thể lấy danh sách yêu thích"
+                        println("DEBUG: [ProductRepository] Error: $errorMessage")
+                        ApiResult.Failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: IOException) {
                 println("DEBUG: [ProductRepository] IOException: ${e.message}")
@@ -301,11 +314,21 @@ class ProductRepository @Inject constructor(
                 val apiResponse = productService.getFavoriteProducts(page = 1, limit = 100)
 
                 if (apiResponse.isValid) {
-                    val productIds = apiResponse.getProductIds()
+                    // Lấy productIds trực tiếp từ response
+                    val productIds = if (apiResponse.data != null && apiResponse.data!!.data != null) {
+                        apiResponse.data!!.data.map { it.productId }
+                    } else {
+                        emptyList()
+                    }
                     println("DEBUG: [ProductRepository] Got ${productIds.size} favorite product IDs")
                     ApiResult.Success(productIds)
                 } else {
-                    ApiResult.Success(emptyList())
+                    // Nếu API trả về success=true nhưng không có data, trả về empty list
+                    if (apiResponse.success) {
+                        ApiResult.Success(emptyList())
+                    } else {
+                        ApiResult.Failure(Exception("Không thể lấy danh sách ID yêu thích"))
+                    }
                 }
             } catch (e: IOException) {
                 println("DEBUG: [ProductRepository] IOException: ${e.message}")
@@ -329,7 +352,7 @@ class ProductRepository @Inject constructor(
     }
 
     /**
-     * Kiểm tra sản phẩm có trong danh sách yêu thích không
+     * Kiểm tra sản phẩm có trong danh sách yêu thích không (Dùng danh sách local)
      * @param productId ID sản phẩm cần kiểm tra
      */
     suspend fun isProductFavorite(productId: String): ApiResult<Boolean> {
@@ -341,6 +364,7 @@ class ProductRepository @Inject constructor(
                 when (result) {
                     is ApiResult.Success -> {
                         val isFavorite = result.data.contains(productId)
+                        println("DEBUG: [ProductRepository] isProductFavorite: $productId = $isFavorite")
                         ApiResult.Success(isFavorite)
                     }
                     is ApiResult.Failure -> {
@@ -356,40 +380,23 @@ class ProductRepository @Inject constructor(
         }
     }
 
-
     /**
-     * Kiểm tra sản phẩm có trong danh sách yêu thích không
+     * Kiểm tra sản phẩm có trong danh sách yêu thích không (Dùng API check trực tiếp)
      * @param productId ID sản phẩm cần kiểm tra
      */
-    // ProductRepository.kt - Sửa hàm checkIsFavorite với debug chi tiết
-    // ProductRepository.kt - Sửa hàm checkIsFavorite
     suspend fun checkIsFavorite(productId: String): ApiResult<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
-                println("DEBUG: [ProductRepository] Checking if product is favorite: $productId")
+                println("DEBUG: [ProductRepository] Checking if product is favorite (API): $productId")
 
                 // Gọi API check favorite
                 val apiResponse = productService.checkIsFavorite(productId)
 
-                // DEBUG: In chi tiết response
-                println("DEBUG: [ProductRepository] === RAW API RESPONSE ===")
-                println("DEBUG: [ProductRepository] Response class: ${apiResponse::class.java.name}")
-                println("DEBUG: [ProductRepository] Response toString: $apiResponse")
-                println("DEBUG: [ProductRepository] success: ${apiResponse.success}")
-                println("DEBUG: [ProductRepository] message: ${apiResponse.message}")
-                println("DEBUG: [ProductRepository] data: ${apiResponse.data}")
-                println("DEBUG: [ProductRepository] data?.success: ${apiResponse.data?.success}")
-                println("DEBUG: [ProductRepository] data?.data: ${apiResponse.data?.data}")
-                println("DEBUG: [ProductRepository] data?.data?.isFavorited: ${apiResponse.data?.data?.isFavorited}")
-                println("DEBUG: [ProductRepository] isFavorited (computed property): ${apiResponse.isFavorited}")
-                println("DEBUG: [ProductRepository] isValid: ${apiResponse.isValid}")
-
                 if (apiResponse.success) {
-                    // Sử dụng computed property isFavorited hoặc lấy giá trị trực tiếp
+                    // Sử dụng computed property isFavorited từ CheckFavoriteResponse
                     val isFavorited = apiResponse.isFavorited
-                    println("DEBUG: [ProductRepository] Product $productId is favorite: $isFavorited")
+                    println("DEBUG: [ProductRepository] API Check Result: Product $productId is favorite: $isFavorited")
 
-                    // KHÔNG DÙNG WORKAROUND SAI - CHỈ TRẢ VỀ GIÁ TRỊ THỰC
                     ApiResult.Success(isFavorited)
                 } else {
                     val errorMessage = apiResponse.message ?: "Không thể kiểm tra trạng thái yêu thích"
@@ -420,7 +427,5 @@ class ProductRepository @Inject constructor(
             }
         }
     }
-
-
 
 }

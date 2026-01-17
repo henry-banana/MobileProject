@@ -85,11 +85,7 @@ export class MeController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getProfile(@CurrentUser() user: any) {
-    const profile = await this.usersService.getProfileWithAddresses(user.uid);
-    return {
-      success: true,
-      data: profile,
-    };
+    return this.usersService.getProfileWithAddresses(user.uid);
   }
 
   /**
@@ -107,12 +103,7 @@ export class MeController {
   @ApiResponse({ status: 400, description: 'Invalid data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
-    const updated = await this.usersService.updateProfile(user.uid, dto);
-    return {
-      success: true,
-      message: 'Profile updated successfully',
-      data: updated,
-    };
+    return this.usersService.updateProfile(user.uid, dto);
   }
 
   /**
@@ -150,13 +141,7 @@ export class MeController {
 
     const avatarUrl = await this.usersService.uploadAvatar(user.uid, file.buffer, file.mimetype);
 
-    return {
-      success: true,
-      message: 'Avatar uploaded successfully',
-      data: {
-        avatarUrl,
-      },
-    };
+    return { avatarUrl };
   }
 
   // ==================== Settings ====================
@@ -171,11 +156,7 @@ export class MeController {
   @ApiOperation({ summary: 'Get my settings' })
   @ApiResponse({ status: 200, description: 'User settings' })
   async getSettings(@CurrentUser() user: any) {
-    const settings = await this.usersService.getSettings(user.uid);
-    return {
-      success: true,
-      data: settings,
-    };
+    return this.usersService.getSettings(user.uid);
   }
 
   /**
@@ -188,12 +169,7 @@ export class MeController {
   @ApiOperation({ summary: 'Update my settings' })
   @ApiResponse({ status: 200, description: 'Settings updated' })
   async updateSettings(@CurrentUser() user: any, @Body() dto: UserSettingsDto) {
-    const settings = await this.usersService.updateSettings(user.uid, dto);
-    return {
-      success: true,
-      message: 'Settings updated successfully',
-      data: settings,
-    };
+    return this.usersService.updateSettings(user.uid, dto);
   }
 
   // ==================== FCM Token ====================
@@ -212,10 +188,7 @@ export class MeController {
   @ApiResponse({ status: 200, description: 'FCM token updated' })
   async updateFcmToken(@CurrentUser() user: any, @Body() dto: UpdateFcmTokenDto) {
     await this.usersService.updateFcmToken(user.uid, dto.fcmToken, dto.deviceId);
-    return {
-      success: true,
-      message: 'FCM token updated successfully',
-    };
+    return { message: 'FCM token updated successfully' };
   }
 
   // ==================== Addresses ====================
@@ -230,11 +203,7 @@ export class MeController {
   @ApiOperation({ summary: 'List my addresses' })
   @ApiResponse({ status: 200, description: 'List of addresses' })
   async getAddresses(@CurrentUser() user: any) {
-    const addresses = await this.usersService.getAddresses(user.uid);
-    return {
-      success: true,
-      data: addresses,
-    };
+    return this.usersService.getAddresses(user.uid);
   }
 
   /**
@@ -249,12 +218,7 @@ export class MeController {
   @ApiResponse({ status: 201, description: 'Address created' })
   @ApiResponse({ status: 400, description: 'Invalid data' })
   async createAddress(@CurrentUser() user: any, @Body() dto: CreateAddressDto) {
-    const address = await this.usersService.createAddress(user.uid, dto);
-    return {
-      success: true,
-      message: 'Address created successfully',
-      data: address,
-    };
+    return this.usersService.createAddress(user.uid, dto);
   }
 
   /**
@@ -272,12 +236,7 @@ export class MeController {
     @Param('id') addressId: string,
     @Body() dto: UpdateAddressDto,
   ) {
-    const address = await this.usersService.updateAddress(user.uid, addressId, dto);
-    return {
-      success: true,
-      message: 'Address updated successfully',
-      data: address,
-    };
+    return this.usersService.updateAddress(user.uid, addressId, dto);
   }
 
   /**
@@ -293,10 +252,7 @@ export class MeController {
   @ApiResponse({ status: 404, description: 'Address not found' })
   async deleteAddress(@CurrentUser() user: any, @Param('id') addressId: string) {
     await this.usersService.deleteAddress(user.uid, addressId);
-    return {
-      success: true,
-      message: 'Address deleted successfully',
-    };
+    return { message: 'Address deleted successfully' };
   }
 
   /**
@@ -311,10 +267,7 @@ export class MeController {
   @ApiResponse({ status: 404, description: 'Address not found' })
   async setDefaultAddress(@CurrentUser() user: any, @Param('id') addressId: string) {
     await this.usersService.setDefaultAddress(user.uid, addressId);
-    return {
-      success: true,
-      message: 'Default address set successfully',
-    };
+    return { message: 'Default address set successfully' };
   }
 
   // ==================== Delete Account ====================
@@ -335,9 +288,6 @@ export class MeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteAccount(@CurrentUser() user: any) {
     await this.usersService.deleteAccount(user.uid);
-    return {
-      success: true,
-      message: 'Account deleted successfully',
-    };
+    return { message: 'Account deleted successfully' };
   }
 }

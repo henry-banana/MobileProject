@@ -19,17 +19,16 @@ interface ProductApiService {
     suspend fun getProducts(
         @QueryMap filters: Map<String, String>
     ): ProductApiResponse
+
     @GET("products/{id}")
     suspend fun getProductDetail(
         @Path("id") productId: String
     ): ProductDetailApiResponse
 
-
     @POST("me/favorites/products/{productId}")
     suspend fun addToFavorites(
         @Path("productId") productId: String
     ): FavoriteResponse
-
 
     @DELETE("me/favorites/products/{productId}")
     suspend fun deleteFavorites(
@@ -42,6 +41,7 @@ interface ProductApiService {
         @Query("limit") limit: Int = 20
     ): FavoriteProductsApiResponse
 
+    // Endpoint check favorite hiện tại - giữ nguyên
     @GET("me/favorites/products/{productId}")
     suspend fun checkIsFavorite(
         @Path("productId") productId: String

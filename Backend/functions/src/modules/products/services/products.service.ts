@@ -25,9 +25,9 @@ export class ProductsService {
   /**
  * Find product by ID (public access - for other services)
  */
-async findOne(productId: string): Promise<ProductEntity> {
-  return await this.getProductById(productId);
-}
+  async findOne(productId: string): Promise<ProductEntity> {
+    return await this.getProductById(productId);
+  }
 
   // ==================== Owner Operations ====================
 

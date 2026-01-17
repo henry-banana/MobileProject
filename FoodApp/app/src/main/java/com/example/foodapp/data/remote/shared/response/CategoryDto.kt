@@ -8,13 +8,13 @@ sealed class ApiResult<out T> {
     data class Failure(val exception: Exception) : ApiResult<Nothing>()
 }
 
-// Response chính từ API
+// Response chính từ API - FIXED
 data class CategoryApiResponse(
     @SerializedName("success")
     val success: Boolean,
 
     @SerializedName("data")
-    val data: CategoryDataWrapper? = null,  // Đây là object wrapper, không phải array
+    val data: List<CategoryDto>? = null,  // <-- Thay đổi: List trực tiếp
 
     @SerializedName("message")
     val message: String? = null,
@@ -23,20 +23,7 @@ data class CategoryApiResponse(
     val timestamp: String? = null
 )
 
-// Wrapper bên trong data field
-data class CategoryDataWrapper(
-    @SerializedName("success")
-    val success: Boolean? = null,
-
-    @SerializedName("data")
-    val data: List<CategoryDto>? = null,  // Array categories thực sự ở đây
-
-    @SerializedName("message")
-    val message: String? = null,
-
-    @SerializedName("timestamp")
-    val timestamp: String? = null
-)
+// XÓA class CategoryDataWrapper vì không cần
 
 // DTO cho từng category
 data class CategoryDto(
@@ -52,7 +39,7 @@ data class CategoryDto(
     @SerializedName("icon")
     val icon: String? = null,
 
-    @SerializedName("status")  // API dùng "status", không phải "isActive"
+    @SerializedName("status")
     val status: String? = null,
 
     @SerializedName("slug")
@@ -77,7 +64,6 @@ fun CategoryDto.toCategory(): Category {
         name = name ?: "",
         description = description,
         icon = icon,
-        // Chuyển đổi status string sang boolean
         isActive = status?.equals("active", ignoreCase = true) == true
     )
 }

@@ -32,12 +32,7 @@ export class AdminShopsController {
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Danh sách shops' })
   async listShops(@Query() query: ListShopsQueryDto) {
-    const result = await this.adminService.listShops(query);
-    return {
-      success: true,
-      data: result.data,
-      meta: result.meta,
-    };
+    return this.adminService.listShops(query);
   }
 
   /**
@@ -49,11 +44,7 @@ export class AdminShopsController {
   @ApiResponse({ status: 200, description: 'Chi tiết shop' })
   @ApiResponse({ status: 404, description: 'Shop không tồn tại' })
   async getShop(@Param('shopId') shopId: string) {
-    const shop = await this.adminService.getShopById(shopId);
-    return {
-      success: true,
-      data: shop,
-    };
+    return this.adminService.getShopById(shopId);
   }
 
   /**
@@ -81,9 +72,6 @@ export class AdminShopsController {
       [ShopAdminStatus.BANNED]: 'Shop đã bị cấm',
     };
 
-    return {
-      success: true,
-      message: messages[dto.status],
-    };
+    return { message: messages[dto.status] };
   }
 }

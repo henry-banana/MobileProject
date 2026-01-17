@@ -22,33 +22,20 @@ class CategoryRepository() {
 
                 println("DEBUG: [CategoryRepository] API Response: success=${response.success}")
 
-                // Log chi tiết để debug
-                println("DEBUG: [CategoryRepository] Has data wrapper: ${response.data != null}")
-                println("DEBUG: [CategoryRepository] Wrapper success: ${response.data?.success}")
-                println("DEBUG: [CategoryRepository] Inner data count: ${response.data?.data?.size ?: 0}")
+                // Log chi tiết để debug - ĐÃ SỬA
+                println("DEBUG: [CategoryRepository] Has data: ${response.data != null}")
+                println("DEBUG: [CategoryRepository] Raw data count: ${response.data?.size ?: 0}")
 
                 if (response.success) {
-                    // Lấy wrapper từ response
-                    val wrapper = response.data
-
-                    if (wrapper == null) {
-                        println("DEBUG: [CategoryRepository] Wrapper is null")
-                        return@withContext ApiResult.Failure(Exception("Không có dữ liệu trả về"))
-                    }
-
-                    // Kiểm tra success của wrapper (nếu có)
-                    val isWrapperSuccess = wrapper.success ?: true
-
-                    if (!isWrapperSuccess) {
-                        val errorMessage = wrapper.message ?: "Failed to load categories"
-                        println("DEBUG: [CategoryRepository] Inner wrapper error: $errorMessage")
-                        return@withContext ApiResult.Failure(Exception(errorMessage))
-                    }
-
-                    // Lấy list categories từ wrapper.data
-                    val categoryDtos: List<CategoryDto> = wrapper.data ?: emptyList()
+                    // Lấy list categories trực tiếp từ response.data
+                    val categoryDtos: List<CategoryDto> = response.data ?: emptyList()
 
                     println("DEBUG: [CategoryRepository] Raw DTOs count: ${categoryDtos.size}")
+
+                    // Log chi tiết raw data
+                    categoryDtos.forEachIndexed { index, dto ->
+                        println("DEBUG: [CategoryRepository] Raw DTO ${index + 1}: id=${dto.id}, name=${dto.name}, status=${dto.status}")
+                    }
 
                     // Convert DTOs sang Models
                     val categories = mutableListOf<Category>()
@@ -81,7 +68,7 @@ class CategoryRepository() {
                     }
                 } else {
                     val errorMessage = response.message ?: "Failed to load categories"
-                    println("DEBUG: [CategoryRepository] Outer response error: $errorMessage")
+                    println("DEBUG: [CategoryRepository] API response error: $errorMessage")
                     ApiResult.Failure(Exception(errorMessage))
                 }
             }

@@ -26,7 +26,7 @@ data class CheckFavoriteResponse @JvmOverloads constructor(
     val success: Boolean = false,
 
     @SerializedName("data")
-    val data: CheckFavoriteDataWrapper? = null,  // Đổi tên để rõ hơn
+    val data: CheckFavoriteDataWrapper? = null,
 
     @SerializedName("message")
     val message: String? = null,
@@ -49,7 +49,7 @@ data class CheckFavoriteDataWrapper @JvmOverloads constructor(
     val success: Boolean = false,
 
     @SerializedName("data")
-    val data: CheckFavoriteActualData? = null  // Đây là object thứ 2
+    val data: CheckFavoriteActualData? = null
 )
 
 /**
@@ -86,8 +86,8 @@ data class FavoriteResponse @JvmOverloads constructor(
  * WRAPPER response cho danh sách sản phẩm yêu thích từ API
  * Format: {
  *   "success": true,
- *   "data": FavoriteProductsInnerResponse,
- *   "timestamp": "2026-01-15T10:19:35.682Z"
+ *   "data": FavoriteProductsData,
+ *   "timestamp": "2026-01-16T19:47:14.275Z"
  * }
  */
 data class FavoriteProductsApiResponse @JvmOverloads constructor(
@@ -95,7 +95,7 @@ data class FavoriteProductsApiResponse @JvmOverloads constructor(
     val success: Boolean = false,
 
     @SerializedName("data")
-    val data: FavoriteProductsInnerResponse? = null,
+    val data: FavoriteProductsData? = null,
 
     @SerializedName("message")
     val message: String? = null,
@@ -103,30 +103,31 @@ data class FavoriteProductsApiResponse @JvmOverloads constructor(
     @SerializedName("timestamp")
     val timestamp: String? = null
 ) {
-    val isValid: Boolean get() = success && data != null && data.success
-    val isEmpty: Boolean get() = data?.isEmpty ?: true
+    val isValid: Boolean get() = success && data != null
+    val isEmpty: Boolean get() = data?.data?.isEmpty() ?: true
 }
 
 /**
- * INNER response chứa danh sách thực sự
+ * DATA chứa danh sách thực sự và phân trang
  * Format: {
- *   "success": true,
  *   "data": [FavoriteProductItem],
- *   "pagination": {...}
+ *   "pagination": {
+ *     "total": 0,
+ *     "page": 1,
+ *     "limit": 20,
+ *     "hasMore": false
+ *   }
  * }
  */
-data class FavoriteProductsInnerResponse @JvmOverloads constructor(
-    @SerializedName("success")
-    val success: Boolean = false,
-
+data class FavoriteProductsData @JvmOverloads constructor(
     @SerializedName("data")
-    val data: List<FavoriteProductItem> = emptyList(),
+    val data: List<FavoriteProductItem> = emptyList(),  // ← Chỉ có data và pagination, không có success
 
     @SerializedName("pagination")
     val pagination: FavoritePagination? = null
 ) {
-    val isValid: Boolean get() = success && pagination != null
     val isEmpty: Boolean get() = data.isEmpty()
+    val hasData: Boolean get() = data.isNotEmpty()
 }
 
 /**
@@ -268,22 +269,22 @@ fun FavoriteProductsApiResponse.getPagination(): FavoritePagination? {
 }
 
 // Extension để lấy inner data dễ dàng
-fun FavoriteProductsApiResponse.getInnerData(): FavoriteProductsInnerResponse? {
+fun FavoriteProductsApiResponse.getInnerData(): FavoriteProductsData? {
     return if (isValid) data else null
 }
 
-// Extension cho FavoriteProductsInnerResponse
-fun FavoriteProductsInnerResponse.toProductList(): List<Product> {
+// Extension cho FavoriteProductsData
+fun FavoriteProductsData.toProductList(): List<Product> {
     return data.map { it.toProduct() }
 }
 
 // Extension để lấy productIds từ danh sách yêu thích
-fun FavoriteProductsInnerResponse.getProductIds(): List<String> {
+fun FavoriteProductsData.getProductIds(): List<String> {
     return data.map { it.productId }
 }
 
 // Extension để kiểm tra sản phẩm có trong danh sách yêu thích không
-fun FavoriteProductsInnerResponse.containsProduct(productId: String): Boolean {
+fun FavoriteProductsData.containsProduct(productId: String): Boolean {
     return data.any { it.productId == productId }
 }
 
@@ -333,7 +334,7 @@ data class ProductDetailApiResponse @JvmOverloads constructor(
     val success: Boolean = false,
 
     @SerializedName("data")
-    val data: ProductApiModel? = null,  // ← ProductApiModel trực tiếp
+    val data: ProductApiModel? = null,
 
     @SerializedName("message")
     val message: String? = null,
@@ -601,8 +602,8 @@ fun ProductListData.toProductList(): List<Product> {
     return products.toProductList()
 }
 
-// Extension cho FavoriteProductsInnerResponse để kiểm tra sản phẩm có trong danh sách không (tiện lợi)
-fun FavoriteProductsInnerResponse.isProductFavorite(productId: String): Boolean {
+// Extension để kiểm tra sản phẩm có trong danh sách không (tiện lợi)
+fun FavoriteProductsData.isProductFavorite(productId: String): Boolean {
     return containsProduct(productId)
 }
 
