@@ -18,8 +18,9 @@ class RealCategoryRepository(private val apiService: CategoriesApiService) : Own
                 val response = apiService.getCategories()
                 if (response.isSuccessful && response.body() != null) {
                     val body = response.body()!!
-                    if (body.success && body.data.success) {
-                        Result.success(body.data.data)
+                    if (body.success) {
+                        // data là List<Category> trực tiếp
+                        Result.success(body.data)
                     } else {
                         Result.failure(Exception("Failed to get categories"))
                     }
