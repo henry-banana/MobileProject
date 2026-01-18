@@ -1,0 +1,257 @@
+import {
+  Controller,
+  Get,
+  Put,
+  Param,
+  Req,
+  UseGuards,
+  Query,
+  HttpCode,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+  ApiConflictResponse,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
+  ApiQuery,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { OrdersService } from '../services';
+import {
+  OrderFilterDto,
+  PaginatedOrdersDto,
+  OrderResponseDto,
+  PaginatedOrdersResponseDto,
+} from '../dto';
+import { OrderEntity } from '../entities';
+import { AuthGuard } from '../../../core/guards/auth.guard';
+import { RolesGuard } from '../../../core/guards/roles.guard';
+import { Roles } from '../../../core/decorators/roles.decorator';
+import { UserRole } from '../../../core/interfaces/user.interface';
+
+/**
+ * Orders Shipper Controller
+ *
+ * Shipper order management endpoints
+ * All endpoints require SHIPPER authentication
+ *
+ * Base URL: /api/orders
+ *
+ * Tasks: ORDER-013 to ORDER-016 (Phase 2)
+ */
+@ApiTags('Orders - Shipper')
+@Controller('orders')
+@ApiBearerAuth('firebase-auth')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles(UserRole.SHIPPER)
+export class OrdersShipperController {
+  constructor(private readonly ordersService: OrdersService) {}
+
+  /**
+   * GET /api/orders/shipper
+   * Get shipper's assigned orders with cursor-based pagination
+   *
+   * ORDER-016 (Phase 2)
+   */
+  @Get('shipper')
+  @ApiOperation({
+    summary: 'Get shipper orders',
+    description: 'Retrieve paginated list of orders assigned to shipper',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['READY', 'SHIPPING', 'DELIVERED'],
+    description: 'Filter by order status',
+    example: 'SHIPPING',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (1-indexed, default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of results per page (default: 10)',
+    example: 10,
+  })
+  @ApiOkResponse({
+    description: 'Orders retrieved successfully',
+    type: PaginatedOrdersResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @ApiResponse({
+    status: 412,
+    description: 'Firestore index required - Click the provided URL to create the index',
+    schema: {
+      example: {
+        success: false,
+        message: 'Query requires a Firestore index. Please create the index at: https://console.firebase.google.com/firestore/indexes',
+        errorCode: 'ORDER_INDEX_REQUIRED',
+        details: {
+          firestoreMessage: 'The query requires an index. You can create it here: ...',
+          indexUrl: 'https://console.firebase.google.com/firestore/indexes',
+        },
+        timestamp: '2026-01-18T10:30:00Z',
+      },
+    },
+  })
+  async getShipperOrders(
+    @Req() req: any,
+    @Query('status') status?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ): Promise<{
+    success: boolean;
+    data: PaginatedOrdersDto;
+    timestamp: string;
+  }> {
+    const filter: OrderFilterDto = { status, page, limit };
+    const data = await this.ordersService.getShipperOrders(
+      req.user.uid,
+      filter,
+    );
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * PUT /api/orders/:id/accept
+   * Accept order for delivery (shipper)
+   *
+   * ORDER-013 (Phase 2)
+   */
+  @Put(':id/accept')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Accept order',
+    description:
+      'Accept an order for delivery (shipper only, must be in READY status, no shipper assigned)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Order ID',
+    example: 'order_123',
+  })
+  @ApiOkResponse({
+    description: 'Order accepted successfully',
+    type: OrderResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Order not found' })
+  @ApiConflictResponse({
+    description:
+      'Invalid state transition or order already assigned to another shipper',
+  })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  async acceptOrder(
+    @Req() req: any,
+    @Param('id') orderId: string,
+  ): Promise<{
+    success: boolean;
+    data: OrderEntity;
+    timestamp: string;
+  }> {
+    const data = await this.ordersService.acceptOrder(req.user.uid, orderId);
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * PUT /api/orders/:id/shipping
+   * Mark order as shipping (shipper picked up order)
+   *
+   * ORDER-014 (Phase 2)
+   */
+  @Put(':id/shipping')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Mark order as shipping',
+    description:
+      'Mark order as shipping/picked up (shipper only). Note: Currently redundant with accept endpoint (both transition to SHIPPING). Kept for API completeness in case of future state split: READY→ASSIGNED→SHIPPING. Updates shippingAt timestamp if not already set.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Order ID',
+    example: 'order_123',
+  })
+  @ApiOkResponse({
+    description: 'Order marked as shipping successfully',
+    type: OrderResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Order not found' })
+  @ApiConflictResponse({ description: 'Invalid state transition' })
+  @ApiForbiddenResponse({ description: 'Shipper not assigned to this order' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  async markShipping(
+    @Req() req: any,
+    @Param('id') orderId: string,
+  ): Promise<{
+    success: boolean;
+    data: OrderEntity;
+    timestamp: string;
+  }> {
+    const data = await this.ordersService.markShipping(req.user.uid, orderId);
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * PUT /api/orders/:id/delivered
+   * Mark order as delivered
+   *
+   * ORDER-015 (Phase 2)
+   */
+  @Put(':id/delivered')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Mark order as delivered',
+    description:
+      'Mark order as delivered (shipper only, must be in SHIPPING status and assigned to this shipper). For COD orders, payment status automatically updates to PAID upon delivery.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Order ID',
+    example: 'order_123',
+  })
+  @ApiOkResponse({
+    description: 'Order marked as delivered successfully',
+    type: OrderResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Order not found' })
+  @ApiConflictResponse({ description: 'Invalid state transition' })
+  @ApiForbiddenResponse({ description: 'Shipper not assigned to this order' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  async markDelivered(
+    @Req() req: any,
+    @Param('id') orderId: string,
+  ): Promise<{
+    success: boolean;
+    data: OrderEntity;
+    timestamp: string;
+  }> {
+    const data = await this.ordersService.markDelivered(req.user.uid, orderId);
+    return {
+      success: true,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+  }
+}

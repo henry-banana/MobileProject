@@ -18,6 +18,6 @@ import { SharedModule } from '../../shared/shared.module';
       useClass: FirestoreShippersRepository,
     },
   ],
-  exports: [ShippersService],
+  exports: [ShippersService, 'IShippersRepository'],
 })
 export class ShippersModule {}

@@ -4,6 +4,7 @@ import {
   ShipperApplicationEntity,
   ApplicationStatus,
 } from '../entities/shipper-application.entity';
+import { ShipperEntity } from '../entities/shipper.entity';
 import { IShippersRepository } from './shippers-repository.interface';
 
 @Injectable()
@@ -154,5 +155,35 @@ export class FirestoreShippersRepository implements IShippersRepository {
       id: doc.id,
       ...doc.data(),
     }));
+  }
+
+  /**
+   * Find shipper by ID - used by OrdersService to check availability
+   * Shippers are stored in the 'users' collection with role: 'SHIPPER'
+   */
+  async findById(id: string): Promise<ShipperEntity | null> {
+    const doc = await this.firestore.collection(this.usersCollection).doc(id).get();
+
+    if (!doc.exists) {
+      return null;
+    }
+
+    const data = doc.data()!;
+    return {
+      id: doc.id,
+      name: data.name || '',
+      phone: data.phone || '',
+      avatar: data.avatar || '',
+      shipperInfo: data.shipperInfo,
+      createdAt: data.createdAt?.toDate?.() || data.createdAt,
+      updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+    } as ShipperEntity;
+  }
+
+  /**
+   * Update shipper - used by OrdersService to manage shipper availability status
+   */
+  async update(id: string, updates: Partial<ShipperEntity>): Promise<void> {
+    await this.firestore.collection(this.usersCollection).doc(id).update(updates);
   }
 }
