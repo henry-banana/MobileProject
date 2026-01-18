@@ -16,14 +16,14 @@ export class ResponseWrapperDto<T> {
   data: T;
 
   @ApiProperty({
-    description: 'Response timestamp',
-    example: '2024-01-08T10:00:00.000Z',
+    description: 'Response timestamp (ISO-8601)',
+    example: '2026-01-18T15:12:20.059Z',
   })
   timestamp: string;
 }
 
 /**
- * Wrapper specifically for OrderEntity responses
+ * Wrapper specifically for OrderEntity responses (detail/cancel)
  */
 export class OrderResponseDto {
   @ApiProperty({
@@ -33,11 +33,11 @@ export class OrderResponseDto {
   success: boolean;
 
   @ApiProperty({
-    description: 'Order data',
+    description: 'Order detail data (all timestamps as ISO-8601 strings)',
     example: {
-      id: 'order_123',
-      orderNumber: 'ORD-001',
-      customerId: 'user_123',
+      id: 'order_abc123def456',
+      orderNumber: 'ORD-1705591320000-A2B3C4',
+      customerId: 'user_cust_001',
       shopId: 'shop_123',
       shopName: 'Cơm Tấm Sườn',
       shipperId: null,
@@ -54,30 +54,44 @@ export class OrderResponseDto {
       shipFee: 15000,
       discount: 0,
       total: 65000,
-      status: 'PENDING',
+      status: 'CANCELLED',
       paymentStatus: 'UNPAID',
       paymentMethod: 'COD',
       deliveryAddress: {
-        street: '123 Nguyen Hue',
-        ward: 'Ben Nghe',
-        district: 'District 1',
-        city: 'Ho Chi Minh City',
+        label: 'KTX B5',
+        fullAddress: 'KTX Khu B - Tòa B5',
+        building: 'B5',
+        room: '101',
+        note: 'Gọi trước 5 phút',
       },
       deliveryNote: 'Call before delivery',
-      createdAt: '2024-01-08T10:00:00.000Z',
+      cancelReason: 'Changed my mind',
+      cancelledBy: 'CUSTOMER',
+      cancelledAt: '2026-01-18T15:12:20.059Z',
+      createdAt: '2026-01-18T14:00:00.000Z',
+      updatedAt: '2026-01-18T15:12:20.059Z',
+      confirmedAt: null,
+      preparingAt: null,
+      readyAt: null,
+      shippingAt: null,
+      deliveredAt: null,
+      reviewId: null,
+      reviewedAt: null,
+      paidOut: false,
+      paidOutAt: null,
     },
   })
   data: any;
 
   @ApiProperty({
-    description: 'Response timestamp',
-    example: '2024-01-08T10:00:00.000Z',
+    description: 'Response timestamp (ISO-8601)',
+    example: '2026-01-18T15:12:21.000Z',
   })
   timestamp: string;
 }
 
 /**
- * Wrapper for paginated orders responses
+ * Wrapper for paginated orders responses (list)
  */
 export class PaginatedOrdersResponseDto {
   @ApiProperty({
@@ -87,30 +101,30 @@ export class PaginatedOrdersResponseDto {
   success: boolean;
 
   @ApiProperty({
-    description: 'Paginated orders data',
+    description: 'Paginated orders data (list items with ISO-8601 timestamps)',
     example: {
       orders: [
         {
-          id: 'order_123',
-          orderNumber: 'ORD-001',
+          id: 'order_abc123def456',
+          orderNumber: 'ORD-1705591320000-A2B3C4',
           shopId: 'shop_123',
           shopName: 'Cơm Tấm Sườn',
           status: 'PENDING',
           paymentStatus: 'UNPAID',
           total: 65000,
           itemCount: 2,
-          createdAt: '2024-01-08T10:00:00.000Z',
+          createdAt: '2026-01-18T15:12:20.059Z',
         },
         {
-          id: 'order_124',
-          orderNumber: 'ORD-002',
+          id: 'order_def456ghi789',
+          orderNumber: 'ORD-1705590600000-X1Y2Z3',
           shopId: 'shop_123',
           shopName: 'Cơm Tấm Sườn',
           status: 'SHIPPING',
           paymentStatus: 'PAID',
           total: 85000,
           itemCount: 3,
-          createdAt: '2024-01-08T09:30:00.000Z',
+          createdAt: '2026-01-18T14:30:00.000Z',
         },
       ],
       page: 1,
@@ -122,8 +136,8 @@ export class PaginatedOrdersResponseDto {
   data: any;
 
   @ApiProperty({
-    description: 'Response timestamp',
-    example: '2024-01-08T10:00:00.000Z',
+    description: 'Response timestamp (ISO-8601)',
+    example: '2026-01-18T15:12:21.000Z',
   })
   timestamp: string;
 }

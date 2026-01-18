@@ -83,6 +83,10 @@ describe('OrdersService - Owner Flow', () => {
       findById: jest.fn(),
     };
 
+    const mockAddressesRepository = {
+      findById: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrdersService,
@@ -106,6 +110,10 @@ describe('OrdersService - Owner Flow', () => {
         {
           provide: 'IShippersRepository',
           useValue: {},
+        },
+        {
+          provide: 'IAddressesRepository',
+          useValue: mockAddressesRepository,
         },
       ],
     }).compile();

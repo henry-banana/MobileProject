@@ -62,6 +62,10 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
       update: jest.fn(),
     };
 
+    const mockAddressesRepository = {
+      findById: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrdersService,
@@ -85,6 +89,10 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         {
           provide: 'IShippersRepository',
           useValue: mockShippersRepository,
+        },
+        {
+          provide: 'IAddressesRepository',
+          useValue: mockAddressesRepository,
         },
       ],
     }).compile();

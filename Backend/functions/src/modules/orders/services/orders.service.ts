@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ConflictException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Timestamp } from 'firebase-admin/firestore';
 import { IOrdersRepository, ORDERS_REPOSITORY } from '../interfaces';
@@ -12,10 +13,12 @@ import { IProductsRepository } from '../../products/interfaces';
 import { IShopsRepository } from '../../shops/interfaces';
 import { IShippersRepository } from '../../shippers/repositories/shippers-repository.interface';
 import { ShipperStatus } from '../../shippers/entities/shipper.entity';
+import { IAddressesRepository, ADDRESSES_REPOSITORY } from '../../users/interfaces';
 import {
   OrderEntity,
   OrderStatus,
   PaymentStatus,
+  DeliveryAddress,
 } from '../entities';
 import {
   CreateOrderDto,
@@ -24,6 +27,9 @@ import {
   PaginatedOrdersDto,
 } from '../dto';
 import { OrderStateMachineService } from './order-state-machine.service';
+import { normalizeDeliveryAddress } from '../utils/address.normalizer';
+import { toIsoString } from '../utils/timestamp.serializer';
+
 
 @Injectable()
 export class OrdersService {
@@ -37,8 +43,86 @@ export class OrdersService {
     private readonly shopsRepo: IShopsRepository,
     @Inject('IShippersRepository')
     private readonly shippersRepo: IShippersRepository,
+    @Inject(ADDRESSES_REPOSITORY)
+    private readonly addressesRepo: IAddressesRepository,
     private readonly stateMachine: OrderStateMachineService,
   ) {}
+
+  /**
+   * Resolve delivery address from addressId or direct snapshot
+   * @param customerId - User ID
+   * @param dto - Create order DTO
+   * @returns Resolved delivery address snapshot
+   */
+  private async resolveDeliveryAddress(
+    customerId: string,
+    dto: CreateOrderDto,
+  ): Promise<DeliveryAddress> {
+    // Validation: require EITHER deliveryAddressId OR deliveryAddress
+    if (!dto.deliveryAddressId && !dto.deliveryAddress?.fullAddress) {
+      throw new BadRequestException({
+        code: 'ORDER_INVALID_ADDRESS',
+        message: 'Either deliveryAddressId or deliveryAddress.fullAddress is required',
+        statusCode: 400,
+      });
+    }
+
+    // Prefer deliveryAddressId if both provided
+    if (dto.deliveryAddressId) {
+      const savedAddress = await this.addressesRepo.findById(dto.deliveryAddressId);
+
+      if (!savedAddress) {
+        throw new NotFoundException({
+          code: 'ADDRESS_NOT_FOUND',
+          message: `Address ${dto.deliveryAddressId} not found`,
+          statusCode: 404,
+        });
+      }
+
+      // Verify ownership
+      if (savedAddress.userId !== customerId) {
+        throw new ForbiddenException({
+          code: 'ADDRESS_ACCESS_DENIED',
+          message: 'Cannot use address that belongs to another user',
+          statusCode: 403,
+        });
+      }
+
+      // Return snapshot (exclude isDefault, createdAt, updatedAt)
+      return {
+        id: savedAddress.id,
+        label: savedAddress.label,
+        fullAddress: savedAddress.fullAddress,
+        building: savedAddress.building || undefined,
+        room: savedAddress.room || undefined,
+        note: dto.deliveryNote || savedAddress.note || undefined, // Allow override
+      };
+    }
+
+    // Use direct snapshot from dto.deliveryAddress
+    if (dto.deliveryAddress) {
+      return {
+        label: dto.deliveryAddress.label,
+        fullAddress: dto.deliveryAddress.fullAddress!,
+        building: dto.deliveryAddress.building,
+        room: dto.deliveryAddress.room,
+        note: dto.deliveryNote || dto.deliveryAddress.note,
+        // Include legacy fields if provided (backward compatibility)
+        street: dto.deliveryAddress.street,
+        ward: dto.deliveryAddress.ward,
+        district: dto.deliveryAddress.district,
+        city: dto.deliveryAddress.city,
+        coordinates: dto.deliveryAddress.coordinates,
+      };
+    }
+
+    // Should never reach here due to validation above
+    throw new BadRequestException({
+      code: 'ORDER_INVALID_ADDRESS',
+      message: 'Invalid delivery address configuration',
+      statusCode: 400,
+    });
+  }
 
   /**
    * ORDER-002: Create a new order from cart
@@ -120,6 +204,14 @@ export class OrdersService {
 
     const total = subtotal + shipFee - discount;
 
+    // 6.5. Resolve delivery address (from addressId or snapshot)
+    const resolvedAddress = await this.resolveDeliveryAddress(customerId, dto);
+
+    // 6.6. Normalize delivery address (remove undefined values)
+    // This ensures Firestore doesn't try to store undefined fields
+    // (e.g., street/ward/district/city when using new KTX format)
+    const normalizedAddress = normalizeDeliveryAddress(resolvedAddress);
+
     // 7. Create order entity
     // PRICING LOCK: All item prices are taken from cart snapshot (price field).
     // Product price changes after add-to-cart do NOT affect the order.
@@ -143,7 +235,7 @@ export class OrdersService {
       status: OrderStatus.PENDING,
       paymentStatus: PaymentStatus.UNPAID,
       paymentMethod: dto.paymentMethod,
-      deliveryAddress: dto.deliveryAddress,
+      deliveryAddress: normalizedAddress, // Use normalized address (no undefined values)
       deliveryNote: dto.deliveryNote,
     };
 
@@ -201,8 +293,6 @@ export class OrdersService {
       limit: validLimit,
       total,
       totalPages,
-      hasNext: validPage < totalPages,
-      hasPrev: validPage > 1,
     };
   }
 
@@ -551,8 +641,6 @@ export class OrdersService {
       limit: validLimit,
       total,
       totalPages,
-      hasNext: validPage < totalPages,
-      hasPrev: validPage > 1,
     };
   }
 
@@ -803,8 +891,6 @@ export class OrdersService {
       limit: validLimit,
       total,
       totalPages,
-      hasNext: validPage < totalPages,
-      hasPrev: validPage > 1,
     };
   }
 
@@ -818,7 +904,7 @@ export class OrdersService {
       paymentStatus: order.paymentStatus,
       total: order.total,
       itemCount: order.items.length,
-      createdAt: order.createdAt,
+      createdAt: toIsoString(order.createdAt),
     };
   }
 

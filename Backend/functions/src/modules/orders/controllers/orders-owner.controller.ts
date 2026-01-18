@@ -44,6 +44,12 @@ import { UserRole } from '../../../core/interfaces/user.interface';
  *
  * Base URL: /api/orders
  *
+ * ⚠️ IMPORTANT: Role-Based Access Control
+ * - CUSTOMER or SHIPPER tokens calling these endpoints will receive 403 Forbidden
+ * - Error message: "Access denied. Required roles: OWNER"
+ * - All endpoints in this controller require OWNER role
+ * - See OrdersController for CUSTOMER endpoints, OrdersShipperController for SHIPPER endpoints
+ *
  * Tasks: ORDER-006 to ORDER-008, ORDER-010
  */
 @ApiTags('Orders - Owner')
@@ -56,7 +62,10 @@ export class OrdersOwnerController {
 
   /**
    * GET /api/orders/shop
-   * Get shop's orders with cursor-based pagination
+   * Get shop's orders with page-based pagination
+   *
+   * ⚠️ OWNER role required - CUSTOMER will receive 403 Forbidden
+   * Endpoint: /api/orders/shop (NOT /api/orders/owner)
    *
    * ORDER-010 (MVP)
    */
@@ -90,6 +99,7 @@ export class OrdersOwnerController {
     description: 'Orders retrieved successfully',
     type: PaginatedOrdersResponseDto,
   })
+  @ApiForbiddenResponse({ description: 'User is not an OWNER (403 - required role missing)' })
   @ApiNotFoundResponse({ description: 'Shop not found' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   async getShopOrders(
@@ -97,18 +107,9 @@ export class OrdersOwnerController {
     @Query('status') status?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
-  ): Promise<{
-    success: boolean;
-    data: PaginatedOrdersDto;
-    timestamp: string;
-  }> {
+  ): Promise<PaginatedOrdersDto> {
     const filter: OrderFilterDto = { status, page, limit };
-    const data = await this.ordersService.getShopOrders(req.user.uid, filter);
-    return {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    };
+    return this.ordersService.getShopOrders(req.user.uid, filter);
   }
 
   /**
@@ -140,16 +141,11 @@ export class OrdersOwnerController {
   async confirmOrder(
     @Req() req: any,
     @Param('id') orderId: string,
-  ): Promise<{ success: boolean; data: OrderEntity; timestamp: string }> {
-    const data = await this.ordersService.confirmOrder(
+  ): Promise<OrderEntity> {
+    return this.ordersService.confirmOrder(
       req.user.uid,
       orderId,
     );
-    return {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    };
   }
 
   /**
@@ -181,16 +177,11 @@ export class OrdersOwnerController {
   async markPreparing(
     @Req() req: any,
     @Param('id') orderId: string,
-  ): Promise<{ success: boolean; data: OrderEntity; timestamp: string }> {
-    const data = await this.ordersService.markPreparing(
+  ): Promise<OrderEntity> {
+    return this.ordersService.markPreparing(
       req.user.uid,
       orderId,
     );
-    return {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    };
   }
 
   /**
@@ -222,13 +213,8 @@ export class OrdersOwnerController {
   async markReady(
     @Req() req: any,
     @Param('id') orderId: string,
-  ): Promise<{ success: boolean; data: OrderEntity; timestamp: string }> {
-    const data = await this.ordersService.markReady(req.user.uid, orderId);
-    return {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    };
+  ): Promise<OrderEntity> {
+    return this.ordersService.markReady(req.user.uid, orderId);
   }
 
   /**
@@ -278,16 +264,11 @@ export class OrdersOwnerController {
     @Req() req: any,
     @Param('id') orderId: string,
     @Body() dto: CancelOrderDto,
-  ): Promise<{ success: boolean; data: OrderEntity; timestamp: string }> {
-    const data = await this.ordersService.ownerCancelOrder(
+  ): Promise<OrderEntity> {
+    return this.ordersService.ownerCancelOrder(
       req.user.uid,
       orderId,
       dto.reason,
     );
-    return {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    };
   }
 }

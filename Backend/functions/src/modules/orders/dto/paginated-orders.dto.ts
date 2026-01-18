@@ -31,16 +31,4 @@ export class PaginatedOrdersDto {
     example: 5,
   })
   totalPages: number;
-
-  @ApiProperty({
-    description: 'Whether there is a next page',
-    example: true,
-  })
-  hasNext: boolean;
-
-  @ApiProperty({
-    description: 'Whether there is a previous page',
-    example: false,
-  })
-  hasPrev: boolean;
 }

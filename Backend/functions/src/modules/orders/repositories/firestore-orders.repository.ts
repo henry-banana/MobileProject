@@ -3,6 +3,7 @@ import { Firestore, FieldValue } from 'firebase-admin/firestore';
 import { IOrdersRepository } from '../interfaces';
 import { OrderEntity, OrderStatus, PaymentStatus } from '../entities';
 import { FirestoreErrorHandler } from '../../../core/filters/firestore-error.handler';
+import { removeUndefinedDeep } from '../utils/address.normalizer';
 
 @Injectable()
 export class FirestoreOrdersRepository implements IOrdersRepository {
@@ -138,13 +139,34 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
     // TRANSACTION LAYER (atomic writes only)
     // Cart existence and shop-group validation happens in service layer BEFORE this is called.
     // This transaction simply performs atomic: create order + update/delete cart group.
+    //
+    // CRITICAL: Firestore requires ALL reads BEFORE any writes in a transaction.
 
     return await this.firestore.runTransaction(async (transaction) => {
-      // 1. Create order document
+      // ====================================================================
+      // PHASE A: READS ONLY (must happen first)
+      // ====================================================================
+
+      // 1. Read cart document first (before any writes)
+      const cartRef = this.firestore
+        .collection(this.cartsCollection)
+        .doc(customerId);
+      const cartSnap = await transaction.get(cartRef);
+
+      // ====================================================================
+      // PHASE B: WRITES ONLY (all reads completed)
+      // ====================================================================
+
+      // 2. Create order document
       const orderRef = this.firestore.collection(this.ordersCollection).doc();
 
+      // Remove undefined values before saving to Firestore
+      // This prevents "Cannot use 'undefined' as a Firestore value" errors
+      // (e.g., when using new KTX format without legacy street/ward/district/city fields)
+      const cleanedOrderData = removeUndefinedDeep(orderData);
+
       const newOrder = {
-        ...orderData,
+        ...cleanedOrderData,
         id: orderRef.id,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -152,12 +174,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
 
       transaction.set(orderRef, newOrder);
 
-      // 2. Update cart: Remove items for this shop only
-      const cartRef = this.firestore
-        .collection(this.cartsCollection)
-        .doc(customerId);
-      const cartSnap = await transaction.get(cartRef);
-
+      // 3. Update cart: Remove items for this shop only
       // Cart MUST exist at this point (validated in service layer)
       if (cartSnap.exists) {
         const cart = cartSnap.data();

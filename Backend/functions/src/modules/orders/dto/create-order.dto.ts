@@ -1,40 +1,92 @@
-import { IsString, IsOptional, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, ValidateNested, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DeliveryAddress } from '../entities';
 
-export class DeliveryAddressDto implements DeliveryAddress {
-  @ApiProperty({
-    description: 'Street address',
-    example: '123 Nguyen Hue',
+/**
+ * KTX-style delivery address for checkout
+ * Matches user AddressBook format
+ */
+export class DeliveryAddressDto {
+  @ApiPropertyOptional({
+    description: 'Address label (e.g., "Nhà", "Phòng ký túc xá")',
+    example: 'KTX B5',
   })
   @IsString()
-  street: string;
+  @IsOptional()
+  label?: string;
 
   @ApiProperty({
-    description: 'Ward name',
-    example: 'Ben Nghe',
+    description: 'Full address (KTX format)',
+    example: 'KTX Khu B - Tòa B5',
   })
   @IsString()
-  ward: string;
-
-  @ApiProperty({
-    description: 'District name',
-    example: 'District 1',
-  })
-  @IsString()
-  district: string;
-
-  @ApiProperty({
-    description: 'City name',
-    example: 'Ho Chi Minh City',
-  })
-  @IsString()
-  city: string;
+  fullAddress: string;
 
   @ApiPropertyOptional({
-    description: 'GPS coordinates (optional)',
+    description: 'Building identifier',
+    example: 'B5',
+  })
+  @IsString()
+  @IsOptional()
+  building?: string;
+
+  @ApiPropertyOptional({
+    description: 'Room number',
+    example: '101',
+  })
+  @IsString()
+  @IsOptional()
+  room?: string;
+
+  @ApiPropertyOptional({
+    description: 'Delivery instructions/note',
+    example: 'Gọi trước khi đến',
+  })
+  @IsString()
+  @IsOptional()
+  note?: string;
+
+  // Legacy fields - DEPRECATED, kept for backward compatibility
+  @ApiPropertyOptional({
+    description: '(DEPRECATED) Street address - use fullAddress instead',
+    example: '123 Nguyen Hue',
+    deprecated: true,
+  })
+  @IsString()
+  @IsOptional()
+  street?: string;
+
+  @ApiPropertyOptional({
+    description: '(DEPRECATED) Ward name - use fullAddress instead',
+    example: 'Ben Nghe',
+    deprecated: true,
+  })
+  @IsString()
+  @IsOptional()
+  ward?: string;
+
+  @ApiPropertyOptional({
+    description: '(DEPRECATED) District name - use fullAddress instead',
+    example: 'District 1',
+    deprecated: true,
+  })
+  @IsString()
+  @IsOptional()
+  district?: string;
+
+  @ApiPropertyOptional({
+    description: '(DEPRECATED) City name - use fullAddress instead',
+    example: 'Ho Chi Minh City',
+    deprecated: true,
+  })
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @ApiPropertyOptional({
+    description: '(DEPRECATED) GPS coordinates - optional',
     example: { lat: 10.7769, lng: 106.7009 },
+    deprecated: true,
   })
   @IsOptional()
   coordinates?: {
@@ -51,17 +103,26 @@ export class CreateOrderDto {
   @IsString()
   shopId: string;
 
-  @ApiProperty({
-    description: 'Delivery address details',
-    type: DeliveryAddressDto,
+  @ApiPropertyOptional({
+    description: 'ALTERNATIVE: Reference to saved address by ID (advanced use). Standard flow: frontend should fetch addresses, let user select/edit, then submit deliveryAddress snapshot.',
+    example: 'addr_abc123',
   })
-  @ValidateNested()
-  @Type(() => DeliveryAddressDto)
-  deliveryAddress: DeliveryAddressDto;
+  @IsString()
+  @IsOptional()
+  deliveryAddressId?: string;
 
   @ApiPropertyOptional({
-    description: 'Additional delivery notes',
-    example: 'Call before delivery',
+    description: 'Delivery address snapshot (RECOMMENDED). Frontend: GET /me/addresses, auto-select isDefault, allow user to edit note, then POST with this deliveryAddress object.',
+    type: DeliveryAddressDto,
+  })
+  @ValidateIf((o) => !o.deliveryAddressId)
+  @ValidateNested()
+  @Type(() => DeliveryAddressDto)
+  deliveryAddress?: DeliveryAddressDto;
+
+  @ApiPropertyOptional({
+    description: 'Additional delivery notes (overrides address note)',
+    example: 'Gọi trước 5 phút',
   })
   @IsString()
   @IsOptional()
@@ -76,7 +137,7 @@ export class CreateOrderDto {
   paymentMethod: 'COD' | 'ZALOPAY' | 'MOMO' | 'SEPAY';
 
   @ApiPropertyOptional({
-    description: 'Voucher code to apply (optional)',
+    description: 'Voucher code to apply (optional for all payment methods)',
     example: 'FREESHIP10',
   })
   @IsString()

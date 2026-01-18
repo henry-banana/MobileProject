@@ -9,6 +9,7 @@ import {
   UseGuards,
   Query,
   HttpCode,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -39,6 +40,7 @@ import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
 import { Roles } from '../../../core/decorators/roles.decorator';
 import { UserRole } from '../../../core/interfaces/user.interface';
+import { ResponseWrapperInterceptor } from '../interceptors';
 
 /**
  * Orders Controller - Customer Endpoints
@@ -55,6 +57,7 @@ import { UserRole } from '../../../core/interfaces/user.interface';
 @ApiBearerAuth('firebase-auth')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles(UserRole.CUSTOMER)
+@UseInterceptors(ResponseWrapperInterceptor)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -75,34 +78,48 @@ export class OrdersController {
   @ApiBody({
     type: CreateOrderDto,
     examples: {
-      cod: {
-        summary: 'COD Order',
+      codMinimal: {
+        summary: 'Example A: COD Order with KTX address',
+        description: 'Minimal COD order with deliveryAddress snapshot',
         value: {
-          shopId: 'shop_123',
+          shopId: 'shop_ktx_001',
           deliveryAddress: {
-            street: '123 Nguyen Hue',
-            ward: 'Ben Nghe',
-            district: 'District 1',
-            city: 'Ho Chi Minh City',
+            label: 'KTX B5',
+            fullAddress: 'KTX Khu B - Tòa B5',
+            building: 'B5',
+            room: '101',
+            note: 'Gọi trước 5 phút',
           },
-          deliveryNote: 'Call before delivery',
           paymentMethod: 'COD',
         },
       },
-      online: {
-        summary: 'Online Payment with Voucher',
+      onlineWithVoucher: {
+        summary: 'Example B: Online Payment with voucher',
+        description: 'ZALOPAY payment with deliveryAddress snapshot and voucher code',
         value: {
-          shopId: 'shop_456',
+          shopId: 'shop_ktx_002',
           deliveryAddress: {
-            street: '456 Le Loi',
-            ward: 'Ben Thanh',
-            district: 'District 1',
-            city: 'Ho Chi Minh City',
-            coordinates: { lat: 10.7769, lng: 106.7009 },
+            label: 'Phòng ký túc xá',
+            fullAddress: 'KTX Khu A - Tòa A2',
+            building: 'A2',
+            room: '205',
+            note: 'Để ở cổng tòa nhà',
           },
-          deliveryNote: 'Leave at door',
           paymentMethod: 'ZALOPAY',
           voucherCode: 'FREESHIP10',
+        },
+      },
+      oneTimeAddress: {
+        summary: 'Example C: One-time delivery address',
+        description: 'Order with custom one-time address (e.g., guest user or different location)',
+        value: {
+          shopId: 'shop_ktx_003',
+          deliveryAddress: {
+            label: 'Nhà bạn',
+            fullAddress: 'Số 123 Lý Thường Kiệt',
+            note: 'Gọi trước khi đến',
+          },
+          paymentMethod: 'COD',
         },
       },
     },
@@ -118,13 +135,8 @@ export class OrdersController {
   async createOrder(
     @Req() req: any,
     @Body() dto: CreateOrderDto,
-  ): Promise<{ success: boolean; data: OrderEntity; timestamp: string }> {
-    const order = await this.ordersService.createOrder(req.user.uid, dto);
-    return {
-      success: true,
-      data: order,
-      timestamp: new Date().toISOString(),
-    };
+  ): Promise<OrderEntity> {
+    return this.ordersService.createOrder(req.user.uid, dto);
   }
 
   /**
@@ -169,18 +181,9 @@ export class OrdersController {
     @Query('status') status?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
-  ): Promise<{
-    success: boolean;
-    data: PaginatedOrdersDto;
-    timestamp: string;
-  }> {
+  ): Promise<PaginatedOrdersDto> {
     const filter: OrderFilterDto = { status, page, limit };
-    const data = await this.ordersService.getMyOrders(req.user.uid, filter);
-    return {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    };
+    return this.ordersService.getMyOrders(req.user.uid, filter);
   }
 
   /**
@@ -209,16 +212,11 @@ export class OrdersController {
   async getOrderDetail(
     @Req() req: any,
     @Param('id') orderId: string,
-  ): Promise<{ success: boolean; data: OrderEntity; timestamp: string }> {
-    const data = await this.ordersService.getOrderDetail(
+  ): Promise<OrderEntity> {
+    return this.ordersService.getOrderDetail(
       req.user.uid,
       orderId,
     );
-    return {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    };
   }
 
   /**
@@ -236,7 +234,7 @@ export class OrdersController {
   @ApiParam({
     name: 'id',
     description: 'Order ID',
-    example: 'order_123',
+    example: 'order_abc123def456',
   })
   @ApiBody({
     type: CancelOrderDto,
@@ -256,6 +254,58 @@ export class OrdersController {
   @ApiOkResponse({
     description: 'Order cancelled successfully',
     type: OrderResponseDto,
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: 'order_abc123def456',
+          orderNumber: 'ORD-1705591320000-A2B3C4',
+          customerId: 'user_cust_001',
+          shopId: 'shop_123',
+          shopName: 'Cơm Tấm Sườn',
+          shipperId: null,
+          items: [
+            {
+              productId: 'prod_123',
+              productName: 'Cơm sườn bì chả',
+              quantity: 2,
+              price: 25000,
+              subtotal: 50000,
+            },
+          ],
+          subtotal: 50000,
+          shipFee: 15000,
+          discount: 0,
+          total: 65000,
+          status: 'CANCELLED',
+          paymentStatus: 'UNPAID',
+          paymentMethod: 'COD',
+          deliveryAddress: {
+            label: 'KTX B5',
+            fullAddress: 'KTX Khu B - Tòa B5',
+            building: 'B5',
+            room: '101',
+            note: 'Gọi trước 5 phút',
+          },
+          deliveryNote: 'Call before delivery',
+          cancelReason: 'Changed my mind',
+          cancelledBy: 'CUSTOMER',
+          cancelledAt: '2026-01-18T15:12:20.059Z',
+          createdAt: '2026-01-18T14:00:00.000Z',
+          updatedAt: '2026-01-18T15:12:20.059Z',
+          confirmedAt: null,
+          preparingAt: null,
+          readyAt: null,
+          shippingAt: null,
+          deliveredAt: null,
+          reviewId: null,
+          reviewedAt: null,
+          paidOut: false,
+          paidOutAt: null,
+        },
+        timestamp: '2026-01-18T15:12:21.000Z',
+      },
+    },
   })
   @ApiNotFoundResponse({ description: 'Order not found' })
   @ApiForbiddenResponse({ description: 'Not authorized' })
@@ -265,16 +315,11 @@ export class OrdersController {
     @Req() req: any,
     @Param('id') orderId: string,
     @Body() dto: CancelOrderDto,
-  ): Promise<{ success: boolean; data: OrderEntity; timestamp: string }> {
-    const data = await this.ordersService.cancelOrder(
+  ): Promise<OrderEntity> {
+    return this.ordersService.cancelOrder(
       req.user.uid,
       orderId,
       dto.reason,
     );
-    return {
-      success: true,
-      data,
-      timestamp: new Date().toISOString(),
-    };
   }
 }

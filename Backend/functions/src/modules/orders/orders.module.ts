@@ -6,6 +6,7 @@ import { ProductsModule } from '../products/products.module';
 import { ShopsModule } from '../shops/shops.module';
 import { CartModule } from '../cart/cart.module';
 import { ShippersModule } from '../shippers/shippers.module';
+import { UsersModule } from '../users/users.module';
 import { ORDERS_REPOSITORY } from './interfaces';
 
 @Module({
@@ -13,9 +14,10 @@ import { ORDERS_REPOSITORY } from './interfaces';
     ProductsModule,
     ShopsModule,
     CartModule,
+    UsersModule,
     forwardRef(() => ShippersModule),
   ],
-  controllers: [OrdersController, OrdersOwnerController, OrdersShipperController],
+  controllers: [OrdersOwnerController, OrdersShipperController, OrdersController],
   providers: [
     OrderStateMachineService,
     OrdersService,

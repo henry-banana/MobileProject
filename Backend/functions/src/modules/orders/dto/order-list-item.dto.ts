@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Timestamp } from 'firebase-admin/firestore';
 
 export class OrderListItemDto {
   @ApiProperty({
@@ -52,8 +53,9 @@ export class OrderListItemDto {
   itemCount: number;
 
   @ApiProperty({
-    description: 'Order creation timestamp',
-    example: '2024-01-08T10:00:00Z',
+    description: 'Order creation timestamp (ISO-8601 string)',
+    example: '2026-01-18T15:12:20.059Z',
+    type: String,
   })
-  createdAt: any;
+  createdAt: string | Timestamp | undefined;
 }
