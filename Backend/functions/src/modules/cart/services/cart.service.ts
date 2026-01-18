@@ -265,4 +265,38 @@ export class CartService {
       await this.cartRepo.delete(customerId);
     }
   }
+
+  async clearCartByShop(
+    customerId: string,
+    shopId: string,
+  ): Promise<{ removedCount: number; groups: CartGroupDto[] }> {
+    // 1. Get cart (return empty if no cart exists)
+    const cart = await this.cartRepo.findByCustomerId(customerId);
+    if (!cart || cart.items.length === 0) {
+      return { removedCount: 0, groups: [] };
+    }
+
+    // 2. Count items to remove
+    const itemsToRemove = cart.items.filter((item) => item.shopId === shopId);
+    const removedCount = itemsToRemove.length;
+
+    // 3. Remove items from this shop
+    cart.items = cart.items.filter((item) => item.shopId !== shopId);
+    cart.updatedAt = Timestamp.now();
+
+    // 4. Save (or delete if empty)
+    if (cart.items.length === 0) {
+      await this.cartRepo.delete(customerId);
+      return { removedCount, groups: [] };
+    } else {
+      await this.cartRepo.update(cart);
+    }
+
+    // 5. Return updated grouped cart
+    const grouped = await this.getCartGrouped(customerId);
+    return {
+      removedCount,
+      groups: grouped.groups,
+    };
+  }
 }

@@ -492,4 +492,247 @@ describe('CartService - Add to Cart Increment Logic', () => {
       expect(currentCart.items[1].quantity).toBe(3);
     });
   });
+
+  describe('clearCartByShop - Clear Shop Group', () => {
+    it('should remove only items from specified shop, keep other shops unchanged', async () => {
+      // Arrange
+      const customerId = 'customer_123';
+      const shopIdToRemove = 'shop_456';
+      
+      const existingCart: CartEntity = {
+        customerId,
+        items: [
+          {
+            productId: 'prod_123',
+            shopId: 'shop_456', // Will be removed
+            productName: 'Product A',
+            productImage: '',
+            quantity: 2,
+            priceAtAdd: 50000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+          {
+            productId: 'prod_456',
+            shopId: 'shop_456', // Will be removed
+            productName: 'Product B',
+            productImage: '',
+            quantity: 1,
+            priceAtAdd: 30000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+          {
+            productId: 'prod_789',
+            shopId: 'shop_999', // Will be kept
+            productName: 'Product C',
+            productImage: '',
+            quantity: 3,
+            priceAtAdd: 40000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+        ],
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      cartRepo.findByCustomerId.mockResolvedValue(existingCart);
+
+      // Act
+      const result = await service.clearCartByShop(customerId, shopIdToRemove);
+
+      // Assert
+      expect(result.removedCount).toBe(2); // 2 items from shop_456
+      expect(cartRepo.update).toHaveBeenCalledTimes(1);
+      
+      const updatedCart = cartRepo.update.mock.calls[0][0];
+      expect(updatedCart.items).toHaveLength(1); // Only 1 item left
+      expect(updatedCart.items[0].shopId).toBe('shop_999'); // From other shop
+      expect(updatedCart.items[0].productId).toBe('prod_789');
+      
+      expect(result.groups).toHaveLength(1); // Only one shop group left
+    });
+
+    it('should return removedCount 0 and unchanged cart when shop not in cart', async () => {
+      // Arrange
+      const customerId = 'customer_123';
+      const shopIdNotInCart = 'shop_nonexistent';
+      
+      const existingCart: CartEntity = {
+        customerId,
+        items: [
+          {
+            productId: 'prod_123',
+            shopId: 'shop_456',
+            productName: 'Product A',
+            productImage: '',
+            quantity: 2,
+            priceAtAdd: 50000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+        ],
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      cartRepo.findByCustomerId.mockResolvedValue(existingCart);
+
+      // Act
+      const result = await service.clearCartByShop(customerId, shopIdNotInCart);
+
+      // Assert
+      expect(result.removedCount).toBe(0); // No items removed
+      expect(cartRepo.update).toHaveBeenCalledTimes(1);
+      
+      const updatedCart = cartRepo.update.mock.calls[0][0];
+      expect(updatedCart.items).toHaveLength(1); // Cart unchanged
+      expect(updatedCart.items[0].shopId).toBe('shop_456');
+    });
+
+    it('should delete cart and return empty groups when cart becomes empty', async () => {
+      // Arrange
+      const customerId = 'customer_123';
+      const shopId = 'shop_456';
+      
+      const existingCart: CartEntity = {
+        customerId,
+        items: [
+          {
+            productId: 'prod_123',
+            shopId: 'shop_456', // Only shop in cart
+            productName: 'Product A',
+            productImage: '',
+            quantity: 2,
+            priceAtAdd: 50000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+          {
+            productId: 'prod_456',
+            shopId: 'shop_456', // Only shop in cart
+            productName: 'Product B',
+            productImage: '',
+            quantity: 1,
+            priceAtAdd: 30000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+        ],
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      cartRepo.findByCustomerId.mockResolvedValue(existingCart);
+
+      // Act
+      const result = await service.clearCartByShop(customerId, shopId);
+
+      // Assert
+      expect(result.removedCount).toBe(2); // All items removed
+      expect(result.groups).toEqual([]); // Empty cart
+      expect(cartRepo.delete).toHaveBeenCalledWith(customerId); // Cart deleted
+      expect(cartRepo.update).not.toHaveBeenCalled(); // No update, deleted instead
+    });
+
+    it('should return empty result when no cart exists', async () => {
+      // Arrange
+      const customerId = 'customer_123';
+      const shopId = 'shop_456';
+      
+      cartRepo.findByCustomerId.mockResolvedValue(null); // No cart
+
+      // Act
+      const result = await service.clearCartByShop(customerId, shopId);
+
+      // Assert
+      expect(result.removedCount).toBe(0);
+      expect(result.groups).toEqual([]);
+      expect(cartRepo.delete).not.toHaveBeenCalled();
+      expect(cartRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should return empty result when cart exists but is empty', async () => {
+      // Arrange
+      const customerId = 'customer_123';
+      const shopId = 'shop_456';
+      
+      const emptyCart: CartEntity = {
+        customerId,
+        items: [], // Empty cart
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      cartRepo.findByCustomerId.mockResolvedValue(emptyCart);
+
+      // Act
+      const result = await service.clearCartByShop(customerId, shopId);
+
+      // Assert
+      expect(result.removedCount).toBe(0);
+      expect(result.groups).toEqual([]);
+      expect(cartRepo.delete).not.toHaveBeenCalled();
+      expect(cartRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should handle removing items from one of multiple shops', async () => {
+      // Arrange
+      const customerId = 'customer_123';
+      const shopIdToRemove = 'shop_456';
+      
+      const existingCart: CartEntity = {
+        customerId,
+        items: [
+          {
+            productId: 'prod_1',
+            shopId: 'shop_456', // Remove
+            productName: 'Product 1',
+            productImage: '',
+            quantity: 1,
+            priceAtAdd: 10000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+          {
+            productId: 'prod_2',
+            shopId: 'shop_789', // Keep
+            productName: 'Product 2',
+            productImage: '',
+            quantity: 2,
+            priceAtAdd: 20000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+          {
+            productId: 'prod_3',
+            shopId: 'shop_999', // Keep
+            productName: 'Product 3',
+            productImage: '',
+            quantity: 3,
+            priceAtAdd: 30000,
+            addedAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          },
+        ],
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      cartRepo.findByCustomerId.mockResolvedValue(existingCart);
+
+      // Act
+      const result = await service.clearCartByShop(customerId, shopIdToRemove);
+
+      // Assert
+      expect(result.removedCount).toBe(1); // 1 item from shop_456
+      expect(cartRepo.update).toHaveBeenCalledTimes(1);
+      
+      const updatedCart = cartRepo.update.mock.calls[0][0];
+      expect(updatedCart.items).toHaveLength(2); // 2 items remaining
+      expect(updatedCart.items.map(i => i.shopId)).toEqual(['shop_789', 'shop_999']);
+      expect(updatedCart.items.map(i => i.productId)).toEqual(['prod_2', 'prod_3']);
+    });
+  });
 });

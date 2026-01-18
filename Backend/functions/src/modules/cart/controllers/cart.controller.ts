@@ -483,4 +483,130 @@ export class CartController {
   async clearCart(@Req() req: any) {
     await this.cartService.clearCart(req.user.uid);
   }
+
+  /**
+   * DELETE /cart/shops/:shopId
+   * Clear cart items for a specific shop
+   *
+   * CART-007
+   */
+  @Delete('shops/:shopId')
+  @ApiOperation({ 
+    summary: 'Clear cart items for a shop',
+    description: 'Removes all items belonging to a specific shop from the cart. Returns updated cart grouped by shop. If cart becomes empty, returns empty groups array.'
+  })
+  @ApiParam({ 
+    name: 'shopId', 
+    required: true,
+    description: 'Shop ID to clear items for',
+    example: 'shop_123'
+  })
+  @ApiOkResponse({
+    description: 'Shop items cleared successfully',
+    schema: {
+      oneOf: [
+        {
+          description: 'Items removed, cart still has other shops',
+          example: {
+            success: true,
+            data: {
+              removedCount: 3,
+              groups: [
+                {
+                  shopId: 'shop_456',
+                  shopName: 'Other Shop',
+                  isOpen: true,
+                  shipFee: 0,
+                  items: [
+                    {
+                      productId: 'prod_xyz',
+                      shopId: 'shop_456',
+                      productName: 'Other Product',
+                      productImage: 'https://...',
+                      quantity: 2,
+                      price: 30000,
+                      subtotal: 60000,
+                    },
+                  ],
+                  subtotal: 60000,
+                },
+              ],
+            },
+          },
+        },
+        {
+          description: 'Cart became empty after removal',
+          example: {
+            success: true,
+            data: {
+              removedCount: 2,
+              groups: [],
+            },
+          },
+        },
+        {
+          description: 'Shop not found in cart',
+          example: {
+            success: true,
+            data: {
+              removedCount: 0,
+              groups: [
+                {
+                  shopId: 'shop_789',
+                  shopName: 'Existing Shop',
+                  isOpen: true,
+                  shipFee: 0,
+                  items: [
+                    {
+                      productId: 'prod_abc',
+                      quantity: 1,
+                      price: 50000,
+                      subtotal: 50000,
+                    },
+                  ],
+                  subtotal: 50000,
+                },
+              ],
+            },
+          },
+        },
+      ],
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized - Invalid or missing authentication token',
+    schema: {
+      example: {
+        success: false,
+        errorCode: 'CART_401',
+        message: 'Unauthorized',
+        timestamp: '2026-01-18T00:00:00.000Z',
+      },
+    },
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden - User does not have CUSTOMER role',
+    schema: {
+      example: {
+        success: false,
+        errorCode: 'CART_403',
+        message: 'Forbidden - CUSTOMER role required',
+        timestamp: '2026-01-18T00:00:00.000Z',
+      },
+    },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+    schema: {
+      example: {
+        success: false,
+        errorCode: 'CART_500',
+        message: 'Internal server error',
+        timestamp: '2026-01-18T00:00:00.000Z',
+      },
+    },
+  })
+  async clearShopGroup(@Req() req: any, @Param('shopId') shopId: string) {
+    return this.cartService.clearCartByShop(req.user.uid, shopId);
+  }
 }
