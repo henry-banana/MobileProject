@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { OrderStateMachineService, OrdersService } from './services';
 import { FirestoreOrdersRepository } from './repositories';
-import { OrdersController, OrdersOwnerController, OrdersShipperController } from './controllers';
+import { OrdersController, OrdersOwnerController, OrdersShipperController, OrdersAdminController } from './controllers';
 import { ProductsModule } from '../products/products.module';
 import { ShopsModule } from '../shops/shops.module';
 import { CartModule } from '../cart/cart.module';
@@ -19,7 +19,7 @@ import { ORDERS_REPOSITORY } from './interfaces';
     UsersModule,
     forwardRef(() => ShippersModule),
   ],
-  controllers: [OrdersOwnerController, OrdersShipperController, OrdersController],
+  controllers: [OrdersOwnerController, OrdersShipperController, OrdersAdminController, OrdersController],
   providers: [
     OrderStateMachineService,
     OrdersService,
