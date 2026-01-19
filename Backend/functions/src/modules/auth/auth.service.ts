@@ -179,12 +179,11 @@ export class AuthService {
       });
 
       // Create Firestore user document
-      // IMPORTANT: role must match custom claims (both sources must be in sync)
       const userEntity: Omit<UserEntity, 'id'> = {
         email: dto.email,
         displayName: dto.displayName,
         ...(phoneNumber && { phone: phoneNumber }), // Store normalized phone
-        role: dto.role,  // ← FIXED: Use dto.role instead of hardcoded CUSTOMER
+        role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
         emailVerified: false,
         fcmTokens: [],
