@@ -2,6 +2,7 @@ import {
   ShipperApplicationEntity,
   ApplicationStatus,
 } from '../entities/shipper-application.entity';
+import { ShipperEntity } from '../entities/shipper.entity';
 
 export interface IShippersRepository {
   // Application management
@@ -27,6 +28,10 @@ export interface IShippersRepository {
 
   deleteApplication(id: string): Promise<void>;
 
-  // Shipper management
+  // Shipper entity management (for Order module to manage shipper availability)
+  findById(id: string): Promise<ShipperEntity | null>;
+  update(id: string, updates: Partial<ShipperEntity>): Promise<void>;
+
+  // Shop shipper listing
   findShippersByShop(shopId: string): Promise<Record<string, unknown>[]>;
 }

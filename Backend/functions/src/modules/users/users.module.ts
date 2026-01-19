@@ -21,6 +21,6 @@ import { SharedModule } from '../../shared/shared.module';
       useClass: FirestoreAddressesRepository,
     },
   ],
-  exports: [UsersService, USERS_REPOSITORY],
+  exports: [UsersService, USERS_REPOSITORY, ADDRESSES_REPOSITORY],
 })
 export class UsersModule {}
