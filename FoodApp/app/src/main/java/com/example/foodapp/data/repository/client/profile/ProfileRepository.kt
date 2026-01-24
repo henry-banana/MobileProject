@@ -281,22 +281,20 @@ class ProfileRepository {
                 val response = profileService.deleteAddress(addressId)
 
                 if (response.isSuccessful) {
-                    val deleteResponse = response.body()
-                    println("DEBUG: [Repository] Delete address response: ${deleteResponse != null}")
-
-                    if (deleteResponse != null) {
-                        println("DEBUG: [Repository] Delete address success: ${deleteResponse.success}")
-
-                        if (deleteResponse.success) {
-                            println("DEBUG: [Repository] Address deleted successfully")
+                    // API chỉ trả về status code, không có response body
+                    when (response.code()) {
+                        200 -> {
+                            println("DEBUG: [Repository] Address deleted successfully (200)")
                             ApiResult.Success(true)
-                        } else {
-                            println("DEBUG: [Repository] Address deletion failed: ${deleteResponse.message}")
-                            ApiResult.Failure(Exception(deleteResponse.message ?: "Xóa địa chỉ thất bại"))
                         }
-                    } else {
-                        println("DEBUG: [Repository] Delete address response body is null")
-                        ApiResult.Failure(Exception("Không có phản hồi từ server"))
+                        404 -> {
+                            println("DEBUG: [Repository] Address not found (404)")
+                            ApiResult.Failure(Exception("Không tìm thấy địa chỉ để xóa"))
+                        }
+                        else -> {
+                            println("DEBUG: [Repository] Unexpected status code: ${response.code()}")
+                            ApiResult.Failure(Exception("Lỗi không xác định: ${response.code()}"))
+                        }
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()

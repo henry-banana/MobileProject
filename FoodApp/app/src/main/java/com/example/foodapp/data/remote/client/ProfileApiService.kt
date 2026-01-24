@@ -29,7 +29,7 @@ interface ProfileApiService {
         @Path("id") addressId: String
     ): Response<DeleteAddressResponse>
 
-    @POST("me/addresses/{id}/set-default")
+    @PUT("me/addresses/{id}/default")
     suspend fun setDefaultAddress(
         @Path("id") addressId: String
     ): Response<SetDefaultAddressResponse>

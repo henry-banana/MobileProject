@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 fun UserProductDetailScreen(
     productId: String,
     onBackPressed: () -> Unit = {},
-    onNavigateToPayment: (Product) -> Unit = { }
+    onNavigateToPayment: (Product, Int) -> Unit = { _, _ -> }
 ) {
     val viewModel: ProductDetailViewModel = viewModel(
         factory = ProductDetailViewModel.factory(LocalContext.current)
@@ -125,7 +125,7 @@ fun UserProductDetailScreen(
                     onQuantityIncrease = { viewModel.increaseQuantity() },
                     onQuantityDecrease = { viewModel.decreaseQuantity() },
                     onAddToCart = { viewModel.addToCart() },
-                    onBuyNow = { onNavigateToPayment(product!!) },
+                    onBuyNow = { onNavigateToPayment(product!!, quantity ?: 1) },
                     isAddingToCart = addToCartState == AddToCartState.Loading
                 )
             }

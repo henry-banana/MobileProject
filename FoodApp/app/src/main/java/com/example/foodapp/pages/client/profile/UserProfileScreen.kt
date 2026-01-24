@@ -32,16 +32,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.foodapp.data.model.Client
 import com.example.foodapp.data.remote.client.response.profile.AddressResponse
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlinx.coroutines.launch
 
 @Composable
 fun UserProfileScreen(
     onBackClick: () -> Unit = {},
     onEditAddressClick: (String) -> Unit = {},
     onChangePasswordClick: () -> Unit = {},
-    onEditProfileClick: () -> Unit = {}
+    onEditProfileClick: () -> Unit = {},
+    onOrderButtonClick: () -> Unit = {} // THÊM CALLBACK CHO BUTTON ĐƠN MUA
 ) {
     val context = LocalContext.current
     val viewModel: ProfileViewModel = viewModel(
@@ -53,18 +54,25 @@ fun UserProfileScreen(
     // State cho các popup
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var showAddAddressDialog by remember { mutableStateOf(false) }
+    var showEditAddressDialog by remember { mutableStateOf(false) }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showSetDefaultConfirmDialog by remember { mutableStateOf(false) }
+
+    var addressToEdit by remember { mutableStateOf<AddressResponse?>(null) }
     var addressToDelete by remember { mutableStateOf<String?>(null) }
+    var addressToSetDefault by remember { mutableStateOf<String?>(null) }
 
     // Observe state từ ViewModel
-    val userState by viewModel.userState.observeAsState(ProfileState.Idle)
+    val userState by viewModel.userState.observeAsState()
     val currentUser by viewModel.currentUser.observeAsState()
     val addresses by viewModel.addresses.observeAsState(emptyList())
     val updateState by viewModel.updateState.observeAsState()
     val createAddressState by viewModel.createAddressState.observeAsState()
     val deleteAddressState by viewModel.deleteAddressState.observeAsState()
+    val updateAddressState by viewModel.updateAddressState.observeAsState()
+    val setDefaultAddressState by viewModel.setDefaultAddressState.observeAsState()
 
-    // Xử lý khi update thành công
+    // Xử lý khi update profile thành công
     LaunchedEffect(updateState) {
         when (val state = updateState) {
             is UpdateProfileState.Success -> {
@@ -75,6 +83,7 @@ fun UserProfileScreen(
                     )
                     showEditProfileDialog = false
                 }
+                viewModel.resetUpdateProfileState()
             }
             is UpdateProfileState.Error -> {
                 // Error được xử lý trong dialog
@@ -103,6 +112,27 @@ fun UserProfileScreen(
         }
     }
 
+    // Xử lý khi cập nhật địa chỉ thành công
+    LaunchedEffect(updateAddressState) {
+        when (val state = updateAddressState) {
+            is UpdateAddressState.Success -> {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = state.message,
+                        duration = SnackbarDuration.Short
+                    )
+                    showEditAddressDialog = false
+                    addressToEdit = null
+                }
+                viewModel.resetUpdateAddressState()
+            }
+            is UpdateAddressState.Error -> {
+                // Error được xử lý trong dialog
+            }
+            else -> {}
+        }
+    }
+
     // Xử lý khi xóa địa chỉ thành công
     LaunchedEffect(deleteAddressState) {
         when (val state = deleteAddressState) {
@@ -112,6 +142,8 @@ fun UserProfileScreen(
                         message = state.message,
                         duration = SnackbarDuration.Short
                     )
+                    showDeleteConfirmDialog = false
+                    addressToDelete = null
                 }
                 viewModel.resetDeleteAddressState()
             }
@@ -122,7 +154,38 @@ fun UserProfileScreen(
                         duration = SnackbarDuration.Short
                     )
                 }
+                showDeleteConfirmDialog = false
+                addressToDelete = null
                 viewModel.resetDeleteAddressState()
+            }
+            else -> {}
+        }
+    }
+
+    // Xử lý khi đặt địa chỉ mặc định thành công
+    LaunchedEffect(setDefaultAddressState) {
+        when (val state = setDefaultAddressState) {
+            is SetDefaultAddressState.Success -> {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = state.message,
+                        duration = SnackbarDuration.Short
+                    )
+                    showSetDefaultConfirmDialog = false
+                    addressToSetDefault = null
+                }
+                viewModel.resetSetDefaultAddressState()
+            }
+            is SetDefaultAddressState.Error -> {
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = state.message,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+                showSetDefaultConfirmDialog = false
+                addressToSetDefault = null
+                viewModel.resetSetDefaultAddressState()
             }
             else -> {}
         }
@@ -134,7 +197,10 @@ fun UserProfileScreen(
             currentUser = currentUser,
             viewModel = viewModel,
             updateState = updateState,
-            onDismiss = { showEditProfileDialog = false }
+            onDismiss = {
+                showEditProfileDialog = false
+                viewModel.resetUpdateProfileState()
+            }
         )
     }
 
@@ -143,7 +209,24 @@ fun UserProfileScreen(
         AddAddressDialog(
             viewModel = viewModel,
             createAddressState = createAddressState,
-            onDismiss = { showAddAddressDialog = false }
+            onDismiss = {
+                showAddAddressDialog = false
+                viewModel.resetCreateAddressState()
+            }
+        )
+    }
+
+    // Popup chỉnh sửa địa chỉ
+    if (showEditAddressDialog && addressToEdit != null) {
+        EditAddressDialog(
+            address = addressToEdit!!,
+            viewModel = viewModel,
+            updateAddressState = updateAddressState,
+            onDismiss = {
+                showEditAddressDialog = false
+                addressToEdit = null
+                viewModel.resetUpdateAddressState()
+            }
         )
     }
 
@@ -159,12 +242,18 @@ fun UserProfileScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        //addressToDelete?.let { viewModel.deleteAddress(it) }
-                        showDeleteConfirmDialog = false
-                        addressToDelete = null
-                    }
+                        addressToDelete?.let { viewModel.deleteAddress(it) }
+                    },
+                    enabled = deleteAddressState !is DeleteAddressState.Loading
                 ) {
-                    Text("Xóa")
+                    if (deleteAddressState is DeleteAddressState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Xóa")
+                    }
                 }
             },
             dismissButton = {
@@ -172,7 +261,48 @@ fun UserProfileScreen(
                     onClick = {
                         showDeleteConfirmDialog = false
                         addressToDelete = null
+                    },
+                    enabled = deleteAddressState !is DeleteAddressState.Loading
+                ) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
+
+    // Dialog xác nhận đặt địa chỉ mặc định
+    if (showSetDefaultConfirmDialog && addressToSetDefault != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showSetDefaultConfirmDialog = false
+                addressToSetDefault = null
+            },
+            title = { Text("Đặt địa chỉ mặc định") },
+            text = { Text("Bạn có muốn đặt địa chỉ này làm mặc định?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        addressToSetDefault?.let { viewModel.setDefaultAddress(it) }
+                    },
+                    enabled = setDefaultAddressState !is SetDefaultAddressState.Loading
+                ) {
+                    if (setDefaultAddressState is SetDefaultAddressState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Đồng ý")
                     }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showSetDefaultConfirmDialog = false
+                        addressToSetDefault = null
+                    },
+                    enabled = setDefaultAddressState !is SetDefaultAddressState.Loading
                 ) {
                     Text("Hủy")
                 }
@@ -202,34 +332,80 @@ fun UserProfileScreen(
                 )
             }
             is ProfileState.Success -> {
-                state.user?.let { user ->
-                    ProfileContent(
-                        user = user,
-                        addresses = state.addresses,
-                        modifier = Modifier
-                            .background(Color.White)
-                            .fillMaxSize()
-                            .padding(padding)
-                            .verticalScroll(rememberScrollState()),
-                        onAddAddressClick = { showAddAddressDialog = true },
-                        onEditAddressClick = onEditAddressClick,
-                        onChangePasswordClick = onChangePasswordClick,
-                        onEditProfileClick = { showEditProfileDialog = true },
-                        onDeleteAddressClick = { addressId ->
-                            addressToDelete = addressId
-                            showDeleteConfirmDialog = true
+                ProfileContent(
+                    user = state.user,
+                    addresses = state.addresses,
+                    modifier = Modifier
+                        .background(Color.White)
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState()),
+                    onAddAddressClick = { showAddAddressDialog = true },
+                    onEditAddressClick = { addressId ->
+                        // Tìm địa chỉ theo ID và hiển thị dialog chỉnh sửa
+                        val address = state.addresses.find { it.id == addressId }
+                        if (address != null) {
+                            addressToEdit = address
+                            showEditAddressDialog = true
                         }
-                    )
-                } ?: run {
-                    EmptyScreen(
-                        onRetryClick = { viewModel.fetchUserData() },
-                        modifier = Modifier.padding(padding)
-                    )
-                }
+                    },
+                    onChangePasswordClick = onChangePasswordClick,
+                    onEditProfileClick = { showEditProfileDialog = true },
+                    onDeleteAddressClick = { addressId ->
+                        addressToDelete = addressId
+                        showDeleteConfirmDialog = true
+                    },
+                    onSetDefaultAddressClick = { addressId ->
+                        addressToSetDefault = addressId
+                        showSetDefaultConfirmDialog = true
+                    },
+                    onOrderButtonClick = onOrderButtonClick // TRUYỀN CALLBACK MỚI
+                )
             }
-            is ProfileState.Idle -> {
+            is ProfileState.Idle, null -> {
                 LoadingScreen(modifier = Modifier.padding(padding))
             }
+        }
+    }
+}
+
+
+@Composable
+fun OrderButtonSection(
+    onOrderButtonClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFF5722)
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Button(
+            onClick = onOrderButtonClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFFF5722),
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.ShoppingCart,
+                contentDescription = "Đơn mua",
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "ĐƠN MUA CỦA BẠN",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -380,7 +556,8 @@ fun AddAddressDialog(
                 ) {
                     Checkbox(
                         checked = isDefault,
-                        onCheckedChange = { isDefault = it }
+                        onCheckedChange = { isDefault = it },
+                        enabled = !isLoading
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -436,6 +613,227 @@ fun AddAddressDialog(
                     Text("Đang thêm...")
                 } else {
                     Text("Thêm địa chỉ")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text("Hủy")
+            }
+        }
+    )
+}
+
+// Dialog chỉnh sửa địa chỉ
+@Composable
+fun EditAddressDialog(
+    address: AddressResponse,
+    viewModel: ProfileViewModel,
+    updateAddressState: UpdateAddressState?,
+    onDismiss: () -> Unit
+) {
+    // State cho form địa chỉ
+    var label by remember { mutableStateOf(address.label ?: "") }
+    var fullAddress by remember { mutableStateOf(address.fullAddress ?: "") }
+    var building by remember { mutableStateOf(address.building ?: "") }
+    var room by remember { mutableStateOf(address.room ?: "") }
+    var note by remember { mutableStateOf(address.note ?: "") }
+    var isDefault by remember { mutableStateOf(address.isDefault ?: false) }
+
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val isLoading = updateAddressState is UpdateAddressState.Loading
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!isLoading) onDismiss()
+        },
+        title = {
+            Text(
+                text = "Chỉnh sửa địa chỉ",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(max = 500.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Hiển thị lỗi nếu có
+                errorMessage?.let { message ->
+                    Text(
+                        text = message,
+                        color = Color.Red,
+                        fontSize = 14.sp
+                    )
+                }
+
+                // Label field
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    label = { Text("Tên địa chỉ") },
+                    placeholder = { Text("VD: Nhà riêng, Công ty, ...") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Label, contentDescription = null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = true,
+                    isError = label.isBlank(),
+                    supportingText = {
+                        if (label.isBlank()) {
+                            Text(
+                                text = "Vui lòng nhập tên địa chỉ",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                )
+
+                // Full Address field
+                OutlinedTextField(
+                    value = fullAddress,
+                    onValueChange = { fullAddress = it },
+                    label = { Text("Địa chỉ đầy đủ") },
+                    placeholder = { Text("Nhập số nhà, tên đường, phường, quận, thành phố") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.LocationOn, contentDescription = null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = false,
+                    minLines = 3,
+                    maxLines = 4,
+                    isError = fullAddress.isBlank(),
+                    supportingText = {
+                        if (fullAddress.isBlank()) {
+                            Text(
+                                text = "Vui lòng nhập địa chỉ đầy đủ",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                )
+
+                // Building field
+                OutlinedTextField(
+                    value = building,
+                    onValueChange = { building = it },
+                    label = { Text("Tòa nhà/Chung cư") },
+                    placeholder = { Text("VD: Tòa nhà A, Chung cư B") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Apartment, contentDescription = null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = true
+                )
+
+                // Room field
+                OutlinedTextField(
+                    value = room,
+                    onValueChange = { room = it },
+                    label = { Text("Phòng/Số căn hộ") },
+                    placeholder = { Text("VD: Phòng 101, Căn hộ 302") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.DoorFront, contentDescription = null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = true
+                )
+
+                // Note field
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Ghi chú") },
+                    placeholder = { Text("VD: Giao hàng ban ngày, gọi trước 30 phút") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Note, contentDescription = null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = false,
+                    minLines = 2,
+                    maxLines = 3
+                )
+
+                // Checkbox for default address
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = isDefault,
+                        onCheckedChange = { isDefault = it },
+                        enabled = !isLoading
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Đặt làm địa chỉ mặc định",
+                        fontSize = 14.sp
+                    )
+                }
+
+                // Hiển thị lỗi từ ViewModel
+                if (updateAddressState is UpdateAddressState.Error) {
+                    Text(
+                        text = updateAddressState.message,
+                        color = Color.Red,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    // Validate
+                    if (label.isBlank()) {
+                        errorMessage = "Vui lòng nhập tên địa chỉ"
+                        return@TextButton
+                    }
+
+                    if (fullAddress.isBlank()) {
+                        errorMessage = "Vui lòng nhập địa chỉ đầy đủ"
+                        return@TextButton
+                    }
+
+                    errorMessage = null
+
+                    // Gọi cập nhật địa chỉ
+                    address.id?.let { addressId ->
+                        viewModel.updateAddress(
+                            addressId = addressId,
+                            label = label,
+                            fullAddress = fullAddress,
+                            building = building.takeIf { it.isNotBlank() },
+                            room = room.takeIf { it.isNotBlank() },
+                            note = note.takeIf { it.isNotBlank() },
+                            isDefault = isDefault
+                        )
+                    }
+                },
+                enabled = !isLoading && label.isNotBlank() && fullAddress.isNotBlank()
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Đang lưu...")
+                } else {
+                    Text("Lưu thay đổi")
                 }
             }
         },
@@ -570,15 +968,22 @@ fun EditProfileDialog(
                         return@TextButton
                     }
 
+                    if (displayName.length > 50) {
+                        errorMessage = "Tên không được quá 50 ký tự"
+                        return@TextButton
+                    }
+
                     errorMessage = null
 
                     // Gọi update
                     viewModel.updateProfile(
-                        displayName = displayName.takeIf { it.isNotBlank() },
-                        phone = phone.takeIf { it.isNotBlank() }
+                        displayName = displayName.takeIf { it.isNotBlank() && it != currentUser?.fullName },
+                        phone = phone.takeIf { it.isNotBlank() && it != currentUser?.phone }
                     )
                 },
-                enabled = !isLoading && (displayName.isNotBlank() || phone.isNotBlank())
+                enabled = !isLoading &&
+                        ((displayName.isNotBlank() && displayName != currentUser?.fullName) ||
+                                (phone.isNotBlank() && phone != currentUser?.phone))
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -601,6 +1006,375 @@ fun EditProfileDialog(
             }
         }
     )
+}
+
+@Composable
+fun ProfileContent(
+    user: Client,
+    addresses: List<AddressResponse>,
+    modifier: Modifier = Modifier,
+    onAddAddressClick: () -> Unit,
+    onEditAddressClick: (String) -> Unit,
+    onChangePasswordClick: () -> Unit,
+    onEditProfileClick: () -> Unit,
+    onDeleteAddressClick: (String) -> Unit,
+    onSetDefaultAddressClick: (String) -> Unit,
+    onOrderButtonClick: () -> Unit // THÊM THAM SỐ MỚI
+) {
+    // Format ngày tham gia từ timestamp
+    val joinDate = remember(user.createdAt) {
+        try {
+            val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            formatter.format(user.createdAt)
+        } catch (e: Exception) {
+            "Không rõ"
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(vertical = 8.dp)
+    ) {
+        // THÊM BUTTON ĐƠN MUA VÀO ĐẦU MÀN HÌNH
+        OrderButtonSection(onOrderButtonClick = onOrderButtonClick)
+
+
+        // Thông tin cá nhân card
+        PersonalInfoCard(
+            user = user,
+            onEditClick = onEditProfileClick
+        )
+
+        // Trạng thái tài khoản
+        AccountStatusCard(user = user)
+
+        // Địa chỉ - Chỉ hiển thị nếu có địa chỉ
+        if (addresses.isNotEmpty()) {
+            AddressCard(
+                addresses = addresses,
+                onAddClick = onAddAddressClick,
+                onEditClick = onEditAddressClick,
+                onDeleteClick = onDeleteAddressClick,
+                onSetDefaultClick = onSetDefaultAddressClick
+            )
+        } else {
+            EmptyAddressCard(onAddClick = onAddAddressClick)
+        }
+
+        // Thông tin tài khoản
+        AccountInfoCard(
+            role = user.role,
+            joinDate = joinDate,
+            isVerified = user.isVerify
+        )
+
+        // Các chức năng
+        SettingsCard(
+            onChangePasswordClick = onChangePasswordClick
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+fun AddressCard(
+    addresses: List<AddressResponse>,
+    onAddClick: () -> Unit,
+    onEditClick: (String) -> Unit,
+    onDeleteClick: (String) -> Unit,
+    onSetDefaultClick: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            // Header với icon
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = Color(0xFFFFF3E0),
+                            shape = RoundedCornerShape(10.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.LocationOn,
+                        contentDescription = null,
+                        tint = Color(0xFFFF9800),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Text(
+                    text = "Địa chỉ giao hàng",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF212121)
+                )
+            }
+
+            // Danh sách địa chỉ
+            if (addresses.isNotEmpty()) {
+                addresses.forEachIndexed { index, address ->
+                    AddressItem(
+                        address = address,
+                        onEditClick = { address.id?.let { onEditClick(it) } },
+                        onDeleteClick = { address.id?.let { onDeleteClick(it) } },
+                        onSetDefaultClick = { address.id?.let { onSetDefaultClick(it) } },
+                        modifier = Modifier.padding(vertical = 6.dp)
+                    )
+
+                    if (index < addresses.size - 1) {
+                        Divider(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = Color(0xFFEEEEEE),
+                            thickness = 1.dp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                // Empty state
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.LocationOn,
+                        contentDescription = null,
+                        tint = Color(0xFFBDBDBD),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Chưa có địa chỉ giao hàng",
+                        fontSize = 14.sp,
+                        color = Color(0xFF9E9E9E)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Button thêm địa chỉ
+            Button(
+                onClick = onAddClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9800),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 0.dp,
+                    pressedElevation = 2.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "Thêm địa chỉ",
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Thêm địa chỉ mới",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AddressItem(
+    address: AddressResponse,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    onSetDefaultClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = address.label ?: "Địa chỉ",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+
+                        if (address.isDefault == true) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Badge(
+                                containerColor = Color.Green.copy(alpha = 0.1f),
+                                contentColor = Color.Green,
+                            ) {
+                                Text("Mặc định", fontSize = 10.sp)
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = address.fullAddress ?: "",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    // Hiển thị thông tin tòa nhà và phòng nếu có
+                    if (!address.building.isNullOrBlank() || !address.room.isNullOrBlank()) {
+                        Text(
+                            text = "${address.building ?: ""} ${if (!address.room.isNullOrBlank()) "Phòng ${address.room}" else ""}".trim(),
+                            fontSize = 13.sp,
+                            color = Color(0xFF666666),
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+
+                    // Hiển thị ghi chú nếu có
+                    if (!address.note.isNullOrBlank()) {
+                        Text(
+                            text = "📝 ${address.note}",
+                            fontSize = 12.sp,
+                            color = Color(0xFF888888),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Menu options
+                Box {
+                    var showMenu by remember { mutableStateOf(false) }
+
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "Tùy chọn",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        // Nút đặt mặc định
+                        if (address.isDefault != true) {
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Star,
+                                            contentDescription = null,
+                                            tint = Color(0xFFFF9800),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Đặt làm mặc định")
+                                    }
+                                },
+                                onClick = {
+                                    onSetDefaultClick()
+                                    showMenu = false
+                                }
+                            )
+                        }
+
+                        // Nút chỉnh sửa
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Edit,
+                                        contentDescription = null,
+                                        tint = Color.Blue,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Chỉnh sửa")
+                                }
+                            },
+                            onClick = {
+                                onEditClick()
+                                showMenu = false
+                            }
+                        )
+
+                        // Nút xóa
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Delete,
+                                        contentDescription = null,
+                                        tint = Color.Red,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Xóa")
+                                }
+                            },
+                            onClick = {
+                                onDeleteClick()
+                                showMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -656,40 +1430,6 @@ fun ErrorScreen(
     }
 }
 
-@Composable
-fun EmptyScreen(
-    onRetryClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Filled.PersonOff,
-                contentDescription = "Không có dữ liệu",
-                tint = Color.Gray,
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Không có dữ liệu người dùng",
-                color = Color.Gray,
-                fontSize = 16.sp
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(
-                onClick = onRetryClick
-            ) {
-                Text("Tải lại")
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileTopBar(
@@ -721,229 +1461,6 @@ fun ProfileTopBar(
             }
         }
     )
-}
-
-@Composable
-fun ProfileContent(
-    user: Client,
-    addresses: List<AddressResponse>,
-    modifier: Modifier = Modifier,
-    onAddAddressClick: () -> Unit,
-    onEditAddressClick: (String) -> Unit,
-    onChangePasswordClick: () -> Unit,
-    onEditProfileClick: () -> Unit,
-    onDeleteAddressClick: (String) -> Unit
-) {
-    // Format ngày tham gia từ timestamp
-    val joinDate = remember(user.createdAt) {
-        try {
-            val formatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            formatter.format(user.createdAt)
-        } catch (e: Exception) {
-            "Không rõ"
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(vertical = 8.dp)
-    ) {
-        // Thêm tiêu đề và 4 button cho trạng thái đơn mua
-        OrderStatusSection()
-
-        // Thông tin cá nhân card
-        PersonalInfoCard(
-            user = user,
-            onEditClick = onEditProfileClick
-        )
-
-        // Trạng thái tài khoản
-        AccountStatusCard(user = user)
-
-        // Địa chỉ - Chỉ hiển thị nếu có địa chỉ
-        if (addresses.isNotEmpty()) {
-            AddressCard(
-                addresses = addresses,
-                onAddClick = onAddAddressClick,
-                onEditClick = onEditAddressClick,
-                onDeleteClick = onDeleteAddressClick
-            )
-        } else {
-            EmptyAddressCard(onAddClick = onAddAddressClick)
-        }
-
-        // Thông tin tài khoản
-        AccountInfoCard(
-            role = user.role,
-            joinDate = joinDate,
-            isVerified = user.isVerify
-        )
-
-        // Các chức năng
-        SettingsCard(
-            onChangePasswordClick = onChangePasswordClick
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-    }
-}
-
-@Composable
-fun OrderStatusSection() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Tiêu đề
-            Text(
-                text = "Trạng thái đơn mua",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-
-            // 4 button nằm ngang - 2 hàng 2 cột
-            // Hàng 1
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Button 1: Chờ giao hàng
-                OrderStatusButton(
-                    icon = Icons.Filled.LocalShipping,
-                    text = "Chờ giao hàng",
-                    badgeCount = 5,
-                    modifier = Modifier.weight(1f)
-                )
-
-                // Button 2: Chờ Lấy món
-                OrderStatusButton(
-                    icon = Icons.Filled.RestaurantMenu,
-                    text = "Chờ Lấy món",
-                    badgeCount = null,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Hàng 2
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Button 3: Chờ Xác Nhận
-                OrderStatusButton(
-                    icon = Icons.Filled.HourglassEmpty,
-                    text = "Chờ Xác Nhận",
-                    badgeCount = 3,
-                    modifier = Modifier.weight(1f)
-                )
-
-                // Button 4: Đánh giá
-                OrderStatusButton(
-                    icon = Icons.Filled.StarRate,
-                    text = "Đánh giá",
-                    badgeCount = null,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun OrderStatusButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    text: String,
-    badgeCount: Int? = null,
-    modifier: Modifier = Modifier
-) {
-    val backgroundColor = Color.White
-    val iconColor = Color(0xFF4CAF50)
-
-    Box(
-        modifier = modifier
-            .height(100.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(backgroundColor)
-            .clickable {
-                // TODO: Xử lý click cho từng button
-            }
-            .border(
-                width = 1.dp,
-                color = Color(0xFFE0E0E0),
-                shape = RoundedCornerShape(8.dp)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(8.dp)
-        ) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.TopStart
-            ) {
-                // Icon container nằm giữa
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(iconColor.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = text,
-                        tint = iconColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
-                if (badgeCount != null) {
-                    Box(
-                        modifier = Modifier
-                            .offset(x = (-4).dp, y = (-4).dp)
-                            .size(20.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFFF5252)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = badgeCount.toString(),
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-
-            // Text nằm dưới icon
-            Text(
-                text = text,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF333333),
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                lineHeight = 16.sp
-            )
-        }
-    }
 }
 
 @Composable
@@ -1100,137 +1617,6 @@ fun AccountStatusCard(user: Client) {
                     label = "Trạng thái",
                     value = if (user.isVerify) "Hoạt động" else "Không hoạt động",
                     isActive = user.isVerify
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AddressCard(
-    addresses: List<AddressResponse>,
-    onAddClick: () -> Unit,
-    onEditClick: (String) -> Unit,
-    onDeleteClick: (String) -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            // Header với icon
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(
-                            color = Color(0xFFFFF3E0),
-                            shape = RoundedCornerShape(10.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        tint = Color(0xFFFF9800),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Text(
-                    text = "Địa chỉ giao hàng",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF212121)
-                )
-            }
-
-            // Danh sách địa chỉ
-            if (addresses.isNotEmpty()) {
-                addresses.forEachIndexed { index, address ->
-                    AddressItem(
-                        address = address,
-                        onEditClick = { address.id?.let { onEditClick(it) } },
-                        onDeleteClick = { address.id?.let { onDeleteClick(it) } },
-                        modifier = Modifier.padding(vertical = 6.dp)
-                    )
-
-                    if (index < addresses.size - 1) {
-                        Divider(
-                            modifier = Modifier.padding(vertical = 8.dp),
-                            color = Color(0xFFEEEEEE),
-                            thickness = 1.dp
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-            } else {
-                // Empty state
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        tint = Color(0xFFBDBDBD),
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "Chưa có địa chỉ giao hàng",
-                        fontSize = 14.sp,
-                        color = Color(0xFF9E9E9E)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // Button thêm địa chỉ
-            Button(
-                onClick = onAddClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF9800),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(12.dp),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 0.dp,
-                    pressedElevation = 2.dp
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = "Thêm địa chỉ",
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Thêm địa chỉ mới",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -1467,107 +1853,6 @@ fun StatusChip(
     }
 }
 
-@Composable
-fun AddressItem(
-    address: AddressResponse,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = address.label ?: "Địa chỉ",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-
-                        if (address.isDefault) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Badge(
-                                containerColor = Color.Green.copy(alpha = 0.1f),
-                                contentColor = Color.Green,
-                            ) {
-                                Text("Mặc định", fontSize = 10.sp)
-                            }
-                        }
-                    }
-
-                    Text(
-                        text = address.fullAddress ?: "",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-
-                    // Hiển thị thông tin tòa nhà và phòng nếu có
-                    if (!address.building.isNullOrBlank() || !address.room.isNullOrBlank()) {
-                        Text(
-                            text = "${address.building ?: ""} ${if (!address.room.isNullOrBlank()) "Phòng ${address.room}" else ""}".trim(),
-                            fontSize = 13.sp,
-                            color = Color(0xFF666666),
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-
-                    // Hiển thị ghi chú nếu có
-                    if (!address.note.isNullOrBlank()) {
-                        Text(
-                            text = "📝 ${address.note}",
-                            fontSize = 12.sp,
-                            color = Color(0xFF888888),
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // Nút chỉnh sửa
-                IconButton(
-                    onClick = onEditClick,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = "Chỉnh sửa",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-
-                // Nút xóa
-                IconButton(
-                    onClick = onDeleteClick,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = "Xóa",
-                        tint = Color.Red,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
 // Previews
 @Preview(showBackground = true)
 @Composable
@@ -1577,8 +1862,23 @@ fun ProfileMainScreenPreview() {
             onBackClick = {},
             onEditAddressClick = {},
             onChangePasswordClick = {},
-            onEditProfileClick = {}
+            onEditProfileClick = {},
+            onOrderButtonClick = {} // THÊM PREVIEW MỚI
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun OrderButtonSectionPreview() {
+    MaterialTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            OrderButtonSection(onOrderButtonClick = {})
+        }
     }
 }
 
@@ -1610,7 +1910,6 @@ fun OrderStatusSectionPreview() {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            OrderStatusSection()
         }
     }
 }
@@ -1632,19 +1931,6 @@ fun OrderStatusButtonPreview() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OrderStatusButton(
-                    icon = Icons.Filled.LocalShipping,
-                    text = "Chờ giao hàng",
-                    badgeCount = 5,
-                    modifier = Modifier.weight(1f)
-                )
-
-                OrderStatusButton(
-                    icon = Icons.Filled.RestaurantMenu,
-                    text = "Chờ Lấy món",
-                    badgeCount = null,
-                    modifier = Modifier.weight(1f)
-                )
             }
 
             Divider(modifier = Modifier.padding(vertical = 8.dp))
@@ -1654,19 +1940,6 @@ fun OrderStatusButtonPreview() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OrderStatusButton(
-                    icon = Icons.Filled.HourglassEmpty,
-                    text = "Chờ Xác Nhận",
-                    badgeCount = null,
-                    modifier = Modifier.weight(1f)
-                )
-
-                OrderStatusButton(
-                    icon = Icons.Filled.StarRate,
-                    text = "Đánh giá",
-                    badgeCount = null,
-                    modifier = Modifier.weight(1f)
-                )
             }
         }
     }
