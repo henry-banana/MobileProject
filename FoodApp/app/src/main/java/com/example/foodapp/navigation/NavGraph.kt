@@ -348,7 +348,6 @@ fun FoodAppNavHost(
         composable(Screen.UserProfile.route) {
             UserProfileScreen(
                 onBackClick = { navController.navigateUp() },
-                onEditAddressClick = { },
                 onChangePasswordClick = { navController.navigate(Screen.UserSetting.route) },
                 onOrderButtonClick = {
                     navController.navigate(Screen.UserOrder.route)
