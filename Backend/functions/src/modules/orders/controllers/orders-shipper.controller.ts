@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Param,
-  Req,
-  UseGuards,
-  Query,
-  HttpCode,
-} from '@nestjs/common';
+import { Controller, Get, Put, Param, Req, UseGuards, Query, HttpCode } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -105,7 +96,8 @@ export class OrdersShipperController {
     schema: {
       example: {
         success: false,
-        message: 'Query requires a Firestore index. Please create the index at: https://console.firebase.google.com/firestore/indexes',
+        message:
+          'Query requires a Firestore index. Please create the index at: https://console.firebase.google.com/firestore/indexes',
         errorCode: 'ORDER_INDEX_REQUIRED',
         details: {
           firestoreMessage: 'The query requires an index. You can create it here: ...',
@@ -122,10 +114,7 @@ export class OrdersShipperController {
     @Query('limit') limit?: number,
   ): Promise<PaginatedOrdersDto> {
     const filter: OrderFilterDto = { status, page, limit };
-    return this.ordersService.getShipperOrders(
-      req.user.uid,
-      filter,
-    );
+    return this.ordersService.getShipperOrders(req.user.uid, filter);
   }
 
   /**
@@ -138,7 +127,8 @@ export class OrdersShipperController {
   @Get('shipper/available')
   @ApiOperation({
     summary: 'Get available orders for shipper',
-    description: 'Retrieve list of unassigned READY orders available for shipper pickup within their shop scope. Returns paginated results with same structure as assigned orders endpoint.',
+    description:
+      'Retrieve list of unassigned READY orders available for shipper pickup within their shop scope. Returns paginated results with same structure as assigned orders endpoint.',
   })
   @ApiQuery({
     name: 'page',
@@ -167,7 +157,8 @@ export class OrdersShipperController {
     schema: {
       example: {
         success: false,
-        message: 'Query requires a Firestore index. Please create the index at: https://console.firebase.google.com/firestore/indexes',
+        message:
+          'Query requires a Firestore index. Please create the index at: https://console.firebase.google.com/firestore/indexes',
         errorCode: 'ORDER_INDEX_REQUIRED',
         details: {
           firestoreMessage: 'The query requires an index. You can create it here: ...',
@@ -183,10 +174,7 @@ export class OrdersShipperController {
     @Query('limit') limit?: number,
   ): Promise<PaginatedOrdersDto> {
     const filter: OrderFilterDto = { page, limit };
-    return this.ordersService.getShipperOrdersAvailable(
-      req.user.uid,
-      filter,
-    );
+    return this.ordersService.getShipperOrdersAvailable(req.user.uid, filter);
   }
 
   /**
@@ -198,7 +186,8 @@ export class OrdersShipperController {
   @Get('shipper/:id')
   @ApiOperation({
     summary: 'Get shipper order detail',
-    description: 'Retrieve full order details for an order assigned to shipper or available for pickup (READY and unassigned)',
+    description:
+      'Retrieve full order details for an order assigned to shipper or available for pickup (READY and unassigned)',
   })
   @ApiParam({
     name: 'id',
@@ -212,10 +201,7 @@ export class OrdersShipperController {
   @ApiNotFoundResponse({ description: 'Order not found' })
   @ApiForbiddenResponse({ description: 'Order not assigned to you and not available for pickup' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async getShipperOrderDetail(
-    @Req() req: any,
-    @Param('id') orderId: string,
-  ): Promise<OrderEntity> {
+  async getShipperOrderDetail(@Req() req: any, @Param('id') orderId: string): Promise<OrderEntity> {
     return this.ordersService.getShipperOrderDetail(req.user.uid, orderId);
   }
 
@@ -243,14 +229,10 @@ export class OrdersShipperController {
   })
   @ApiNotFoundResponse({ description: 'Order not found' })
   @ApiConflictResponse({
-    description:
-      'Invalid state transition or order already assigned to another shipper',
+    description: 'Invalid state transition or order already assigned to another shipper',
   })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async acceptOrder(
-    @Req() req: any,
-    @Param('id') orderId: string,
-  ): Promise<OrderEntity> {
+  async acceptOrder(@Req() req: any, @Param('id') orderId: string): Promise<OrderEntity> {
     return this.ordersService.acceptOrder(req.user.uid, orderId);
   }
 
@@ -280,10 +262,7 @@ export class OrdersShipperController {
   @ApiConflictResponse({ description: 'Invalid state transition' })
   @ApiForbiddenResponse({ description: 'Shipper not assigned to this order' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async markShipping(
-    @Req() req: any,
-    @Param('id') orderId: string,
-  ): Promise<OrderEntity> {
+  async markShipping(@Req() req: any, @Param('id') orderId: string): Promise<OrderEntity | null> {
     return this.ordersService.markShipping(req.user.uid, orderId);
   }
 
@@ -313,10 +292,7 @@ export class OrdersShipperController {
   @ApiConflictResponse({ description: 'Invalid state transition' })
   @ApiForbiddenResponse({ description: 'Shipper not assigned to this order' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async markDelivered(
-    @Req() req: any,
-    @Param('id') orderId: string,
-  ): Promise<OrderEntity> {
+  async markDelivered(@Req() req: any, @Param('id') orderId: string): Promise<OrderEntity | null> {
     return this.ordersService.markDelivered(req.user.uid, orderId);
   }
 }

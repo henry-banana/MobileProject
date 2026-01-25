@@ -29,7 +29,15 @@ import { FirestoreService } from './firestore.service';
       },
       inject: [FirebaseService],
     },
+    // FIREBASE_APP token for FCM and other services
+    {
+      provide: 'FIREBASE_APP',
+      useFactory: (firebaseService: FirebaseService) => {
+        return firebaseService.app;
+      },
+      inject: [FirebaseService],
+    },
   ],
-  exports: [FirebaseService, FirestoreService, 'FIRESTORE'],
+  exports: [FirebaseService, FirestoreService, 'FIRESTORE', 'FIREBASE_APP'],
 })
 export class FirebaseModule {}

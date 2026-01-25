@@ -76,9 +76,7 @@ export class OrdersBackfillService {
         }
       });
 
-      console.log(
-        `[Backfill] Found ${docsToUpdate.length} orders missing shipperId field`,
-      );
+      console.log(`[Backfill] Found ${docsToUpdate.length} orders missing shipperId field`);
 
       // Batch update in groups of 100 (safe Firestore limit)
       const batchSize = 100;
@@ -149,7 +147,8 @@ export class OrdersBackfillService {
 
       if (totalReady > 0 && availableCount === 0) {
         // Mismatch: READY orders exist but none visible to shipper
-        const issue = `Mismatch detected: ${totalReady} READY orders exist but shipper sees 0. ` +
+        const issue =
+          `Mismatch detected: ${totalReady} READY orders exist but shipper sees 0. ` +
           `This usually means some orders lack shipperId field. ` +
           `Run backfill to fix.`;
         console.warn('[Validation]', issue);

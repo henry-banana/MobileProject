@@ -6,16 +6,16 @@ import { Timestamp } from 'firebase-admin/firestore';
 
 /**
  * REGRESSION TEST: Shipper Available Orders Query
- * 
+ *
  * Issue: GET /api/orders/shipper/available returned total=0, orders=[]
- * 
+ *
  * Root Cause: Orders were created WITHOUT shipperId field
  * - Firestore query: .where('shipperId', '==', null)
  * - Does NOT match documents where field is MISSING
  * - Only matches documents where field is EXPLICITLY null
- * 
+ *
  * Fix: Ensure orderEntity has shipperId: null at creation
- * 
+ *
  * Test Validates:
  * 1. Order created with shipperId: null (not missing)
  * 2. COUNT query finds the order
@@ -216,9 +216,7 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
       };
 
       mockOrdersRepo.query.mockReturnValue(mockQueryBuilder);
-      mockOrdersRepo.findMany.mockResolvedValue(
-        MOCK_ORDERS.filter((o) => o.shipperId === null),
-      );
+      mockOrdersRepo.findMany.mockResolvedValue(MOCK_ORDERS.filter((o) => o.shipperId === null));
 
       // Execute
       await service.getShipperOrdersAvailable(SHIPPER_ID, {});
@@ -258,9 +256,7 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
 
       mockOrdersRepo.query.mockReturnValue(mockQueryBuilder);
       mockOrdersRepo.count.mockResolvedValue(2);
-      mockOrdersRepo.findMany.mockResolvedValue(
-        MOCK_ORDERS.filter((o) => o.shipperId === null),
-      );
+      mockOrdersRepo.findMany.mockResolvedValue(MOCK_ORDERS.filter((o) => o.shipperId === null));
 
       // Execute
       const result = await service.getShipperOrdersAvailable(SHIPPER_ID, {
@@ -272,7 +268,10 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
       console.log('✓ FETCH RESULT SET:');
       console.log('  - Total orders found:', result.total);
       console.log('  - Orders returned:', result.orders.length);
-      console.log('  - Order IDs:', result.orders.map((o: any) => o.id));
+      console.log(
+        '  - Order IDs:',
+        result.orders.map((o: any) => o.id),
+      );
 
       // Should find 2 unassigned orders (not 0, not 3)
       expect(result.orders).toHaveLength(2);
@@ -280,9 +279,7 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
       expect(result.orders[1].shipperId).toBeNull();
 
       // Should NOT include assigned order
-      const hasAssignedOrder = result.orders.some(
-        (o: any) => o.shipperId !== null,
-      );
+      const hasAssignedOrder = result.orders.some((o: any) => o.shipperId !== null);
       expect(hasAssignedOrder).toBe(false);
     });
   });
@@ -299,9 +296,7 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
 
       mockOrdersRepo.query.mockReturnValue(mockQueryBuilder);
       mockOrdersRepo.count.mockResolvedValue(2);
-      mockOrdersRepo.findMany.mockResolvedValue(
-        MOCK_ORDERS.filter((o) => o.shipperId === null),
-      );
+      mockOrdersRepo.findMany.mockResolvedValue(MOCK_ORDERS.filter((o) => o.shipperId === null));
 
       // Execute: page 1, limit 10
       const result = await service.getShipperOrdersAvailable(SHIPPER_ID, {
@@ -388,12 +383,12 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
       };
 
       // Before migration: field missing, query doesn't match
-      const beforeMatch = 'shipperId' in orderBeforeMigration && 
-                          orderBeforeMigration.shipperId === null;
-      
+      const beforeMatch =
+        'shipperId' in orderBeforeMigration && orderBeforeMigration.shipperId === null;
+
       // After migration: field present and null, query matches
-      const afterMatch = 'shipperId' in orderAfterMigration && 
-                         orderAfterMigration.shipperId === null;
+      const afterMatch =
+        'shipperId' in orderAfterMigration && orderAfterMigration.shipperId === null;
 
       console.log('✓ MIGRATION TEST:');
       console.log('  - Order BEFORE migration (.shipperId missing):');
@@ -404,7 +399,7 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
       console.log('    • Query .where("shipperId", "==", null) matches?', afterMatch);
 
       expect(beforeMatch).toBe(false); // Before: not queryable
-      expect(afterMatch).toBe(true);   // After: queryable
+      expect(afterMatch).toBe(true); // After: queryable
     });
 
     it('should return newly visible orders after migration', async () => {
@@ -430,7 +425,10 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
         deliveryAddress: { street: '999 Old St' },
       };
 
-      const ordersAfterMigration = [oldOrderPostMigration, ...MOCK_ORDERS.filter(o => o.shipperId === null)];
+      const ordersAfterMigration = [
+        oldOrderPostMigration,
+        ...MOCK_ORDERS.filter((o) => o.shipperId === null),
+      ];
 
       // Mock repository
       const mockQueryBuilder = {
@@ -453,11 +451,13 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
       // Verify
       console.log('✓ MIGRATION RESULT:');
       console.log('  - Old orders now visible:', result.orders.length, '(includes migrated order)');
-      console.log('  - Contains old migrated order?', 
-        result.orders.some(o => o.id === 'order_old_after_migration'));
+      console.log(
+        '  - Contains old migrated order?',
+        result.orders.some((o) => o.id === 'order_old_after_migration'),
+      );
 
       expect(result.orders.length).toBeGreaterThanOrEqual(3); // At least 2 new + 1 migrated
-      expect(result.orders.some(o => o.id === 'order_old_after_migration')).toBe(true);
+      expect(result.orders.some((o) => o.id === 'order_old_after_migration')).toBe(true);
     });
   });
 
@@ -465,10 +465,10 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
     it('should NOT match orders where shipperId field is completely missing', async () => {
       /**
        * ROOT CAUSE REGRESSION TEST
-       * 
+       *
        * BUG: Orders created before fix lack shipperId field entirely
        * Query .where('shipperId', '==', null) does NOT match missing fields
-       * 
+       *
        * This test ensures:
        * 1. Documents with missing field are NOT included
        * 2. Documents with explicit null ARE included
@@ -496,7 +496,11 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
       // Setup: Count query should differentiate
       mockOrdersRepo.count.mockImplementation((where: any) => {
         // Simulate Firestore: only matches explicit null, not missing field
-        if (where.shipperId === null && where.status === OrderStatus.READY && where.shopId === SHOP_ID) {
+        if (
+          where.shipperId === null &&
+          where.status === OrderStatus.READY &&
+          where.shopId === SHOP_ID
+        ) {
           // Count only orders WITH explicit null
           const allOrders = [orderWithNull];
           return Promise.resolve(allOrders.length);
@@ -536,7 +540,9 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
       // 1. Order creation doesn't set shipperId: null
       // 2. Repository count includes missing fields (should not)
       // 3. Backfill is not run for old orders
-      console.log('  ✓ Test validates: New orders have shipperId field, old orders are invisible until backfilled');
+      console.log(
+        '  ✓ Test validates: New orders have shipperId field, old orders are invisible until backfilled',
+      );
     });
   });
 });
@@ -544,7 +550,7 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
 /**
  * HOW TO RUN:
  * npm test -- --testPathPattern="shipper-available"
- * 
+ *
  * EXPECTED OUTPUT:
  * PASS  src/modules/orders/services/orders.service.spec.shipper-available.ts
  *   OrdersService - Shipper Available Orders (Regression Test)
@@ -560,7 +566,7 @@ describe('OrdersService - Shipper Available Orders (Regression Test)', () => {
  *       ✓ ROOT CAUSE TEST: Should NOT omit shipperId field
  *
  * Tests:       6 passed, 6 total
- * 
+ *
  * CONSOLE OUTPUT EVIDENCE:
  * ✓ COUNT QUERY PARAMETERS CAPTURED:
  *   - status: READY (expected: READY)

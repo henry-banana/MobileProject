@@ -4,16 +4,16 @@ import { AppModule } from '../../../app.module';
 
 /**
  * E2E Test: Cart Query Parameter Parsing
- * 
+ *
  * This test ensures that query parameters (page, limit, includeAll)
  * are correctly parsed at the HTTP layer, not just at the service layer.
- * 
+ *
  * Bug context: Unit tests passed but Swagger UI showed incorrect behavior
  * because query string parsing wasn't working correctly.
- * 
+ *
  * Installation required:
  *   npm install --save-dev supertest @types/supertest
- * 
+ *
  * Run with:
  *   npm test -- cart.controller.e2e-spec.ts
  */
@@ -23,7 +23,9 @@ let request: any;
 try {
   request = require('supertest');
 } catch (e) {
-  console.warn('supertest not installed. Install with: npm install --save-dev supertest @types/supertest');
+  console.warn(
+    'supertest not installed. Install with: npm install --save-dev supertest @types/supertest',
+  );
 }
 describe('CartController (e2e) - Query Parsing', () => {
   let app: INestApplication;
@@ -64,7 +66,7 @@ describe('CartController (e2e) - Query Parsing', () => {
   describe('GET /api/cart - Query Parameter Parsing', () => {
     /**
      * Test: includeAll=false with limit=1 should return exactly 1 group
-     * 
+     *
      * Expected: { groups: [1 group], page: 1, limit: 1, totalGroups: N, totalPages: N }
      * Bug: Was returning all groups with limit=totalGroups
      */
@@ -103,7 +105,7 @@ describe('CartController (e2e) - Query Parsing', () => {
 
     /**
      * Test: page=2 should return different groups than page=1
-     * 
+     *
      * Expected: Different shopId in groups[0]
      * Bug: Was returning same groups regardless of page param
      */
@@ -149,7 +151,7 @@ describe('CartController (e2e) - Query Parsing', () => {
 
     /**
      * Test: includeAll=true should return ALL groups
-     * 
+     *
      * Expected: groups.length === totalGroups
      * Expected: limit === totalGroups (or still 10, depending on implementation)
      */
@@ -177,7 +179,7 @@ describe('CartController (e2e) - Query Parsing', () => {
 
     /**
      * Test: includeAll="false" (string) should be parsed as boolean false
-     * 
+     *
      * This is the critical test for the bug fix.
      * String "false" must be parsed as boolean false, not truthy.
      */
@@ -207,7 +209,7 @@ describe('CartController (e2e) - Query Parsing', () => {
 
     /**
      * Test: Out-of-range page should return empty groups array
-     * 
+     *
      * Expected: { groups: [], page: 100, limit: 10, totalGroups: N, totalPages: M }
      * Should NOT fallback to page 1
      */

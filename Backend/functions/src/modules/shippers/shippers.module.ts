@@ -2,15 +2,21 @@ import { Module } from '@nestjs/common';
 import { ShippersService } from './shippers.service';
 import { ShipperApplicationsController } from './shipper-applications.controller';
 import { OwnerShippersController } from './owner-shippers.controller';
+import { ShipperNotificationsController } from './shipper-notifications.controller';
 import { FirestoreShippersRepository } from './repositories/firestore-shippers.repository';
 import { UsersModule } from '../users/users.module';
 import { ShopsModule } from '../shops/shops.module';
 import { FirebaseModule } from '../../core/firebase/firebase.module';
 import { SharedModule } from '../../shared/shared.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [FirebaseModule, UsersModule, ShopsModule, SharedModule],
-  controllers: [ShipperApplicationsController, OwnerShippersController],
+  imports: [FirebaseModule, UsersModule, ShopsModule, SharedModule, NotificationsModule],
+  controllers: [
+    ShipperApplicationsController,
+    OwnerShippersController,
+    ShipperNotificationsController,
+  ],
   providers: [
     ShippersService,
     {

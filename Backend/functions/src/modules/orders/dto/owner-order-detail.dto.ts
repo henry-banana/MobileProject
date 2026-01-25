@@ -6,7 +6,7 @@ import { OrderCustomerSnapshotDto } from './order-customer-snapshot.dto';
 /**
  * OWNER order detail response DTO
  * Used for GET /api/orders/shop/:id
- * 
+ *
  * Consistent with OWNER list response structure:
  * - Uses `customer` field (not customerSnapshot)
  * - Includes `shipperId` and optional `shipper` object

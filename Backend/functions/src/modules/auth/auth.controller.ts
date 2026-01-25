@@ -243,7 +243,7 @@ export class AuthController {
   /**
    * PUT /auth/set-role
    * Set user role
-   * 
+   *
    * Updates role in both Firestore and Firebase Custom Claims.
    * User must be authenticated. After setting role, user should refresh their token.
    */
@@ -253,7 +253,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Set user role',
-    description: 'Set role for authenticated user. Updates both Firestore and Firebase Custom Claims.',
+    description:
+      'Set role for authenticated user. Updates both Firestore and Firebase Custom Claims.',
   })
   @ApiResponse({
     status: 200,

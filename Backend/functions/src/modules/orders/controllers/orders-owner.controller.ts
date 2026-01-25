@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Put,
-  Param,
-  Req,
-  UseGuards,
-  Query,
-  HttpCode,
-  Body,
-} from '@nestjs/common';
+import { Controller, Get, Put, Param, Req, UseGuards, Query, HttpCode, Body } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -122,7 +112,7 @@ export class OrdersOwnerController {
   @Get('shop/:id')
   @ApiOperation({
     summary: 'Get shop order detail',
-    description: 'Retrieve full order details for an order that belongs to owner\'s shop',
+    description: "Retrieve full order details for an order that belongs to owner's shop",
   })
   @ApiParam({
     name: 'id',
@@ -153,8 +143,7 @@ export class OrdersOwnerController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Confirm order',
-    description:
-      'Confirm an order (owner only, must be in PENDING status)',
+    description: 'Confirm an order (owner only, must be in PENDING status)',
   })
   @ApiParam({
     name: 'id',
@@ -169,14 +158,8 @@ export class OrdersOwnerController {
   @ApiForbiddenResponse({ description: 'Not authorized' })
   @ApiConflictResponse({ description: 'Cannot confirm - payment or status issue' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async confirmOrder(
-    @Req() req: any,
-    @Param('id') orderId: string,
-  ): Promise<OrderEntity> {
-    return this.ordersService.confirmOrder(
-      req.user.uid,
-      orderId,
-    );
+  async confirmOrder(@Req() req: any, @Param('id') orderId: string): Promise<OrderEntity> {
+    return this.ordersService.confirmOrder(req.user.uid, orderId);
   }
 
   /**
@@ -189,8 +172,7 @@ export class OrdersOwnerController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Mark order as preparing',
-    description:
-      'Mark order as being prepared (owner only, must be in CONFIRMED status)',
+    description: 'Mark order as being prepared (owner only, must be in CONFIRMED status)',
   })
   @ApiParam({
     name: 'id',
@@ -205,14 +187,8 @@ export class OrdersOwnerController {
   @ApiForbiddenResponse({ description: 'Not authorized' })
   @ApiConflictResponse({ description: 'Cannot transition to PREPARING status' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async markPreparing(
-    @Req() req: any,
-    @Param('id') orderId: string,
-  ): Promise<OrderEntity> {
-    return this.ordersService.markPreparing(
-      req.user.uid,
-      orderId,
-    );
+  async markPreparing(@Req() req: any, @Param('id') orderId: string): Promise<OrderEntity> {
+    return this.ordersService.markPreparing(req.user.uid, orderId);
   }
 
   /**
@@ -225,8 +201,7 @@ export class OrdersOwnerController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Mark order as ready',
-    description:
-      'Mark order as ready for pickup (owner only, must be in PREPARING status)',
+    description: 'Mark order as ready for pickup (owner only, must be in PREPARING status)',
   })
   @ApiParam({
     name: 'id',
@@ -241,10 +216,7 @@ export class OrdersOwnerController {
   @ApiForbiddenResponse({ description: 'Not authorized' })
   @ApiConflictResponse({ description: 'Cannot transition to READY status' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async markReady(
-    @Req() req: any,
-    @Param('id') orderId: string,
-  ): Promise<OrderEntity> {
+  async markReady(@Req() req: any, @Param('id') orderId: string): Promise<OrderEntity | null> {
     return this.ordersService.markReady(req.user.uid, orderId);
   }
 
@@ -258,8 +230,7 @@ export class OrdersOwnerController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Cancel order (owner)',
-    description:
-      'Cancel an order (owner only, must be in CONFIRMED or PREPARING status)',
+    description: 'Cancel an order (owner only, must be in CONFIRMED or PREPARING status)',
   })
   @ApiParam({
     name: 'id',
@@ -295,11 +266,7 @@ export class OrdersOwnerController {
     @Req() req: any,
     @Param('id') orderId: string,
     @Body() dto: CancelOrderDto,
-  ): Promise<OrderEntity> {
-    return this.ordersService.ownerCancelOrder(
-      req.user.uid,
-      orderId,
-      dto.reason,
-    );
+  ): Promise<OrderEntity | null> {
+    return this.ordersService.ownerCancelOrder(req.user.uid, orderId, dto.reason);
   }
 }

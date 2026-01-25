@@ -18,10 +18,10 @@ export class CartGroupsQueryDto {
   @Max(50)
   limit?: number;
 
-  @ApiPropertyOptional({ 
-    description: 'Return all groups without pagination (bypasses page/limit slicing)', 
+  @ApiPropertyOptional({
+    description: 'Return all groups without pagination (bypasses page/limit slicing)',
     example: false,
-    type: 'boolean'
+    type: 'boolean',
   })
   @IsOptional()
   @Transform(({ value }) => {

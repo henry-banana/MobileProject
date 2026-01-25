@@ -1,4 +1,10 @@
-import { Injectable, Inject, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { IProductsRepository } from '../interfaces';
 import { ProductEntity } from '../entities';
 import {
@@ -21,10 +27,9 @@ export class ProductsService {
     private readonly categoriesService: CategoriesService,
   ) {}
 
-
   /**
- * Find product by ID (public access - for other services)
- */
+   * Find product by ID (public access - for other services)
+   */
   async findOne(productId: string): Promise<ProductEntity> {
     return await this.getProductById(productId);
   }

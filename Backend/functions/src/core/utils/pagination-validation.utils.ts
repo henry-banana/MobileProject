@@ -52,14 +52,12 @@ export function validatePaginationMeta(meta: any): void {
     if (extraFields.length > 0) {
       throw new Error(
         `Pagination meta contains unexpected fields: ${extraFields.join(', ')}. ` +
-        `Remove hasNext, hasPrev, and other extra fields. Only allow: ${requiredFields.join(', ')}`,
+          `Remove hasNext, hasPrev, and other extra fields. Only allow: ${requiredFields.join(', ')}`,
       );
     }
 
     if (missingFields.length > 0) {
-      throw new Error(
-        `Pagination meta is missing required fields: ${missingFields.join(', ')}`,
-      );
+      throw new Error(`Pagination meta is missing required fields: ${missingFields.join(', ')}`);
     }
   }
 
@@ -85,7 +83,7 @@ export function validatePaginationMeta(meta: any): void {
   if (meta.totalPages !== expectedTotalPages) {
     throw new Error(
       `totalPages mismatch: expected ${expectedTotalPages} (ceil(${meta.total}/${meta.limit})), ` +
-      `got ${meta.totalPages}`,
+        `got ${meta.totalPages}`,
     );
   }
 
@@ -144,9 +142,7 @@ export function validatePaginatedResponse(
 
   // Validate items count consistency
   if (items.length > paginationMeta.limit) {
-    throw new Error(
-      `Item count (${items.length}) exceeds limit (${paginationMeta.limit})`,
-    );
+    throw new Error(`Item count (${items.length}) exceeds limit (${paginationMeta.limit})`);
   }
 }
 

@@ -82,9 +82,7 @@ export class CartService {
     }
 
     // 5. Check if product already in cart
-    const existingItemIndex = cart.items.findIndex(
-      (item) => item.productId === dto.productId,
-    );
+    const existingItemIndex = cart.items.findIndex((item) => item.productId === dto.productId);
 
     // 5a. Calculate quantity: INCREMENT if exists, otherwise use request quantity
     const existingQuantity = existingItemIndex >= 0 ? cart.items[existingItemIndex].quantity : 0;
@@ -134,10 +132,7 @@ export class CartService {
     };
   }
 
-  async getCartGrouped(
-    customerId: string,
-    options?: CartGroupsOptions,
-  ): Promise<CartGroupsResult> {
+  async getCartGrouped(customerId: string, options?: CartGroupsOptions): Promise<CartGroupsResult> {
     const includeAll = options?.includeAll ?? false;
     const page = options?.page ?? 1;
     const limit = options?.limit ?? 10;
@@ -166,13 +161,11 @@ export class CartService {
 
     // 3. Batch fetch shops (optimization)
     const shopIds = Array.from(itemsByShop.keys());
-    const shopPromises = shopIds.map((shopId) =>
-      this.shopsRepo.findById(shopId),
-    );
+    const shopPromises = shopIds.map((shopId) => this.shopsRepo.findById(shopId));
     const shops = await Promise.all(shopPromises);
 
     // 4. Build shop map
-    const shopMap = new Map<string, typeof shops[0]>();
+    const shopMap = new Map<string, (typeof shops)[0]>();
     shops.forEach((shop, index) => {
       if (shop) {
         shopMap.set(shopIds[index], shop);
@@ -211,9 +204,7 @@ export class CartService {
 
       const subtotal = cartItems.reduce((sum, item) => sum + item.subtotal, 0);
       const lastUpdated = Math.max(
-        ...items.map((item) =>
-          Math.max(toMillis(item.updatedAt), toMillis(item.addedAt)),
-        ),
+        ...items.map((item) => Math.max(toMillis(item.updatedAt), toMillis(item.addedAt))),
       );
 
       groupsWithMeta.push({
@@ -257,7 +248,8 @@ export class CartService {
     }
 
     // Normal pagination: slice groups
-    const pagedGroups = page > totalPages && totalPages > 0 ? [] : orderedGroups.slice(offset, offset + limit);
+    const pagedGroups =
+      page > totalPages && totalPages > 0 ? [] : orderedGroups.slice(offset, offset + limit);
 
     return {
       groups: pagedGroups,
@@ -293,9 +285,7 @@ export class CartService {
     }
 
     // 2. Find item
-    const itemIndex = cart.items.findIndex(
-      (item) => item.productId === productId,
-    );
+    const itemIndex = cart.items.findIndex((item) => item.productId === productId);
     if (itemIndex === -1) {
       throw new NotFoundException({
         code: 'CART_003',
@@ -332,9 +322,7 @@ export class CartService {
     }
 
     // 2. Find item
-    const itemIndex = cart.items.findIndex(
-      (item) => item.productId === productId,
-    );
+    const itemIndex = cart.items.findIndex((item) => item.productId === productId);
     if (itemIndex === -1) {
       throw new NotFoundException({
         code: 'CART_004',

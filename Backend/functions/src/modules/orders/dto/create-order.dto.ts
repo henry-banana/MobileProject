@@ -104,7 +104,8 @@ export class CreateOrderDto {
   shopId: string;
 
   @ApiPropertyOptional({
-    description: 'ALTERNATIVE: Reference to saved address by ID (advanced use). Standard flow: frontend should fetch addresses, let user select/edit, then submit deliveryAddress snapshot.',
+    description:
+      'ALTERNATIVE: Reference to saved address by ID (advanced use). Standard flow: frontend should fetch addresses, let user select/edit, then submit deliveryAddress snapshot.',
     example: 'addr_abc123',
   })
   @IsString()
@@ -112,7 +113,8 @@ export class CreateOrderDto {
   deliveryAddressId?: string;
 
   @ApiPropertyOptional({
-    description: 'Delivery address snapshot (RECOMMENDED). Frontend: GET /me/addresses, auto-select isDefault, allow user to edit note, then POST with this deliveryAddress object.',
+    description:
+      'Delivery address snapshot (RECOMMENDED). Frontend: GET /me/addresses, auto-select isDefault, allow user to edit note, then POST with this deliveryAddress object.',
     type: DeliveryAddressDto,
   })
   @ValidateIf((o) => !o.deliveryAddressId)

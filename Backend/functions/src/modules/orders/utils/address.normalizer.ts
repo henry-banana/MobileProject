@@ -11,9 +11,7 @@ import { DeliveryAddress } from '../entities/delivery-address.entity';
  * Only used for order documents before Firestore save
  * Does not mutate the original object
  */
-export function removeUndefinedDeep<T extends Record<string, any>>(
-  obj: T,
-): Partial<T> {
+export function removeUndefinedDeep<T extends Record<string, any>>(obj: T): Partial<T> {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -60,9 +58,7 @@ export function removeUndefinedDeep<T extends Record<string, any>>(
  * { label, fullAddress, street, ward, ... }
  * => Only includes fields that are defined
  */
-export function normalizeDeliveryAddress(
-  input: DeliveryAddress | undefined,
-): DeliveryAddress {
+export function normalizeDeliveryAddress(input: DeliveryAddress | undefined): DeliveryAddress {
   if (!input) {
     return {};
   }

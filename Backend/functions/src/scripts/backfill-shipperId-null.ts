@@ -108,8 +108,10 @@ async function backfillShipperId(): Promise<void> {
 
       await writeBatch.commit();
       batchCount++;
-      const progress = Math.min((i + BATCH_SIZE) * 100 / orders.length, 100);
-      console.log(`  ✓ Batch ${batchCount}: ${batch.length} orders updated (${progress.toFixed(0)}%)`);
+      const progress = Math.min(((i + BATCH_SIZE) * 100) / orders.length, 100);
+      console.log(
+        `  ✓ Batch ${batchCount}: ${batch.length} orders updated (${progress.toFixed(0)}%)`,
+      );
     }
 
     console.log('\n✅ Migration completed successfully!\n');
@@ -120,7 +122,9 @@ async function backfillShipperId(): Promise<void> {
     console.log(`  • Batches: ${batchCount}\n`);
 
     console.log('🔄 Next step: Verify shipper available orders endpoint');
-    console.log('   GET /api/orders/shipper/available should now return previously unassigned orders\n');
+    console.log(
+      '   GET /api/orders/shipper/available should now return previously unassigned orders\n',
+    );
   } catch (error) {
     console.error('❌ Migration failed:', error);
     process.exit(1);
@@ -130,10 +134,12 @@ async function backfillShipperId(): Promise<void> {
 }
 
 // Run migration
-backfillShipperId().then(() => {
-  console.log('✨ Done!');
-  process.exit(0);
-}).catch((error) => {
-  console.error('Fatal error:', error);
-  process.exit(1);
-});
+backfillShipperId()
+  .then(() => {
+    console.log('✨ Done!');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('Fatal error:', error);
+    process.exit(1);
+  });

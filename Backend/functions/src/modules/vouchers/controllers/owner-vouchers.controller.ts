@@ -75,10 +75,7 @@ export class OwnerVouchersController {
               properties: {
                 type: { enum: ['FIXED_AMOUNT'] },
                 maxDiscount: {
-                  oneOf: [
-                    { type: 'number' },
-                    { type: 'null' },
-                  ],
+                  oneOf: [{ type: 'number' }, { type: 'null' }],
                   description: 'OPTIONAL for FIXED_AMOUNT - ignored if provided',
                   example: null,
                 },

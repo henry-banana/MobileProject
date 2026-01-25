@@ -19,9 +19,9 @@ import { ShippersModule } from './modules/shippers/shippers.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { VouchersModule } from './modules/vouchers/vouchers.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 // import { PaymentsModule } from './modules/payments/payments.module';
 // import { WalletsModule } from './modules/wallets/wallets.module';
-// import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -53,10 +53,13 @@ import { VouchersModule } from './modules/vouchers/vouchers.module';
     CartModule,
     OrdersModule,
     VouchersModule,
+
+    // EPIC 05: Notifications (CORE)
+    NotificationsModule,
+
     // Future EPICs
     // PaymentsModule,
     // WalletsModule,
-    // NotificationsModule,
   ],
 })
 export class AppModule {}

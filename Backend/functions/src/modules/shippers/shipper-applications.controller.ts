@@ -1,4 +1,16 @@
-import { Controller, Post, Get, Delete, Body, Param, UseGuards, Req, UseInterceptors, UploadedFiles, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiConsumes } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ShippersService } from './shippers.service';
@@ -73,7 +85,9 @@ export class ShipperApplicationsController {
   ): Promise<ShipperApplicationEntity> {
     // Validate files
     if (!files?.idCardFront?.[0] || !files?.idCardBack?.[0] || !files?.driverLicense?.[0]) {
-      throw new BadRequestException('Vui lòng upload đầy đủ 3 ảnh: CMND/CCCD mặt trước, mặt sau và bằng lái xe');
+      throw new BadRequestException(
+        'Vui lòng upload đầy đủ 3 ảnh: CMND/CCCD mặt trước, mặt sau và bằng lái xe',
+      );
     }
 
     return this.shippersService.applyShipper(

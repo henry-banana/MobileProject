@@ -515,7 +515,7 @@ export class AuthService {
 
   /**
    * Set user role
-   * 
+   *
    * Updates role in both Firestore and Firebase Custom Claims
    */
   async setRole(userId: string, role: UserRole) {
