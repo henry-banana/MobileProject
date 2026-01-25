@@ -223,12 +223,74 @@ export class ProductsService {
     filters: ProductFilterDto,
   ): Promise<{ products: ProductEntity[]; total: number; page: number; limit: number }> {
     const result = await this.productsRepository.searchGlobal(filters);
+    
+  
+    const currentHour = new Date().getHours();
+    
+    // Các khung giờ ưu tiên cơm
+    const ricePriorityHours = [
+      { start: 5, end: 8 },   // 5h-8h sáng
+      { start: 10, end: 21 }  // 10h-14h trưa
+    ];
+    
+    // Kiểm tra xem có đang trong khung giờ ưu tiên cơm không
+    const isRicePriorityTime = ricePriorityHours.some(
+      ({ start, end }) => currentHour >= start && currentHour < end
+    );
+    
+    let sortedProducts = [...result.products];
+    
+    if (isRicePriorityTime) {
+      // Ưu tiên các món thuộc category "cơm" trong khung giờ 5-8h và 10-14h
+      sortedProducts.sort((a, b) => {
+        const aIsRice = this.isRiceCategory(a.categoryName);
+        const bIsRice = this.isRiceCategory(b.categoryName);
+        
+        if (aIsRice && !bIsRice) return -1; // a là cơm, ưu tiên lên đầu
+        if (!aIsRice && bIsRice) return 1;  // b là cơm, a xuống dưới
+        return 0; // Giữ nguyên thứ tự nếu cùng loại
+      });
+    } else {
+      // Các khung giờ khác: ưu tiên tráng miệng và trà sữa
+      sortedProducts.sort((a, b) => {
+        const aIsDessert = this.isDessertOrBubbleTeaCategory(a.categoryName);
+        const bIsDessert = this.isDessertOrBubbleTeaCategory(b.categoryName);
+        
+        if (aIsDessert && !bIsDessert) return -1; // a là tráng miệng/trà sữa, ưu tiên lên đầu
+        if (!aIsDessert && bIsDessert) return 1;  // b là tráng miệng/trà sữa, a xuống dưới
+        return 0; // Giữ nguyên thứ tự nếu cùng loại
+      });
+  }
+  
+  return {
+    products: sortedProducts,
+    total: result.total,
+    page: filters.page || 1,
+    limit: filters.limit || 20,
+  };
+}
 
-    return {
-      ...result,
-      page: filters.page || 1,
-      limit: filters.limit || 20,
-    };
+  // Helper method để kiểm tra category cơm
+  private isRiceCategory(category?: string): boolean {
+    if (!category) return false;
+    
+    const riceKeywords = ['Cơm', 'Phở & Bún', 'Mì'];
+    const categoryLower = category.toLowerCase();
+    
+    return riceKeywords.some(keyword => categoryLower.includes(keyword.toLowerCase()));
+  }
+
+  // Helper method để kiểm tra category tráng miệng hoặc trà sữa
+  private isDessertOrBubbleTeaCategory(category?: string): boolean {
+    if (!category) return false;
+    
+    const dessertKeywords = [
+      'Tráng miệng', 'Đồ ăn vặt', 'Trà sữa & Đồ uống', 'Coffee'
+    ];
+    
+    const categoryLower = category.toLowerCase();
+    
+    return dessertKeywords.some(keyword => categoryLower.includes(keyword.toLowerCase()));
   }
 
   /**

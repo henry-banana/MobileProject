@@ -49,13 +49,11 @@ data class Client(
                     addresses = apiData.addresses?.mapNotNull { address ->
                         address?.let {
                             DeliveryAddress(
+                                // ID và thông tin cơ bản
                                 id = it.id ?: "",
-                                name = it.label ?: "Địa chỉ",
-                                address = it.fullAddress ?: "",
-                                isDefault = it.isDefault ?: false,
+                                label = it.label ?: "Địa chỉ",
+                                fullAddress = it.fullAddress ?: "",
                                 clientId = apiData.id,
-                                phone = apiData.phone ?: "",
-                                note = ""
                             )
                         }
                     } ?: emptyList()

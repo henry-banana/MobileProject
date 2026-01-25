@@ -26,6 +26,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.foodapp.data.model.shared.product.FoodCategory
+import com.example.foodapp.data.model.shared.product.Product
 import com.example.foodapp.pages.client.components.home.UserBottomNav
 import com.example.foodapp.utils.CurrencyUtils
 
@@ -34,6 +36,7 @@ import com.example.foodapp.utils.CurrencyUtils
 fun CartScreen(
     navController: NavHostController,
     onBackClick: () -> Unit,
+    onCheckoutShop: (List<Product>, List<Int>, String, String) -> Unit = { _, _, _, _ -> }
 ) {
 
     val viewModel: CartViewModel = viewModel(
@@ -260,7 +263,7 @@ fun CartScreen(
                             totalShippingFee = filteredTotalShippingFee,
                             subtotal = filteredTotalAmount,
                             onCheckout = {
-                                // TODO: Điều hướng đến màn hình thanh toán
+                                handleCheckoutAll(filteredShopGroups, onCheckoutShop)
                             }
                         )
                         UserBottomNav(navController = navController, onProfileClick = { })
@@ -326,6 +329,9 @@ fun CartScreen(
                                 onDeleteShop = { shopGroup ->
                                     viewModel.showDeleteShopDialog(shopGroup)
                                 },
+                                onCheckoutShop = { shopGroup ->
+                                    handleCheckoutShop(shopGroup, onCheckoutShop)
+                                },
                                 removingItemId = removingItemId,
                                 updatingItemId = updatingItemId
                             )
@@ -354,6 +360,64 @@ fun CartScreen(
     }
 }
 
+private fun handleCheckoutShop(
+    shopGroup: ShopGroup,
+    onCheckoutShop: (List<Product>, List<Int>, String, String) -> Unit
+) {
+    // Tạo danh sách products
+    val products = shopGroup.items.map { cartItem ->
+        Product(
+            id = cartItem.id,
+            name = cartItem.name,
+            description = cartItem.name,
+            price = cartItem.formattedPrice,
+            priceValue = cartItem.price,
+            category = FoodCategory.FOOD,
+            imageUrl = cartItem.imageUrl ?: "",
+            shopId = shopGroup.shopId,
+            shopName = shopGroup.shopName
+        )
+    }
+
+    // Tạo danh sách quantities tương ứng
+    val quantities = shopGroup.items.map { it.quantity }
+
+    // Truyền cả products và quantities
+    onCheckoutShop(products, quantities, shopGroup.shopId, shopGroup.shopName)
+}
+
+private fun handleCheckoutAll(
+    shopGroups: List<ShopGroup>,
+    onCheckoutShop: (List<Product>, List<Int>, String, String) -> Unit
+) {
+    if (shopGroups.size == 1) {
+        handleCheckoutShop(shopGroups.first(), onCheckoutShop)
+    } else {
+        val allProducts = mutableListOf<Product>()
+        val allQuantities = mutableListOf<Int>()
+
+        shopGroups.forEach { shopGroup ->
+            shopGroup.items.forEach { cartItem ->
+                allProducts.add(
+                    Product(
+                        id = cartItem.id,
+                        name = cartItem.name,
+                        description = cartItem.name,
+                        price = cartItem.formattedPrice,
+                        priceValue = cartItem.price,
+                        category = FoodCategory.FOOD,
+                        imageUrl = cartItem.imageUrl ?: "",
+                        shopId = shopGroup.shopId,
+                        shopName = shopGroup.shopName
+                    )
+                )
+                allQuantities.add(cartItem.quantity)
+            }
+        }
+        onCheckoutShop(allProducts, allQuantities, "", "Tất cả cửa hàng")
+    }
+}
+
 @Composable
 private fun ShopGroupsContent(
     shopGroups: List<ShopGroup>,
@@ -362,6 +426,7 @@ private fun ShopGroupsContent(
     onQuantityChange: (String, Int) -> Unit,
     onSaveQuantityChange: (String) -> Unit,
     onDeleteShop: (ShopGroup) -> Unit,
+    onCheckoutShop: (ShopGroup) -> Unit,
     removingItemId: String?,
     updatingItemId: String?
 ) {
@@ -381,6 +446,7 @@ private fun ShopGroupsContent(
                     onQuantityChange = onQuantityChange,
                     onSaveQuantityChange = onSaveQuantityChange,
                     onDeleteShop = onDeleteShop,
+                    onCheckoutShop = onCheckoutShop,
                     removingItemId = removingItemId,
                     updatingItemId = updatingItemId
                 )
@@ -397,6 +463,7 @@ private fun ShopGroupSection(
     onQuantityChange: (String, Int) -> Unit,
     onSaveQuantityChange: (String) -> Unit,
     onDeleteShop: (ShopGroup) -> Unit,
+    onCheckoutShop: (ShopGroup) -> Unit,
     removingItemId: String?,
     updatingItemId: String?
 ) {
@@ -413,7 +480,6 @@ private fun ShopGroupSection(
                 .fillMaxWidth()
                 .padding(vertical = 16.dp, horizontal = 16.dp)
         ) {
-            // Shop Header
             ShopHeader(
                 shopGroup = shopGroup,
                 onDeleteShop = onDeleteShop
@@ -421,7 +487,6 @@ private fun ShopGroupSection(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // List items trong shop này
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -442,8 +507,87 @@ private fun ShopGroupSection(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Shop Footer (tổng tiền shop)
-            ShopFooter(shopGroup = shopGroup)
+            ShopFooterWithCheckout(
+                shopGroup = shopGroup,
+                onCheckout = { onCheckoutShop(shopGroup) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ShopFooterWithCheckout(
+    shopGroup: ShopGroup,
+    onCheckout: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF5F5F5)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Phí vận chuyển:",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+                Text(
+                    text = CurrencyUtils.formatCurrency(shopGroup.shipFee),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Tổng shop:",
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = CurrencyUtils.formatCurrency(shopGroup.subtotal + shopGroup.shipFee),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFFF9800)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = onCheckout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF9800)
+                )
+            ) {
+                Text(
+                    text = "Thanh toán shop này",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.White
+                )
+            }
         }
     }
 }
@@ -611,7 +755,6 @@ private fun ShopItemCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Bộ chọn số lượng
                 QuantitySelector(
                     currentQuantity = currentQuantity,
                     originalQuantity = item.quantity,
@@ -770,62 +913,6 @@ private fun QuantitySelector(
                     contentDescription = "Lưu",
                     tint = Color(0xFF4CAF50),
                     modifier = Modifier.size(18.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShopFooter(
-    shopGroup: ShopGroup
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5F5F5)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Phí vận chuyển:",
-                    fontSize = 13.sp,
-                    color = Color.Gray
-                )
-                Text(
-                    text = CurrencyUtils.formatCurrency(shopGroup.shipFee),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Tổng shop:",
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = CurrencyUtils.formatCurrency(shopGroup.subtotal + shopGroup.shipFee),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFF9800)
                 )
             }
         }
@@ -1209,7 +1296,7 @@ private fun CartBottomBar(
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
-                    "Thanh toán ngay",
+                    "Thanh toán tất cả",
                     color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold

@@ -39,7 +39,6 @@ data class Product(
     val priceValue: Double,
     val category: FoodCategory,
 
-    // Field cho hình ảnh (hỗ trợ cả local và remote)
     val imageRes: Int? = null,          // Local resource ID (nếu có)
     val imageUrl: String? = null,       // URL ảnh từ API
 
