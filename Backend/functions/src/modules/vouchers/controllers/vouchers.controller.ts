@@ -31,7 +31,8 @@ export class VouchersController {
   @Get()
   @ApiOperation({
     summary: 'Get available vouchers',
-    description: 'Customer gets all active vouchers for a shop with per-user usage info (myUsageCount, myRemainingUses)',
+    description:
+      'Customer gets all active vouchers for a shop with per-user usage info (myUsageCount, myRemainingUses)',
   })
   @ApiQuery({ name: 'shopId', required: true, description: 'Shop ID' })
   @ApiResponse({
@@ -46,14 +47,30 @@ export class VouchersController {
           id: { type: 'string', example: 'voucher_summer20_2024' },
           code: { type: 'string', example: 'SUMMER20' },
           shopId: { type: 'string', example: 'shop_123' },
-          type: { type: 'string', example: 'PERCENTAGE', enum: ['PERCENTAGE', 'FIXED_AMOUNT', 'FREE_SHIP'] },
+          type: {
+            type: 'string',
+            example: 'PERCENTAGE',
+            enum: ['PERCENTAGE', 'FIXED_AMOUNT', 'FREE_SHIP'],
+          },
           value: { type: 'number', example: 20 },
           minOrderAmount: { type: 'number', example: 30000 },
           usageLimit: { type: 'number', example: 100 },
           usageLimitPerUser: { type: 'number', example: 3 },
-          currentUsage: { type: 'number', example: 25, description: 'Global aggregate usage (all customers)' },
-          myUsageCount: { type: 'number', example: 1, description: 'Times current user has used this voucher' },
-          myRemainingUses: { type: 'number', example: 2, description: 'Remaining uses for current user' },
+          currentUsage: {
+            type: 'number',
+            example: 25,
+            description: 'Global aggregate usage (all customers)',
+          },
+          myUsageCount: {
+            type: 'number',
+            example: 1,
+            description: 'Times current user has used this voucher',
+          },
+          myRemainingUses: {
+            type: 'number',
+            example: 2,
+            description: 'Remaining uses for current user',
+          },
           validFrom: { type: 'string', example: '2026-01-21T00:00:00Z' },
           validTo: { type: 'string', example: '2026-12-31T23:59:59Z' },
           name: { type: 'string', example: 'Miễn phí ship 50%' },
@@ -113,10 +130,7 @@ export class VouchersController {
       ],
     },
   })
-  async getAvailableVouchers(
-    @Query('shopId') shopId: string,
-    @CurrentUser('uid') userId: string,
-  ) {
+  async getAvailableVouchers(@Query('shopId') shopId: string, @CurrentUser('uid') userId: string) {
     const vouchers = await this.vouchersService.getAvailableVouchers(shopId, userId);
     return vouchers;
   }

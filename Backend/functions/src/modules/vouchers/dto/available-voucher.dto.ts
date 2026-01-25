@@ -4,7 +4,7 @@ import { VoucherEntity, VoucherType, OwnerType } from '../entities';
 /**
  * Available Voucher Response DTO
  * Used by GET /vouchers (Customer endpoint)
- * 
+ *
  * Extends VoucherEntity with per-user usage information.
  * All fields match the backend response.
  */

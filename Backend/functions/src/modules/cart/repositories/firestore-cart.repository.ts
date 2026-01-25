@@ -10,10 +10,7 @@ export class FirestoreCartRepository implements ICartRepository {
   constructor(@Inject('FIRESTORE') private readonly firestore: Firestore) {}
 
   async findByCustomerId(customerId: string): Promise<CartEntity | null> {
-    const doc = await this.firestore
-      .collection(this.collection)
-      .doc(customerId)
-      .get();
+    const doc = await this.firestore.collection(this.collection).doc(customerId).get();
 
     if (!doc.exists) {
       return null;
@@ -23,35 +20,27 @@ export class FirestoreCartRepository implements ICartRepository {
   }
 
   async create(cart: CartEntity): Promise<CartEntity> {
-    await this.firestore
-      .collection(this.collection)
-      .doc(cart.customerId)
-      .set({
-        items: cart.items,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+    await this.firestore.collection(this.collection).doc(cart.customerId).set({
+      items: cart.items,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
 
     return cart;
   }
 
   async update(cart: CartEntity): Promise<void> {
-    await this.firestore
-      .collection(this.collection)
-      .doc(cart.customerId)
-      .update({
-        items: cart.items,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+    await this.firestore.collection(this.collection).doc(cart.customerId).update({
+      items: cart.items,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
   }
 
   async delete(customerId: string): Promise<void> {
     await this.firestore.collection(this.collection).doc(customerId).delete();
   }
 
-  private mapToEntity(
-    doc: FirebaseFirestore.DocumentSnapshot,
-  ): CartEntity | null {
+  private mapToEntity(doc: FirebaseFirestore.DocumentSnapshot): CartEntity | null {
     if (!doc.exists) {
       return null;
     }

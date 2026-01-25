@@ -151,7 +151,10 @@ export class FirestoreVouchersRepository implements IVouchersRepository {
    * Chunking for Firestore 'in' operator limit (~10 items per query)
    * @returns Map of voucherId -> usage count for the given user
    */
-  async countUsageByUserBatch(voucherIds: string[], userId: string): Promise<Record<string, number>> {
+  async countUsageByUserBatch(
+    voucherIds: string[],
+    userId: string,
+  ): Promise<Record<string, number>> {
     if (voucherIds.length === 0) {
       return {};
     }

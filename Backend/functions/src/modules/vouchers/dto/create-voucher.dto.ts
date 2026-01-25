@@ -47,7 +47,8 @@ export class CreateVoucherDto {
 
   @ApiProperty({
     example: 20000,
-    description: 'Maximum discount amount (REQUIRED for PERCENTAGE, optional for FIXED_AMOUNT/FREE_SHIP)',
+    description:
+      'Maximum discount amount (REQUIRED for PERCENTAGE, optional for FIXED_AMOUNT/FREE_SHIP)',
   })
   @ValidateIf((o) => o.type === VoucherType.PERCENTAGE)
   @IsNotEmpty({ message: 'maxDiscount là bắt buộc cho loại voucher PERCENTAGE' })

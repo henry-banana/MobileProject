@@ -27,7 +27,9 @@ import { Timestamp } from 'firebase-admin/firestore';
  *   toIsoString(null) // undefined
  *   toIsoString(undefined) // undefined
  */
-export function toIsoString(timestamp: Timestamp | Date | string | null | undefined | any): string | undefined {
+export function toIsoString(
+  timestamp: Timestamp | Date | string | null | undefined | any,
+): string | undefined {
   if (timestamp === null || timestamp === undefined) {
     return undefined;
   }
@@ -98,7 +100,7 @@ export function serializeTimestamps<T extends Record<string, any>>(obj: T): T {
   }
 
   if (Array.isArray(obj)) {
-    return (obj.map((item: any) => serializeTimestamps(item)) as unknown) as T;
+    return obj.map((item: any) => serializeTimestamps(item)) as unknown as T;
   }
 
   const serialized: Record<string, any> = { ...obj };
@@ -115,7 +117,7 @@ export function serializeTimestamps<T extends Record<string, any>>(obj: T): T {
       else if (value && typeof value === 'object') {
         if (Array.isArray(value)) {
           serialized[key] = value.map((item: any) =>
-            typeof item === 'object' && item !== null ? serializeTimestamps(item) : item
+            typeof item === 'object' && item !== null ? serializeTimestamps(item) : item,
           );
         } else {
           serialized[key] = serializeTimestamps(value);
@@ -124,7 +126,7 @@ export function serializeTimestamps<T extends Record<string, any>>(obj: T): T {
     }
   }
 
-  return (serialized as unknown) as T;
+  return serialized as unknown as T;
 }
 
 /**

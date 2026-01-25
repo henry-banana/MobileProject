@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Post,
-  Req,
-  UseGuards,
-  HttpCode,
-} from '@nestjs/common';
+import { Controller, Post, Req, UseGuards, HttpCode } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -96,9 +90,7 @@ export class OrdersAdminController {
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
   @ApiForbiddenResponse({ description: 'Must be ADMIN role' })
   async backfillShipperIdNull(@Req() req: any): Promise<any> {
-    console.log(
-      `[Backfill] Started by admin: ${req.user?.email || req.user?.uid}`,
-    );
+    console.log(`[Backfill] Started by admin: ${req.user?.email || req.user?.uid}`);
 
     // Call backfill service (injected in orders.service)
     return await this.ordersService.backfillShipperIdNull();

@@ -19,10 +19,7 @@ export class OrderStateMachineService {
    * @param newStatus Desired new status
    * @throws ConflictException if transition is invalid
    */
-  async validateTransition(
-    currentStatus: OrderStatus,
-    newStatus: OrderStatus,
-  ): Promise<void> {
+  async validateTransition(currentStatus: OrderStatus, newStatus: OrderStatus): Promise<void> {
     const allowedTransitions = this.transitions.get(currentStatus) || [];
 
     if (!allowedTransitions.includes(newStatus)) {
@@ -39,11 +36,7 @@ export class OrderStateMachineService {
    * MVP: Customer can cancel PENDING, CONFIRMED, PREPARING only
    */
   canCancelCustomer(status: OrderStatus): boolean {
-    return [
-      OrderStatus.PENDING,
-      OrderStatus.CONFIRMED,
-      OrderStatus.PREPARING,
-    ].includes(status);
+    return [OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.PREPARING].includes(status);
   }
 
   /**

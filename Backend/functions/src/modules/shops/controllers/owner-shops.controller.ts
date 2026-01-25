@@ -12,7 +12,14 @@ import {
   UploadedFiles,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiConsumes } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
@@ -204,12 +211,7 @@ export class OwnerShopsController {
       logo?: Express.Multer.File[];
     },
   ) {
-    await this.shopsService.updateShop(
-      ownerId,
-      dto,
-      files?.coverImage?.[0],
-      files?.logo?.[0],
-    );
+    await this.shopsService.updateShop(ownerId, dto, files?.coverImage?.[0], files?.logo?.[0]);
     return { message: 'Cập nhật shop thành công' };
   }
 

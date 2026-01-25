@@ -13,10 +13,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
   constructor(@Inject('FIRESTORE') private readonly firestore: Firestore) {}
 
   async findById(id: string): Promise<OrderEntity | null> {
-    const doc = await this.firestore
-      .collection(this.ordersCollection)
-      .doc(id)
-      .get();
+    const doc = await this.firestore.collection(this.ordersCollection).doc(id).get();
 
     if (!doc.exists) {
       return null;
@@ -27,7 +24,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
 
   async findByCustomerId(
     customerId: string,
-    options?: { limit?: number; startAfter?: any }
+    options?: { limit?: number; startAfter?: any },
   ): Promise<OrderEntity[]> {
     const limit = options?.limit || 10;
     let query = this.firestore
@@ -46,7 +43,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
 
   async findByShopId(
     shopId: string,
-    options?: { limit?: number; startAfter?: any }
+    options?: { limit?: number; startAfter?: any },
   ): Promise<OrderEntity[]> {
     const limit = options?.limit || 10;
     let query = this.firestore
@@ -96,10 +93,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
       updatedAt: FieldValue.serverTimestamp(),
     };
 
-    await this.firestore
-      .collection(this.ordersCollection)
-      .doc(id)
-      .update(updateData);
+    await this.firestore.collection(this.ordersCollection).doc(id).update(updateData);
   }
 
   query() {
@@ -116,7 +110,8 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
         // Previously skipped null values, causing COUNT to return different results than FETCH
         const entries = Object.entries(where);
         for (const [key, value] of entries) {
-          if (value !== undefined) {  // Allow null, only skip undefined
+          if (value !== undefined) {
+            // Allow null, only skip undefined
             query = query.where(key, '==', value);
           }
         }
@@ -132,7 +127,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
   /**
    * Creates an order and atomically clears the cart group in a transaction
    * CRITICAL: Ensure all validation is done in service layer BEFORE calling this
-   * 
+   *
    * @param additionalTransactionOps Optional callback for additional transaction operations (e.g., apply voucher)
    */
   async createOrderAndClearCartGroup(
@@ -153,9 +148,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
       // ====================================================================
 
       // 1. Read cart document first (before any writes)
-      const cartRef = this.firestore
-        .collection(this.cartsCollection)
-        .doc(customerId);
+      const cartRef = this.firestore.collection(this.cartsCollection).doc(customerId);
       const cartSnap = await transaction.get(cartRef);
 
       // ====================================================================
@@ -189,9 +182,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
       if (cartSnap.exists) {
         const cart = cartSnap.data();
         if (cart) {
-          const remainingItems = cart.items.filter(
-            (item: any) => item.shopId !== shopId
-          );
+          const remainingItems = cart.items.filter((item: any) => item.shopId !== shopId);
 
           if (remainingItems.length === 0) {
             // Cart now empty after removing this shop group - delete document
@@ -216,17 +207,14 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
   /**
    * Atomically accept order and update shipper status
    * CRITICAL: Firestore transaction prevents race condition where two shippers accept same order
-   * 
+   *
    * Transaction flow:
    * 1. READ: Get current order state (verify shipperId is still null)
    * 2. READ: Get shipper state (verify status still AVAILABLE)
    * 3. WRITE: Update order with shipperId, status=SHIPPING, timestamps
    * 4. WRITE: Update shipper with status=BUSY
    */
-  async acceptOrderAtomically(
-    orderId: string,
-    shipperId: string,
-  ): Promise<any> {
+  async acceptOrderAtomically(orderId: string, shipperId: string): Promise<any> {
     return await this.firestore.runTransaction(async (transaction) => {
       // ====================================================================
       // PHASE A: READS ONLY (must happen first)
@@ -268,7 +256,9 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
 
       // 4. Verify shipper is still AVAILABLE
       if (shipperData?.shipperInfo?.status !== 'AVAILABLE') {
-        throw new Error(`Shipper is no longer AVAILABLE (current: ${shipperData?.shipperInfo?.status})`);
+        throw new Error(
+          `Shipper is no longer AVAILABLE (current: ${shipperData?.shipperInfo?.status})`,
+        );
       }
 
       // ====================================================================
@@ -301,9 +291,7 @@ export class FirestoreOrdersRepository implements IOrdersRepository {
     });
   }
 
-  private mapToEntity(
-    doc: FirebaseFirestore.DocumentSnapshot
-  ): OrderEntity | null {
+  private mapToEntity(doc: FirebaseFirestore.DocumentSnapshot): OrderEntity | null {
     if (!doc.exists) {
       return null;
     }

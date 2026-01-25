@@ -91,37 +91,37 @@ export class FavoritesService {
    * TODO: Replace with real ProductsService call
    */
   private async getProductData(productId: string): Promise<ProductData> {
-  try {
-    // Gọi ProductsService để lấy thông tin sản phẩm
-    const product = await this.productsService.findOne(productId);
+    try {
+      // Gọi ProductsService để lấy thông tin sản phẩm
+      const product = await this.productsService.findOne(productId);
 
-    if (!product) {
-      throw new Error('Product not found');
+      if (!product) {
+        throw new Error('Product not found');
+      }
+
+      return {
+        id: product.id,
+        name: product.name || 'Product Name',
+        price: product.price || 0,
+        // Sửa: product.imageUrl là string, không phải array
+        imageUrl: product.imageUrl || undefined,
+        shopId: product.shopId || 'shop_placeholder',
+        // Sửa: product.shopName là trường trực tiếp
+        shopName: product.shopName || 'Shop Name',
+      };
+    } catch (error) {
+      // Xử lý lỗi - có thể log hoặc throw custom exception
+      console.error(`Error fetching product data for ${productId}:`, error);
+
+      // Fallback về placeholder data nếu có lỗi
+      return {
+        id: productId,
+        name: 'Product Name',
+        price: 0,
+        imageUrl: undefined,
+        shopId: 'shop_placeholder',
+        shopName: 'Shop Name',
+      };
     }
-
-    return {
-      id: product.id,
-      name: product.name || 'Product Name',
-      price: product.price || 0,
-      // Sửa: product.imageUrl là string, không phải array
-      imageUrl: product.imageUrl || undefined,
-      shopId: product.shopId || 'shop_placeholder',
-      // Sửa: product.shopName là trường trực tiếp
-      shopName: product.shopName || 'Shop Name',
-    };
-  } catch (error) {
-    // Xử lý lỗi - có thể log hoặc throw custom exception
-    console.error(`Error fetching product data for ${productId}:`, error);
-    
-    // Fallback về placeholder data nếu có lỗi
-    return {
-      id: productId,
-      name: 'Product Name',
-      price: 0,
-      imageUrl: undefined,
-      shopId: 'shop_placeholder',
-      shopName: 'Shop Name',
-    };
   }
-}
 }

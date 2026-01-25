@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsEnum,
-  IsNotEmpty,
-  MaxLength,
-  Matches,
-} from 'class-validator';
+import { IsString, IsEnum, IsNotEmpty, MaxLength, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum VehicleType {

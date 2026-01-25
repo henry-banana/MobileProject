@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Inject,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { Firestore, FieldValue } from '@google-cloud/firestore';
 import { IShippersRepository } from './repositories/shippers-repository.interface';
@@ -16,9 +17,13 @@ import { ApplyShipperDto } from './dto/apply-shipper.dto';
 import { RejectApplicationDto } from './dto/reject-application.dto';
 import { ShipperApplicationEntity, ApplicationStatus } from './entities/shipper-application.entity';
 import { ShipperEntity } from './entities/shipper.entity';
+import { NotificationsService } from '../notifications/services/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class ShippersService {
+  private readonly logger = new Logger(ShippersService.name);
+
   constructor(
     @Inject('IShippersRepository')
     private readonly shippersRepository: IShippersRepository,
@@ -26,6 +31,7 @@ export class ShippersService {
     private readonly shopsService: ShopsService,
     private readonly storageService: StorageService,
     private readonly firebaseService: FirebaseService,
+    private readonly notificationsService: NotificationsService,
     @Inject('FIRESTORE')
     private readonly firestore: Firestore,
   ) {}
@@ -45,8 +51,14 @@ export class ShippersService {
       throw new ConflictException('SHIPPER_001: Bạn đã là shipper rồi');
     }
 
-    // Validate shop exists first
-    const shop = await this.shopsService.getShopById(dto.shopId);
+    // Validate shop exists first - get full shop entity to get ownerId
+    const shopRef = this.firestore.collection('shops').doc(dto.shopId);
+    const shopDoc = await shopRef.get();
+    if (!shopDoc.exists) {
+      throw new NotFoundException('Không tìm thấy shop này');
+    }
+    const shop = shopDoc.data() as any;
+    const shopName = shop.name || '';
 
     // Check if already applied (PENDING)
     const existingApp = await this.shippersRepository.findPendingApplication(userId, dto.shopId);
@@ -112,7 +124,7 @@ export class ShippersService {
       userPhone: user.phone || '',
       userAvatar: user.avatarUrl || '',
       shopId: dto.shopId,
-      shopName: shop.name,
+      shopName,
       vehicleType: dto.vehicleType,
       vehicleNumber: dto.vehicleNumber,
       idCardNumber: dto.idCardNumber,
@@ -123,8 +135,25 @@ export class ShippersService {
       status: ApplicationStatus.PENDING,
     });
 
-    // TODO: Notify owner
-    // await this.notificationService.sendToOwner(dto.shopId, { ... });
+    // Notify shop owner about shipper application
+    try {
+      await this.notificationsService.send({
+        userId: shop.ownerId,
+        title: `New Shipper Application`,
+        body: `${user.displayName} applied to be a shipper for ${shop.name}`,
+        type: NotificationType.SHIPPER_APPLIED,
+        data: {
+          applicationId: application.id,
+          shipperId: userId,
+          shopId: dto.shopId,
+          vehicleType: dto.vehicleType,
+        },
+        shopId: dto.shopId,
+      });
+    } catch (error) {
+      this.logger.error('Failed to send SHIPPER_APPLIED notification:', error);
+      // Non-blocking: do not throw
+    }
 
     return application;
   }
@@ -178,7 +207,7 @@ export class ShippersService {
     // Sanity check to prevent shipperInfo being written to owner's document
     if (app.userId === ownerId) {
       throw new BadRequestException(
-        'SHIPPER_BUG: Chủ shop không thể là shipper cho chính shop của mình. Vui lòng dùng tài khoản shipper khác.'
+        'SHIPPER_BUG: Chủ shop không thể là shipper cho chính shop của mình. Vui lòng dùng tài khoản shipper khác.',
       );
     }
 
@@ -196,7 +225,7 @@ export class ShippersService {
     // SHIPPER-DATA-BUG-FIX: Verify we're writing to shipper's document (app.userId), not owner's
     await this.firestore.runTransaction(async (transaction) => {
       const appRef = this.firestore.collection('shipperApplications').doc(applicationId);
-      const userRef = this.firestore.collection('users').doc(app.userId);  // ✓ Correct: shipper's document
+      const userRef = this.firestore.collection('users').doc(app.userId); // ✓ Correct: shipper's document
 
       // Update application
       transaction.update(appRef, {
@@ -218,8 +247,8 @@ export class ShippersService {
           shopName: app.shopName,
           vehicleType: app.vehicleType,
           vehicleNumber: app.vehicleNumber,
-          status: 'AVAILABLE',  // FIX: Changed from ACTIVE to AVAILABLE
-          isOnline: false,  // Default: offline until shipper goes online
+          status: 'AVAILABLE', // FIX: Changed from ACTIVE to AVAILABLE
+          isOnline: false, // Default: offline until shipper goes online
           rating: 5.0,
           totalDeliveries: 0,
           currentOrders: [],
@@ -246,8 +275,24 @@ export class ShippersService {
       throw new Error(errorMsg);
     }
 
-    // TODO: Notify user
-    // await this.notificationService.sendToUser(app.userId, { ... });
+    // Notify shipper about approval
+    try {
+      await this.notificationsService.send({
+        userId: app.userId,
+        title: `Application Approved`,
+        body: `Your application to be a shipper for ${app.shopName} has been approved!`,
+        type: NotificationType.SHIPPER_APPLICATION_APPROVED,
+        data: {
+          applicationId,
+          shopId: app.shopId,
+          shopName: app.shopName,
+        },
+        shopId: app.shopId,
+      });
+    } catch (error) {
+      this.logger.error('Failed to send SHIPPER_APPLICATION_APPROVED notification:', error);
+      // Non-blocking: do not throw
+    }
   }
 
   // SHIP-007: Reject Application
@@ -281,8 +326,25 @@ export class ShippersService {
       dto.reason,
     );
 
-    // TODO: Notify user
-    // await this.notificationService.sendToUser(app.userId, { ... });
+    // Notify shipper about rejection
+    try {
+      await this.notificationsService.send({
+        userId: app.userId,
+        title: `Application Rejected`,
+        body: `Your application to be a shipper for ${app.shopName} has been rejected. Reason: ${dto.reason || 'No reason provided'}`,
+        type: NotificationType.SHIPPER_APPLICATION_REJECTED,
+        data: {
+          applicationId,
+          shopId: app.shopId,
+          shopName: app.shopName,
+          reason: dto.reason,
+        },
+        shopId: app.shopId,
+      });
+    } catch (error) {
+      this.logger.error('Failed to send SHIPPER_APPLICATION_REJECTED notification:', error);
+      // Non-blocking: do not throw
+    }
   }
 
   // SHIP-008: List Shop Shippers
@@ -349,5 +411,24 @@ export class ShippersService {
       console.error(errorMsg, error);
       throw new Error(errorMsg);
     }
+  }
+
+  /**
+   * Get shipper profile by ID
+   * Returns shipper entity with shipperInfo including shopId
+   */
+  async findById(shipperId: string): Promise<ShipperEntity | null> {
+    const shipper = await this.shippersRepository.findById(shipperId);
+    if (!shipper) {
+      return null;
+    }
+
+    return new ShipperEntity({
+      id: shipper.id,
+      name: shipper.name,
+      phone: shipper.phone,
+      avatar: shipper.avatar,
+      shipperInfo: shipper.shipperInfo,
+    });
   }
 }

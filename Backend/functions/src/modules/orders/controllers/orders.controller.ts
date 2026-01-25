@@ -146,10 +146,7 @@ export class OrdersController {
   @ApiNotFoundResponse({ description: 'Cart or shop not found' })
   @ApiConflictResponse({ description: 'Shop closed or product unavailable' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async createOrder(
-    @Req() req: any,
-    @Body() dto: CreateOrderDto,
-  ): Promise<OrderEntity> {
+  async createOrder(@Req() req: any, @Body() dto: CreateOrderDto): Promise<OrderEntity> {
     return this.ordersService.createOrder(req.user.uid, dto);
   }
 
@@ -223,14 +220,8 @@ export class OrdersController {
   @ApiNotFoundResponse({ description: 'Order not found' })
   @ApiForbiddenResponse({ description: 'Not authorized to view this order' })
   @ApiUnauthorizedResponse({ description: 'Not authenticated' })
-  async getOrderDetail(
-    @Req() req: any,
-    @Param('id') orderId: string,
-  ): Promise<OrderEntity> {
-    return this.ordersService.getOrderDetail(
-      req.user.uid,
-      orderId,
-    );
+  async getOrderDetail(@Req() req: any, @Param('id') orderId: string): Promise<OrderEntity> {
+    return this.ordersService.getOrderDetail(req.user.uid, orderId);
   }
 
   /**
@@ -242,8 +233,7 @@ export class OrdersController {
   @Put(':id/cancel')
   @ApiOperation({
     summary: 'Cancel order',
-    description:
-      'Cancel an order (only if in PENDING, CONFIRMED, or PREPARING status)',
+    description: 'Cancel an order (only if in PENDING, CONFIRMED, or PREPARING status)',
   })
   @ApiParam({
     name: 'id',
@@ -330,10 +320,6 @@ export class OrdersController {
     @Param('id') orderId: string,
     @Body() dto: CancelOrderDto,
   ): Promise<OrderEntity> {
-    return this.ordersService.cancelOrder(
-      req.user.uid,
-      orderId,
-      dto.reason,
-    );
+    return this.ordersService.cancelOrder(req.user.uid, orderId, dto.reason);
   }
 }

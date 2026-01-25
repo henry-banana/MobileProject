@@ -17,14 +17,12 @@ import { ShipperStatus } from '../../shippers/entities/shipper.entity';
 import { IAddressesRepository, ADDRESSES_REPOSITORY } from '../../users/interfaces';
 import { IUsersRepository, USERS_REPOSITORY } from '../../users/interfaces';
 import { VouchersService } from '../../vouchers/vouchers.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
+import { NotificationType } from '../../notifications/entities/notification.entity';
+import { NotificationCategory } from '../../notifications/dto/admin-batch-send.dto';
 import { ConfigService } from '../../../core/config/config.service';
 import { FirebaseService } from '../../../core/firebase/firebase.service';
-import {
-  OrderEntity,
-  OrderStatus,
-  PaymentStatus,
-  DeliveryAddress,
-} from '../entities';
+import { OrderEntity, OrderStatus, PaymentStatus, DeliveryAddress } from '../entities';
 import {
   CreateOrderDto,
   OrderFilterDto,
@@ -35,7 +33,6 @@ import {
 import { OrderStateMachineService } from './order-state-machine.service';
 import { normalizeDeliveryAddress } from '../utils/address.normalizer';
 import { toIsoString } from '../utils/timestamp.serializer';
-
 
 @Injectable()
 export class OrdersService {
@@ -56,10 +53,43 @@ export class OrdersService {
     @Inject(USERS_REPOSITORY)
     private readonly usersRepo: IUsersRepository,
     private readonly vouchersService: VouchersService,
+    private readonly notificationsService: NotificationsService,
     private readonly stateMachine: OrderStateMachineService,
     private readonly configService: ConfigService,
     private readonly firebaseService: FirebaseService,
   ) {}
+
+  /**
+   * Helper: Send order notification safely (non-blocking, best-effort)
+   * Wraps notification call in try-catch to prevent business logic failure
+   */
+  private async sendOrderNotification(
+    userId: string,
+    title: string,
+    body: string,
+    type: NotificationType,
+    order: OrderEntity,
+  ): Promise<void> {
+    try {
+      await this.notificationsService.send({
+        userId,
+        title,
+        body,
+        type,
+        data: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          shopId: order.shopId,
+          shipperId: order.shipperId || undefined,
+        },
+        orderId: order.id,
+        shopId: order.shopId,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send ${type} notification to ${userId}:`, error);
+      // Non-blocking: do not throw
+    }
+  }
 
   /**
    * Resolve delivery address from addressId or direct snapshot
@@ -141,10 +171,10 @@ export class OrdersService {
    * Helper: Resolve shipper's shop ID from users collection
    * This matches the data source used by owner list endpoint (GET /owner/shippers)
    * Reads from users/{uid}.shipperInfo.shopId (authoritative source)
-   * 
+   *
    * SHIPPER-DATA-BUG-FIX: Validates role and provides helpful error messages
    * if shipperInfo is missing or in wrong document
-   * 
+   *
    * @param shipperId - Shipper user ID
    * @returns shopId - The shop ID the shipper is assigned to
    * @throws NotFoundException - Shipper not found
@@ -182,7 +212,8 @@ export class OrdersService {
     if (!shopId) {
       throw new BadRequestException({
         code: 'SHIPPER_NOT_ASSIGNED',
-        message: 'Shipper has not been assigned to a shop. Wait for owner to approve your application or check if assignment failed.',
+        message:
+          'Shipper has not been assigned to a shop. Wait for owner to approve your application or check if assignment failed.',
         statusCode: 400,
         details: {
           shipperId,
@@ -200,10 +231,7 @@ export class OrdersService {
    * CRITICAL: Uses Firestore transaction to atomically create order and clear cart
    * All validation happens in service layer BEFORE transaction
    */
-  async createOrder(
-    customerId: string,
-    dto: CreateOrderDto,
-  ): Promise<OrderEntity> {
+  async createOrder(customerId: string, dto: CreateOrderDto): Promise<OrderEntity> {
     // SERVICE LAYER VALIDATION (all pre-transaction checks)
     // This ensures cart state is confirmed before atomic transaction
 
@@ -260,10 +288,10 @@ export class OrdersService {
 
     // 5. Calculate totals using cart's subtotal (already calculated)
     const subtotal = shopGroup.subtotal;
-    
+
     // FREE_SHIP MODEL: Customer pays 0, shipper gets shop fee internally
-    const shipFee = 0;                           // Customer pays nothing for shipping
-    const shipperPayout = shop.shipFeePerOrder || 0;  // Internal amount to pay shipper
+    const shipFee = 0; // Customer pays nothing for shipping
+    const shipperPayout = shop.shipFeePerOrder || 0; // Internal amount to pay shipper
 
     // 6. Validate and preview voucher (if provided)
     let discount = 0;
@@ -274,7 +302,7 @@ export class OrdersService {
         code: dto.voucherCode,
         shopId: shop.id,
         subtotal,
-        shipFee: shipperPayout,  // Pass internal shipFee for validation logic
+        shipFee: shipperPayout, // Pass internal shipFee for validation logic
       });
 
       if (!validationResult.valid) {
@@ -335,8 +363,8 @@ export class OrdersService {
         subtotal: item.subtotal,
       })),
       subtotal,
-      shipFee,              // Customer pays 0 (free-ship model)
-      shipperPayout,        // Internal: amount to pay shipper
+      shipFee, // Customer pays 0 (free-ship model)
+      shipperPayout, // Internal: amount to pay shipper
       discount,
       voucherCode,
       voucherId,
@@ -356,15 +384,43 @@ export class OrdersService {
       dto.shopId,
       orderEntity,
       // Apply voucher atomically if voucherId present
-      voucherId ? async () => {
-        await this.vouchersService.applyVoucherAtomic(
-          voucherId!,
-          customerId,
-          orderEntity.orderNumber, // Use orderNumber as orderId
-          discount,
-        );
-      } : undefined,
+      voucherId
+        ? async () => {
+            await this.vouchersService.applyVoucherAtomic(
+              voucherId!,
+              customerId,
+              orderEntity.orderNumber, // Use orderNumber as orderId
+              discount,
+            );
+          }
+        : undefined,
     );
+
+    // 9. NOTIF-007: Send NEW_ORDER notification to shop owner (best-effort, non-blocking)
+    try {
+      const shopOwner = shop.ownerId;
+      if (shopOwner) {
+        // FIX #3: Safe currency formatting - ensure amount is a number before toLocaleString
+        const total = Number(order.total ?? 0);
+        const totalText = total.toLocaleString('vi-VN');
+        await this.notificationsService.send({
+          userId: shopOwner,
+          title: `New order received`,
+          body: `Order #${order.orderNumber} from ${customerSnapshot?.displayName || 'Guest'} for ${totalText}đ`,
+          type: NotificationType.NEW_ORDER,
+          data: {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            shopId: order.shopId,
+          },
+          orderId: order.id,
+          shopId: order.shopId,
+        });
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send NEW_ORDER notification for order ${order.id}:`, error);
+      // Non-blocking: do not throw
+    }
 
     return order;
   }
@@ -372,10 +428,7 @@ export class OrdersService {
   /**
    * ORDER-003: Get customer's orders with cursor-based pagination
    */
-  async getMyOrders(
-    customerId: string,
-    filter: OrderFilterDto,
-  ): Promise<PaginatedOrdersDto> {
+  async getMyOrders(customerId: string, filter: OrderFilterDto): Promise<PaginatedOrdersDto> {
     const { status, page = 1, limit = 10 } = filter;
 
     // Validate pagination params
@@ -414,7 +467,7 @@ export class OrdersService {
     const customerMap = await this.resolveCustomersForOrders(orders);
 
     return {
-      orders: orders.map(order => this.mapToListDto(order, emptyShipperMap, customerMap)),
+      orders: orders.map((order) => this.mapToListDto(order, emptyShipperMap, customerMap)),
       page: validPage,
       limit: validLimit,
       total,
@@ -425,10 +478,7 @@ export class OrdersService {
   /**
    * ORDER-004: Get order detail with ownership check
    */
-  async getOrderDetail(
-    customerId: string,
-    orderId: string,
-  ): Promise<OrderEntity> {
+  async getOrderDetail(customerId: string, orderId: string): Promise<OrderEntity> {
     const order = await this.ordersRepo.findById(orderId);
 
     if (!order) {
@@ -454,11 +504,7 @@ export class OrdersService {
   /**
    * ORDER-005: Cancel order (customer only, with state validation)
    */
-  async cancelOrder(
-    customerId: string,
-    orderId: string,
-    reason?: string,
-  ): Promise<OrderEntity> {
+  async cancelOrder(customerId: string, orderId: string, reason?: string): Promise<OrderEntity> {
     // 1. Get order
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
@@ -500,19 +546,45 @@ export class OrdersService {
       // TODO: Call paymentService.initiateRefund(orderId) when available
     }
 
-    // 6. Notify shop owner (stub for MVP)
-    // TODO: Call notificationService.notifyOwner(...) when available
+    // 6. Notify shop owner about cancellation
+    const updatedOrder = await this.ordersRepo.findById(orderId);
+    if (updatedOrder) {
+      try {
+        const shop = await this.shopsRepo.findById(order.shopId);
+        // FIX #2: Guard ownerId resolution - ensure valid userId before sending
+        const ownerId = shop?.ownerId;
+        if (!ownerId) {
+          this.logger.warn(
+            `NOTIF-WARNING: Cannot resolve ownerId for ORDER_CANCELLED notification`,
+            {
+              orderId,
+              shopId: order.shopId,
+              shop_ownerId: shop?.ownerId,
+            },
+          );
+        } else {
+          await this.notificationsService.send({
+            userId: ownerId,
+            title: `Order Cancelled`,
+            body: `Order #${updatedOrder.orderNumber} has been cancelled by customer: ${reason || 'No reason provided'}`,
+            type: NotificationType.ORDER_CANCELLED,
+            data: { orderId, orderNumber: updatedOrder.orderNumber, cancelReason: reason },
+            orderId,
+            shopId: order.shopId,
+          });
+        }
+      } catch (error) {
+        this.logger.error('Failed to send ORDER_CANCELLED notification:', error);
+      }
+    }
 
-    return this.ordersRepo.findById(orderId) as Promise<OrderEntity>;
+    return updatedOrder!;
   }
 
   /**
    * ORDER-006: Owner confirms order
    */
-  async confirmOrder(
-    ownerId: string,
-    orderId: string,
-  ): Promise<OrderEntity> {
+  async confirmOrder(ownerId: string, orderId: string): Promise<OrderEntity> {
     // 1. Get order
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
@@ -534,10 +606,7 @@ export class OrdersService {
     }
 
     // 3. Validate payment (COD can be confirmed immediately)
-    if (
-      order.paymentMethod !== 'COD' &&
-      order.paymentStatus !== PaymentStatus.PAID
-    ) {
+    if (order.paymentMethod !== 'COD' && order.paymentStatus !== PaymentStatus.PAID) {
       throw new ConflictException({
         code: 'ORDER_009',
         message: 'Cannot confirm order - payment not completed',
@@ -546,10 +615,7 @@ export class OrdersService {
     }
 
     // 4. Validate state transition
-    await this.stateMachine.validateTransition(
-      order.status,
-      OrderStatus.CONFIRMED,
-    );
+    await this.stateMachine.validateTransition(order.status, OrderStatus.CONFIRMED);
 
     // 5. Update order
     await this.ordersRepo.update(orderId, {
@@ -557,19 +623,23 @@ export class OrdersService {
       confirmedAt: Timestamp.now(),
     });
 
-    // 6. Notify customer (stub for MVP)
-    // TODO: Call notificationService.notifyCustomer(...) when available
+    // 6. NOTIF-007: Notify customer (best-effort, non-blocking)
+    const updatedOrder = (await this.ordersRepo.findById(orderId)) as OrderEntity;
+    await this.sendOrderNotification(
+      order.customerId,
+      'Order confirmed',
+      `Your order #${updatedOrder.orderNumber} has been confirmed and will be prepared shortly`,
+      NotificationType.ORDER_CONFIRMED,
+      updatedOrder,
+    );
 
-    return this.ordersRepo.findById(orderId) as Promise<OrderEntity>;
+    return updatedOrder;
   }
 
   /**
    * ORDER-007: Owner marks order as preparing
    */
-  async markPreparing(
-    ownerId: string,
-    orderId: string,
-  ): Promise<OrderEntity> {
+  async markPreparing(ownerId: string, orderId: string): Promise<OrderEntity> {
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
       throw new NotFoundException({
@@ -590,10 +660,7 @@ export class OrdersService {
     }
 
     // Validate state transition
-    await this.stateMachine.validateTransition(
-      order.status,
-      OrderStatus.PREPARING,
-    );
+    await this.stateMachine.validateTransition(order.status, OrderStatus.PREPARING);
 
     // Update
     await this.ordersRepo.update(orderId, {
@@ -601,19 +668,23 @@ export class OrdersService {
       preparingAt: Timestamp.now(),
     });
 
-    // Notify customer (stub for MVP)
-    // TODO: Call notificationService.notifyCustomer(...) when available
+    // NOTIF-007: Notify customer (best-effort, non-blocking)
+    const updatedOrder = (await this.ordersRepo.findById(orderId)) as OrderEntity;
+    await this.sendOrderNotification(
+      order.customerId,
+      'Order is being prepared',
+      `Your order #${updatedOrder.orderNumber} is now being prepared by the shop`,
+      NotificationType.ORDER_PREPARING,
+      updatedOrder,
+    );
 
-    return this.ordersRepo.findById(orderId) as Promise<OrderEntity>;
+    return updatedOrder;
   }
 
   /**
    * ORDER-008: Owner marks order as ready
    */
-  async markReady(
-    ownerId: string,
-    orderId: string,
-  ): Promise<OrderEntity> {
+  async markReady(ownerId: string, orderId: string): Promise<OrderEntity | null> {
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
       throw new NotFoundException({
@@ -634,10 +705,7 @@ export class OrdersService {
     }
 
     // Validate state transition
-    await this.stateMachine.validateTransition(
-      order.status,
-      OrderStatus.READY,
-    );
+    await this.stateMachine.validateTransition(order.status, OrderStatus.READY);
 
     // Update
     await this.ordersRepo.update(orderId, {
@@ -645,24 +713,48 @@ export class OrdersService {
       readyAt: Timestamp.now(),
     });
 
-    // Notify customer (stub for MVP)
-    // TODO: Call notificationService.notifyCustomer(...) when available
+    // Refetch order for notification
+    const updatedOrder = await this.ordersRepo.findById(orderId);
+    if (updatedOrder) {
+      // Notify customer
+      await this.sendOrderNotification(
+        order.customerId,
+        `Order Ready for Pickup`,
+        `Order #${updatedOrder.orderNumber} is ready for pickup at ${shop.name}`,
+        NotificationType.ORDER_READY,
+        updatedOrder,
+      );
 
-    // Notify available shippers (broadcast) - stub for MVP
-    // TODO: Call notificationService.notifyAvailableShippers(...) when available
+      // Broadcast to active shippers for this shop (best-effort, non-blocking)
+      try {
+        const topic = `shop_${order.shopId}_shippers_active`;
+        await this.notificationsService.sendToTopic({
+          topic,
+          title: 'New Order Ready for Delivery',
+          body: `Order #${updatedOrder.orderNumber} is ready for pickup at ${shop.name}`,
+          type: NotificationType.ORDER_READY,
+          category: NotificationCategory.TRANSACTIONAL,
+          data: {
+            orderId: updatedOrder.id,
+            orderNumber: updatedOrder.orderNumber,
+            shopId: order.shopId,
+            shopName: shop.name,
+          },
+        });
+      } catch (error) {
+        // Best-effort: log error but don't break order flow
+        this.logger.error(`Failed to broadcast ORDER_READY to shippers: ${error}`);
+      }
+    }
 
-    return this.ordersRepo.findById(orderId) as Promise<OrderEntity>;
+    return updatedOrder;
   }
 
   /**
    * ORDER-009: Owner cancels order
    * Can only cancel from CONFIRMED or PREPARING status
    */
-  async ownerCancelOrder(
-    ownerId: string,
-    orderId: string,
-    reason?: string,
-  ): Promise<OrderEntity> {
+  async ownerCancelOrder(ownerId: string, orderId: string, reason?: string): Promise<OrderEntity | null> {
     // 1. Get order
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
@@ -684,12 +776,12 @@ export class OrdersService {
     }
 
     // 3. Validate cancellation is allowed for current status
-    // Owner can only cancel from CONFIRMED or PREPARING
-    const cancelableStatuses = [OrderStatus.CONFIRMED, OrderStatus.PREPARING];
+    // Owner can cancel from PENDING, CONFIRMED, or PREPARING
+    const cancelableStatuses = [OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.PREPARING];
     if (!cancelableStatuses.includes(order.status)) {
       throw new ConflictException({
         code: 'ORDER_013',
-        message: `Cannot cancel order - order is ${order.status}. Owner can only cancel CONFIRMED or PREPARING orders.`,
+        message: `Cannot cancel order - order is ${order.status}. Owner can only cancel PENDING, CONFIRMED or PREPARING orders.`,
         statusCode: 409,
       });
     }
@@ -707,27 +799,33 @@ export class OrdersService {
       // TODO: Call paymentService.initiateRefund(orderId) when available
     }
 
-    // 6. Notify customer (stub for MVP)
-    // TODO: Call notificationService.notifyCustomer(...) when available
+    // 6. Notify customer about cancellation
+    const updatedOrder = await this.ordersRepo.findById(orderId);
+    if (updatedOrder) {
+      await this.sendOrderNotification(
+        order.customerId,
+        `Order Cancelled`,
+        `Order #${updatedOrder.orderNumber} has been cancelled by the shop: ${reason || 'No reason provided'}`,
+        NotificationType.ORDER_CANCELLED,
+        updatedOrder,
+      );
+    }
 
-    return this.ordersRepo.findById(orderId) as Promise<OrderEntity>;
+    return updatedOrder;
   }
 
   /**
    * ORDER-010: Get shop orders with page-based pagination
-   * 
+   *
    * ⚠️ FIRESTORE INDEX REQUIREMENTS:
    * - Composite index: shopId ASC + createdAt DESC
    * - Composite index (with filter): shopId ASC + status ASC + createdAt DESC
-   * 
+   *
    * DEV FALLBACK MODE:
    * Set ENABLE_FIRESTORE_PAGINATION_FALLBACK=true in .env to use in-memory pagination
    * when indexes are building. Not recommended for production.
    */
-  async getShopOrders(
-    ownerId: string,
-    filter: OrderFilterDto,
-  ): Promise<PaginatedOrdersDto> {
+  async getShopOrders(ownerId: string, filter: OrderFilterDto): Promise<PaginatedOrdersDto> {
     // 1. Get shop owned by this owner
     const shop = await this.shopsRepo.findByOwnerId(ownerId);
     if (!shop) {
@@ -786,7 +884,7 @@ export class OrdersService {
       const customerMap = await this.resolveCustomersForOrders(orders);
 
       return {
-        orders: orders.map(order => this.mapToListDto(order, shipperMap, customerMap)),
+        orders: orders.map((order) => this.mapToListDto(order, shipperMap, customerMap)),
         page: validPage,
         limit: validLimit,
         total,
@@ -794,8 +892,8 @@ export class OrdersService {
       };
     } catch (error: any) {
       // Check if this is a FAILED_PRECONDITION error (missing/building index)
-      const isIndexError = 
-        error?.code === 'FAILED_PRECONDITION' || 
+      const isIndexError =
+        error?.code === 'FAILED_PRECONDITION' ||
         error?.code === 9 || // Firestore numeric code
         (error?.message && error.message.includes('requires an index'));
 
@@ -803,7 +901,7 @@ export class OrdersService {
       if (isIndexError && this.configService.enableFirestorePaginationFallback) {
         this.logger.warn(
           `[FALLBACK MODE] Using in-memory pagination for shop ${shopId} due to missing/building Firestore index. ` +
-          `This is a development workaround and NOT recommended for production.`
+            `This is a development workaround and NOT recommended for production.`,
         );
 
         return this.getShopOrdersFallback(shopId, status, validPage, validLimit);
@@ -816,14 +914,14 @@ export class OrdersService {
 
   /**
    * FALLBACK: Get shop orders using in-memory pagination
-   * 
+   *
    * WARNING: This method is only for development when Firestore indexes are building.
    * - Fetches up to 200 orders without orderBy (avoids composite index requirement)
    * - Sorts in memory by createdAt
    * - Applies pagination in memory
    * - Does NOT scale well with large datasets
    * - Total count is approximate (limited to fetched subset)
-   * 
+   *
    * DO NOT USE IN PRODUCTION
    */
   private async getShopOrdersFallback(
@@ -836,17 +934,14 @@ export class OrdersService {
     // Use a safe upper bound to avoid fetching too much data
     const FETCH_LIMIT = 200;
 
-    let query = this.ordersRepo
-      .query()
-      .where('shopId', '==', shopId)
-      .limit(FETCH_LIMIT);
+    const query = this.ordersRepo.query().where('shopId', '==', shopId).limit(FETCH_LIMIT);
 
     const allOrders = await this.ordersRepo.findMany(query);
 
     // Filter by status in memory if provided
     let filteredOrders = allOrders;
     if (status) {
-      filteredOrders = allOrders.filter(order => order.status === status);
+      filteredOrders = allOrders.filter((order) => order.status === status);
     }
 
     // Sort by createdAt DESC in memory
@@ -870,16 +965,25 @@ export class OrdersService {
     if (allOrders.length >= FETCH_LIMIT) {
       this.logger.warn(
         `[FALLBACK MODE] Fetched ${FETCH_LIMIT} orders. Actual total may be higher. ` +
-        `Pagination totals are approximate.`
+          `Pagination totals are approximate.`,
       );
     }
 
     // DEBUG: Log order structure for verification (only if DEBUG_ORDERS=true)
     if (process.env.DEBUG_ORDERS === 'true' && paginatedOrders.length > 0) {
-      this.logger.debug('[OWNER LIST FALLBACK] First order doc keys:', Object.keys(paginatedOrders[0]));
-      this.logger.debug('[OWNER LIST FALLBACK] customerSnapshot exists?', !!paginatedOrders[0].customerSnapshot);
+      this.logger.debug(
+        '[OWNER LIST FALLBACK] First order doc keys:',
+        Object.keys(paginatedOrders[0]),
+      );
+      this.logger.debug(
+        '[OWNER LIST FALLBACK] customerSnapshot exists?',
+        !!paginatedOrders[0].customerSnapshot,
+      );
       if (paginatedOrders[0].customerSnapshot) {
-        this.logger.debug('[OWNER LIST FALLBACK] customerSnapshot:', paginatedOrders[0].customerSnapshot);
+        this.logger.debug(
+          '[OWNER LIST FALLBACK] customerSnapshot:',
+          paginatedOrders[0].customerSnapshot,
+        );
       }
     }
 
@@ -890,7 +994,7 @@ export class OrdersService {
     const customerMap = await this.resolveCustomersForOrders(paginatedOrders);
 
     return {
-      orders: paginatedOrders.map(order => this.mapToListDto(order, shipperMap, customerMap)),
+      orders: paginatedOrders.map((order) => this.mapToListDto(order, shipperMap, customerMap)),
       page,
       limit,
       total,
@@ -904,41 +1008,38 @@ export class OrdersService {
    */
   private getTimestampMillis(timestamp: any): number {
     if (!timestamp) return 0;
-    
+
     // Firestore Timestamp
     if (timestamp instanceof Timestamp) {
       return timestamp.toMillis();
     }
-    
+
     // Date object
     if (timestamp instanceof Date) {
       return timestamp.getTime();
     }
-    
+
     // Timestamp-like object with _seconds
     if (typeof timestamp === 'object' && typeof timestamp._seconds === 'number') {
       return timestamp._seconds * 1000 + Math.floor((timestamp._nanoseconds || 0) / 1000000);
     }
-    
+
     // String (ISO format)
     if (typeof timestamp === 'string') {
       return new Date(timestamp).getTime();
     }
-    
+
     return 0;
   }
 
   /**
    * OWNER ORDER DETAIL: Get full order detail for shop owner
    * GET /api/orders/shop/:id
-   * 
+   *
    * Authorization: OWNER role required
    * Validates that order belongs to owner's shop
    */
-  async getShopOrderDetail(
-    ownerId: string,
-    orderId: string,
-  ): Promise<OwnerOrderDetailDto> {
+  async getShopOrderDetail(ownerId: string, orderId: string): Promise<OwnerOrderDetailDto> {
     // 1. Get order
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
@@ -975,18 +1076,15 @@ export class OrdersService {
   /**
    * ORDER-013: Accept order for delivery (shipper)
    * PHASE 2
-   * 
+   *
    * OPTION-1-FIX: Accept order chỉ set shipperId, KHÔNG thay đổi status
    * Status vẫn là READY sau accept, sẽ chuyển READY → SHIPPING ở markShipping()
-   * 
+   *
    * CRITICAL: Uses Firestore transaction to atomically:
    * 1. Verify order is still READY with shipperId=null (prevents race condition: two shippers accepting same order)
    * 2. Set shipperId only (do NOT change status)
    */
-  async acceptOrder(
-    shipperId: string,
-    orderId: string,
-  ): Promise<OrderEntity> {
+  async acceptOrder(shipperId: string, orderId: string): Promise<OrderEntity> {
     // SERVICE LAYER VALIDATION (all pre-transaction checks)
     // This ensures state is confirmed before atomic transaction
 
@@ -1038,7 +1136,8 @@ export class OrdersService {
         details: {
           shipperId,
           hasShipperInfo: false,
-          guidance: 'Ensure shop owner approved this shipper application before attempting to accept orders.',
+          guidance:
+            'Ensure shop owner approved this shipper application before attempting to accept orders.',
         },
       });
     }
@@ -1071,7 +1170,8 @@ export class OrdersService {
           shipperId,
           currentStatus: shipper.shipperInfo.status,
           validStatuses,
-          guidance: 'Ensure shipper goes online (status AVAILABLE or ACTIVE) before trying to accept orders.',
+          guidance:
+            'Ensure shipper goes online (status AVAILABLE or ACTIVE) before trying to accept orders.',
         },
       });
     }
@@ -1082,12 +1182,38 @@ export class OrdersService {
 
     // 6. CRITICAL: Use Firestore transaction to atomically accept order
     // This prevents race condition where two shippers accept same order
-    const updatedOrder = await this.ordersRepo.acceptOrderAtomically(
-      orderId,
-      shipperId,
-    );
+    const updatedOrder = await this.ordersRepo.acceptOrderAtomically(orderId, shipperId);
 
     console.log(`✓ Order ${order.orderNumber} accepted by shipper: ${shipperId}`);
+
+    // Notify shop owner about shipper assignment
+    try {
+      // FIX #2: Guard ownerId resolution - ensure valid userId before sending to notificationService
+      const shop = await this.shopsRepo.findById(order.shopId);
+      const ownerId = shop?.ownerId;
+      if (!ownerId) {
+        this.logger.warn(
+          `NOTIF-WARNING: Cannot resolve ownerId for SHIPPER_ASSIGNED notification`,
+          {
+            orderId,
+            shopId: order.shopId,
+            shop_ownerId: shop?.ownerId,
+          },
+        );
+        return updatedOrder;
+      }
+      await this.notificationsService.send({
+        userId: ownerId,
+        title: `Shipper Assigned`,
+        body: `Shipper has accepted order #${order.orderNumber} for delivery`,
+        type: NotificationType.SHIPPER_ASSIGNED,
+        data: { orderId, orderNumber: order.orderNumber, shipperId },
+        orderId,
+        shopId: order.shopId,
+      });
+    } catch (error) {
+      this.logger.error('Failed to send SHIPPER_ASSIGNED notification:', error);
+    }
 
     return updatedOrder;
   }
@@ -1095,14 +1221,11 @@ export class OrdersService {
   /**
    * ORDER-014: Mark order as shipping (shipper picked up and started delivery)
    * PHASE 2
-   * 
+   *
    * OPTION-1-FIX: Accept chỉ set shipperId (status vẫn READY)
    * markShipping sẽ thực hiện chuyển READY → SHIPPING
    */
-  async markShipping(
-    shipperId: string,
-    orderId: string,
-  ): Promise<OrderEntity> {
+  async markShipping(shipperId: string, orderId: string): Promise<OrderEntity | null> {
     // 1. Get order
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
@@ -1133,10 +1256,7 @@ export class OrdersService {
     }
 
     // 4. Validate state transition (READY -> SHIPPING)
-    await this.stateMachine.validateTransition(
-      order.status,
-      OrderStatus.SHIPPING,
-    );
+    await this.stateMachine.validateTransition(order.status, OrderStatus.SHIPPING);
 
     // 5. Update order: transition to SHIPPING and set shippingAt timestamp
     // OPTION-1-FIX: This is where READY → SHIPPING happens (not in accept)
@@ -1147,17 +1267,26 @@ export class OrdersService {
       updatedAt: now,
     });
 
-    return this.ordersRepo.findById(orderId) as Promise<OrderEntity>;
+    // Refetch order and notify customer
+    const updatedOrder = await this.ordersRepo.findById(orderId);
+    if (updatedOrder) {
+      await this.sendOrderNotification(
+        order.customerId,
+        `Order On the Way`,
+        `Order #${updatedOrder.orderNumber} is now being delivered to you`,
+        NotificationType.ORDER_SHIPPING,
+        updatedOrder,
+      );
+    }
+
+    return updatedOrder;
   }
 
   /**
    * ORDER-015: Mark order as delivered
    * PHASE 2
    */
-  async markDelivered(
-    shipperId: string,
-    orderId: string,
-  ): Promise<OrderEntity> {
+  async markDelivered(shipperId: string, orderId: string): Promise<OrderEntity | null> {
     // 1. Get order
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
@@ -1186,10 +1315,7 @@ export class OrdersService {
       });
     }
 
-    await this.stateMachine.validateTransition(
-      order.status,
-      OrderStatus.DELIVERED,
-    );
+    await this.stateMachine.validateTransition(order.status, OrderStatus.DELIVERED);
 
     // 4. Update order status
     const updateData: any = {
@@ -1218,20 +1344,61 @@ export class OrdersService {
 
     console.log(`✓ Order ${order.orderNumber} delivered by shipper: ${shipperId}`);
 
+    // Refetch order and notify customer and owner
+    const deliveredOrder = await this.ordersRepo.findById(orderId);
+    if (deliveredOrder) {
+      // Notify customer
+      await this.sendOrderNotification(
+        order.customerId,
+        `Order Delivered`,
+        `Order #${deliveredOrder.orderNumber} has been successfully delivered`,
+        NotificationType.ORDER_DELIVERED,
+        deliveredOrder,
+      );
+
+      // Notify shop owner
+      try {
+        const shop = await this.shopsRepo.findById(order.shopId);
+        if (shop?.ownerId) {
+          // FIX #1: Safe shipper name fallback - prefer available displayName from user, then name, then fallback
+          // Since ShipperEntity doesn't have displayName, we try to fetch it from users collection
+          let shipperName = 'Shipper';
+          if (shipper?.name) {
+            shipperName = shipper.name;
+          } else {
+            try {
+              const shipperUser = await this.usersRepo.findById(shipperId);
+              shipperName = shipperUser?.displayName ?? 'Shipper';
+            } catch {
+              shipperName = 'Shipper';
+            }
+          }
+          await this.notificationsService.send({
+            userId: shop.ownerId,
+            title: `Order Delivered`,
+            body: `Order #${deliveredOrder.orderNumber} was successfully delivered by ${shipperName}`,
+            type: NotificationType.ORDER_DELIVERED,
+            data: { orderId, orderNumber: deliveredOrder.orderNumber, shipperId },
+            orderId,
+            shopId: order.shopId,
+          });
+        }
+      } catch (error) {
+        this.logger.error('Failed to send ORDER_DELIVERED notification to owner:', error);
+      }
+    }
+
     // TODO: Trigger payout to shop owner (Phase 2 enhancement)
     // await this.walletService.processOrderPayout(orderId);
 
-    return this.ordersRepo.findById(orderId) as Promise<OrderEntity>;
+    return deliveredOrder;
   }
 
   /**
    * ORDER-016: Get shipper's orders with page-based pagination
    * PHASE 2
    */
-  async getShipperOrders(
-    shipperId: string,
-    filter: OrderFilterDto,
-  ): Promise<PaginatedOrdersDto> {
+  async getShipperOrders(shipperId: string, filter: OrderFilterDto): Promise<PaginatedOrdersDto> {
     const { status, page = 1, limit = 10 } = filter;
 
     // Validate shipper has a shop (authorization check)
@@ -1271,7 +1438,7 @@ export class OrdersService {
     const customerMap = await this.resolveCustomersForOrders(orders);
 
     return {
-      orders: orders.map(order => this.mapToListDto(order, shipperMap, customerMap)),
+      orders: orders.map((order) => this.mapToListDto(order, shipperMap, customerMap)),
       page: validPage,
       limit: validLimit,
       total,
@@ -1282,10 +1449,10 @@ export class OrdersService {
   /**
    * GET AVAILABLE ORDERS FOR SHIPPER
    * GET /api/orders/shipper/available
-   * 
+   *
    * Returns READY orders that are unassigned (shipperId=null) and belong to the shipper's shop
    * This allows shippers to discover available orders to accept/pickup
-   * 
+   *
    * Authorization: SHIPPER role required
    * Query scope: Only READY orders with shipperId=null within shipper's shop
    */
@@ -1322,8 +1489,8 @@ export class OrdersService {
         if (readyCount > 0) {
           console.warn(
             `[ShipperAvailable] Mismatch: shopId=${shopId} has ${readyCount} READY ` +
-            `orders but 0 visible to shipper. Some orders may lack shipperId field. ` +
-            `Consider running OrdersBackfillService.backfillShipperIdNull() to fix.`,
+              `orders but 0 visible to shipper. Some orders may lack shipperId field. ` +
+              `Consider running OrdersBackfillService.backfillShipperIdNull() to fix.`,
           );
         }
       } catch (err) {
@@ -1352,7 +1519,7 @@ export class OrdersService {
     const customerMap = await this.resolveCustomersForOrders(orders);
 
     return {
-      orders: orders.map(order => this.mapToListDto(order, shipperMap, customerMap)),
+      orders: orders.map((order) => this.mapToListDto(order, shipperMap, customerMap)),
       page: validPage,
       limit: validLimit,
       total,
@@ -1363,16 +1530,13 @@ export class OrdersService {
   /**
    * SHIPPER ORDER DETAIL: Get full order detail for shipper
    * GET /api/orders/shipper/:id
-   * 
+   *
    * Authorization: SHIPPER role required
    * Allows access if:
    * - Order is assigned to this shipper (order.shipperId === shipperId), OR
    * - Order is READY and unassigned (shipperId is null) - allows preview before accepting
    */
-  async getShipperOrderDetail(
-    shipperId: string,
-    orderId: string,
-  ): Promise<OrderEntity> {
+  async getShipperOrderDetail(shipperId: string, orderId: string): Promise<OrderEntity> {
     // 1. Get order
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
@@ -1424,7 +1588,7 @@ export class OrdersService {
     try {
       const customerIds = Array.from(customerIdsToResolve);
       const customerUsers = await Promise.all(
-        customerIds.map(id => this.usersRepo.findById(id).catch(() => null))
+        customerIds.map((id) => this.usersRepo.findById(id).catch(() => null)),
       );
 
       // Build map of customer data
@@ -1471,7 +1635,7 @@ export class OrdersService {
     try {
       const shipperIds = Array.from(shipperIdsToResolve);
       const shipperUsers = await Promise.all(
-        shipperIds.map(id => this.usersRepo.findById(id).catch(() => null))
+        shipperIds.map((id) => this.usersRepo.findById(id).catch(() => null)),
       );
 
       // Build map of shipper data
@@ -1495,7 +1659,7 @@ export class OrdersService {
   /**
    * Map OrderEntity to OwnerOrderDetailDto
    * Used for OWNER detail endpoint GET /api/orders/shop/{id}
-   * 
+   *
    * Ensures consistency with list response:
    * - customer field (not customerSnapshot) with phone always present
    * - shipperId field included (null or string)
@@ -1552,7 +1716,7 @@ export class OrdersService {
       shopId: order.shopId,
       shopName: order.shopName,
       shipperId: order.shipperId ?? null,
-      items: order.items.map(item => ({
+      items: order.items.map((item) => ({
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
@@ -1570,16 +1734,18 @@ export class OrdersService {
       paymentMethod: order.paymentMethod,
       customer,
       shipper,
-      deliveryAddress: order.deliveryAddress ? {
-        label: order.deliveryAddress.label,
-        fullAddress: order.deliveryAddress.fullAddress,
-        building: order.deliveryAddress.building,
-        room: order.deliveryAddress.room,
-        note: order.deliveryAddress.note,
-      } : {
-        label: '',
-        fullAddress: '',
-      },
+      deliveryAddress: order.deliveryAddress
+        ? {
+            label: order.deliveryAddress.label,
+            fullAddress: order.deliveryAddress.fullAddress,
+            building: order.deliveryAddress.building,
+            room: order.deliveryAddress.room,
+            note: order.deliveryAddress.note,
+          }
+        : {
+            label: '',
+            fullAddress: '',
+          },
       deliveryNote: order.deliveryNote,
       createdAt: toIsoString(order.createdAt),
       updatedAt: toIsoString(order.updatedAt),
@@ -1604,9 +1770,9 @@ export class OrdersService {
     customerMap?: Map<string, { id: string; displayName?: string; phone?: string }>,
   ): OrderListItemDto {
     const MAX_PREVIEW_ITEMS = 3;
-    
+
     // Create items preview (max 3 items)
-    const itemsPreview = order.items.slice(0, MAX_PREVIEW_ITEMS).map(item => ({
+    const itemsPreview = order.items.slice(0, MAX_PREVIEW_ITEMS).map((item) => ({
       productId: item.productId,
       productName: item.productName,
       quantity: item.quantity,
@@ -1643,20 +1809,24 @@ export class OrdersService {
       itemsPreviewCount: itemsPreview.length,
       customer: customerData,
       paymentMethod: order.paymentMethod,
-      deliveryAddress: order.deliveryAddress ? {
-        label: order.deliveryAddress.label,
-        fullAddress: order.deliveryAddress.fullAddress,
-        building: order.deliveryAddress.building,
-        room: order.deliveryAddress.room,
-      } : undefined,
+      deliveryAddress: order.deliveryAddress
+        ? {
+            label: order.deliveryAddress.label,
+            fullAddress: order.deliveryAddress.fullAddress,
+            building: order.deliveryAddress.building,
+            room: order.deliveryAddress.room,
+          }
+        : undefined,
       shipperId: order.shipperId ?? null,
-      shipper: order.shipperSnapshot ? {
-        id: order.shipperSnapshot.id,
-        displayName: order.shipperSnapshot.displayName,
-        phone: order.shipperSnapshot.phone,
-      } : (order.shipperId && shipperMap?.has(order.shipperId) 
-          ? shipperMap.get(order.shipperId)! 
-          : undefined),
+      shipper: order.shipperSnapshot
+        ? {
+            id: order.shipperSnapshot.id,
+            displayName: order.shipperSnapshot.displayName,
+            phone: order.shipperSnapshot.phone,
+          }
+        : order.shipperId && shipperMap?.has(order.shipperId)
+          ? shipperMap.get(order.shipperId)!
+          : undefined,
       updatedAt: toIsoString(order.updatedAt),
     };
   }
@@ -1716,10 +1886,7 @@ export class OrdersService {
           OrderStatus.PREPARING,
         ];
 
-        if (
-          statusesToBackfill.includes(data.status) &&
-          !('shipperId' in data)
-        ) {
+        if (statusesToBackfill.includes(data.status) && !('shipperId' in data)) {
           docsToUpdate.push({
             id: doc.id,
             data,
@@ -1727,9 +1894,7 @@ export class OrdersService {
         }
       });
 
-      console.log(
-        `[BackfillShipperIdNull] Found ${docsToUpdate.length} orders missing shipperId`,
-      );
+      console.log(`[BackfillShipperIdNull] Found ${docsToUpdate.length} orders missing shipperId`);
 
       // Batch update in groups of 100 (Firestore safe limit)
       const batchSize = 100;
@@ -1747,7 +1912,7 @@ export class OrdersService {
           await writeBatch.commit();
           console.log(
             `[BackfillShipperIdNull] Batch ${Math.floor(i / batchSize) + 1}: ` +
-            `Updated ${batch.length} orders`,
+              `Updated ${batch.length} orders`,
           );
         } catch (err) {
           const error = err instanceof Error ? err.message : String(err);
@@ -1762,7 +1927,7 @@ export class OrdersService {
 
       console.log(
         `[BackfillShipperIdNull] Complete! ` +
-        `Scanned: ${result.scanned}, Updated: ${result.updated}, Skipped: ${result.skipped}`,
+          `Scanned: ${result.scanned}, Updated: ${result.updated}, Skipped: ${result.skipped}`,
       );
 
       return result;

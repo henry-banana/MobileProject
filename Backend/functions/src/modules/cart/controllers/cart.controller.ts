@@ -59,18 +59,30 @@ export class CartController {
    * CART-005
    */
   @Get()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get cart items grouped by shop',
-    description: 'Returns cart items grouped by shop. Returns empty groups array if cart is empty or does not exist.'
+    description:
+      'Returns cart items grouped by shop. Returns empty groups array if cart is empty or does not exist.',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (1-based, default 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default 10, max 50)' })
-  @ApiQuery({ 
-    name: 'includeAll', 
-    required: false, 
-    type: Boolean, 
-    description: 'Return all groups without pagination. Query string must be exactly "true" (case-insensitive) to enable. Default: false',
-    example: false
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (1-based, default 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default 10, max 50)',
+  })
+  @ApiQuery({
+    name: 'includeAll',
+    required: false,
+    type: Boolean,
+    description:
+      'Return all groups without pagination. Query string must be exactly "true" (case-insensitive) to enable. Default: false',
+    example: false,
   })
   @ApiOkResponse({
     description: 'Cart items grouped by shop (or empty cart)',
@@ -227,9 +239,7 @@ export class CartController {
 
     // Parse limit: default 10, range [1, 50]
     const limitNum = limitRaw ? parseInt(limitRaw, 10) : 10;
-    const limit = Number.isFinite(limitNum) 
-      ? Math.max(1, Math.min(50, limitNum))
-      : 10;
+    const limit = Number.isFinite(limitNum) ? Math.max(1, Math.min(50, limitNum)) : 10;
 
     if (process.env.DEBUG_CART_QUERY === 'true') {
       console.log('[CART DEBUG] Parsed values:', { page, limit, includeAll });
@@ -351,9 +361,10 @@ export class CartController {
    * CART-002
    */
   @Post('items')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Add product to cart',
-    description: 'Adds a product to the cart. If product already exists, quantity is incremented. Returns cart id and grouped items.'
+    description:
+      'Adds a product to the cart. If product already exists, quantity is incremented. Returns cart id and grouped items.',
   })
   @ApiCreatedResponse({
     description: 'Product added to cart successfully',
@@ -467,14 +478,15 @@ export class CartController {
    * CART-003
    */
   @Put('items/:productId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update cart item quantity',
-    description: 'Updates the quantity of a specific product in the cart. Returns updated cart with grouped items.'
+    description:
+      'Updates the quantity of a specific product in the cart. Returns updated cart with grouped items.',
   })
-  @ApiParam({ 
-    name: 'productId', 
+  @ApiParam({
+    name: 'productId',
     description: 'Product ID to update',
-    example: 'prod_abc123'
+    example: 'prod_abc123',
   })
   @ApiOkResponse({
     description: 'Cart item quantity updated successfully',
@@ -582,15 +594,16 @@ export class CartController {
    */
   @Delete('items/:productId')
   @HttpCode(204)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Remove item from cart',
-    description: 'Removes a specific product from the cart. If cart becomes empty after removal, the cart document is deleted.'
+    description:
+      'Removes a specific product from the cart. If cart becomes empty after removal, the cart document is deleted.',
   })
-  @ApiParam({ 
-    name: 'productId', 
+  @ApiParam({
+    name: 'productId',
     required: true,
     description: 'Product ID to remove from cart',
-    example: 'prod_abc123'
+    example: 'prod_abc123',
   })
   @ApiNoContentResponse({ description: 'Item removed from cart successfully (no response body)' })
   @ApiNotFoundResponse({
@@ -652,9 +665,10 @@ export class CartController {
    */
   @Delete()
   @HttpCode(204)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Clear entire cart',
-    description: 'Clears all items from the cart. This operation is idempotent - returns 204 even if cart is already empty or does not exist.'
+    description:
+      'Clears all items from the cart. This operation is idempotent - returns 204 even if cart is already empty or does not exist.',
   })
   @ApiNoContentResponse({ description: 'Cart cleared successfully (no response body)' })
   @ApiUnauthorizedResponse({
@@ -694,7 +708,6 @@ export class CartController {
     await this.cartService.clearCart(req.user.uid);
   }
 
-
   /**
    * DELETE /cart/shops/:shopId
    * Clear cart items for a specific shop
@@ -702,15 +715,16 @@ export class CartController {
    * CART-007
    */
   @Delete('shops/:shopId')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Clear cart items for a shop',
-    description: 'Removes all items belonging to a specific shop from the cart. Returns updated cart grouped by shop. If cart becomes empty, returns empty groups array.'
+    description:
+      'Removes all items belonging to a specific shop from the cart. Returns updated cart grouped by shop. If cart becomes empty, returns empty groups array.',
   })
-  @ApiParam({ 
-    name: 'shopId', 
+  @ApiParam({
+    name: 'shopId',
     required: true,
     description: 'Shop ID to clear items for',
-    example: 'shop_123'
+    example: 'shop_123',
   })
   @ApiOkResponse({
     description: 'Shop items cleared successfully',
