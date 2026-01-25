@@ -144,6 +144,15 @@ export class NotificationsService {
     limit: number;
     unreadCount: number;
   }> {
+    if (process.env.DEBUG_NOTIF_QUERY === '1') {
+      console.log('[NotificationsService getMyNotifications]');
+      console.log('  userId:', userId);
+      console.log('  read:', read, 'typeof:', typeof read);
+      console.log('  read === true:', read === true);
+      console.log('  read === false:', read === false);
+      console.log('  read === undefined:', read === undefined);
+    }
+
     const offset = (page - 1) * limit;
 
     // Get paginated notifications

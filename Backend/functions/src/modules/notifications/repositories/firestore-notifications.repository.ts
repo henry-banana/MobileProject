@@ -3,6 +3,34 @@ import { Firestore, Timestamp } from 'firebase-admin/firestore';
 import { INotificationsRepository } from '../interfaces';
 import { NotificationEntity } from '../entities';
 
+/**
+ * Helper: Remove undefined values from object recursively
+ * Firestore doesn't support undefined values; this ensures clean documents
+ */
+function cleanUndefinedValues(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return undefined;
+  }
+
+  if (typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => cleanUndefinedValues(item)).filter((item) => item !== undefined);
+  }
+
+  // Object
+  const cleaned: any = {};
+  Object.keys(obj).forEach((key) => {
+    const value = cleanUndefinedValues(obj[key]);
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  });
+  return cleaned;
+}
+
 @Injectable()
 export class FirestoreNotificationsRepository implements INotificationsRepository {
   private readonly collectionName = 'notifications';
@@ -13,22 +41,55 @@ export class FirestoreNotificationsRepository implements INotificationsRepositor
     const docRef = this.firestore.collection(this.collectionName).doc();
     const now = Timestamp.now();
 
-    const entity: NotificationEntity = {
+    // Build entity with clean values (no undefined)
+    const entity: any = {
       id: docRef.id,
       userId,
       title: data.title!,
       body: data.body!,
-      imageUrl: data.imageUrl,
       type: data.type!,
-      data: data.data,
       read: false,
-      orderId: data.orderId,
-      shopId: data.shopId,
       createdAt: now.toDate().toISOString(),
     };
 
+    // Add optional fields only if defined
+    if (data.imageUrl !== undefined) {
+      entity.imageUrl = data.imageUrl;
+    }
+    if (data.data !== undefined) {
+      // Deep clean data object to remove any undefined values
+      const cleanedData = cleanUndefinedValues(data.data);
+      if (Object.keys(cleanedData).length > 0) {
+        entity.data = cleanedData;
+      }
+    }
+    if (data.orderId !== undefined) {
+      entity.orderId = data.orderId;
+    }
+    if (data.shopId !== undefined) {
+      entity.shopId = data.shopId;
+    }
+    if (data.sentAt !== undefined) {
+      entity.sentAt = data.sentAt;
+    }
+    if (data.deliveryStatus !== undefined) {
+      entity.deliveryStatus = data.deliveryStatus;
+    }
+    if (data.deliveryErrorCode !== undefined) {
+      entity.deliveryErrorCode = data.deliveryErrorCode;
+    }
+    if (data.deliveryErrorMessage !== undefined) {
+      entity.deliveryErrorMessage = data.deliveryErrorMessage;
+    }
+    if (data.readAt !== undefined) {
+      entity.readAt = data.readAt;
+    }
+
+    // Write cleaned entity to Firestore (no undefined values)
     await docRef.set(entity);
-    return entity;
+    
+    // Return entity with only defined fields
+    return cleanUndefinedValues(entity) as NotificationEntity;
   }
 
   async findById(userId: string, notificationId: string): Promise<NotificationEntity | null> {
@@ -52,11 +113,25 @@ export class FirestoreNotificationsRepository implements INotificationsRepositor
       offset?: number;
     },
   ): Promise<{ items: NotificationEntity[]; total: number }> {
+    if (process.env.DEBUG_NOTIF_QUERY === '1') {
+      console.log('[FirestoreNotificationsRepository findByUserId]');
+      console.log('  filters.read:', filters?.read, 'typeof:', typeof filters?.read);
+      console.log('  filters.read === undefined:', filters?.read === undefined);
+      console.log('  filters.read !== undefined:', filters?.read !== undefined);
+    }
+
     // Get total count
     let countQuery = this.firestore.collection(this.collectionName).where('userId', '==', userId);
 
     if (filters?.read !== undefined) {
+      if (process.env.DEBUG_NOTIF_QUERY === '1') {
+        console.log('[FirestoreNotificationsRepository] Applying read filter:', filters.read);
+      }
       countQuery = countQuery.where('read', '==', filters.read);
+    } else {
+      if (process.env.DEBUG_NOTIF_QUERY === '1') {
+        console.log('[FirestoreNotificationsRepository] No read filter, returning all');
+      }
     }
 
     const countSnapshot = await countQuery.count().get();

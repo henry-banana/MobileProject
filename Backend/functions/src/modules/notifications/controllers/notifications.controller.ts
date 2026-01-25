@@ -128,27 +128,35 @@ export class NotificationsController {
 
   /**
    * GET /notifications?read=false&page=1&limit=20
-   * Get user's notifications with pagination
+   * Get user's notifications with pagination and optional read status filter
    *
    * NOTIF-005: Get My Notifications
    *
+   * Query Parameters:
+   * - read (boolean, optional): Filter by read status
+   *   * true: Return only read notifications
+   *   * false: Return only unread notifications
+   *   * omitted: Return all notifications
+   * - page (number, optional): Page number (1-based, default 1)
+   * - limit (number, optional): Items per page (default 20, max 100)
+   *
    * Response includes:
-   * - items: array of notifications
-   * - total: total count (respecting filter)
+   * - items: array of notifications (filtered by read param if provided)
+   * - total: total count of notifications (respecting read filter)
    * - page: current page (1-based)
    * - limit: items per page
-   * - unreadCount: count of ALL unread notifications (regardless of page/filter)
+   * - unreadCount: count of ALL unread notifications (ignores read/page filter)
    */
   @Get()
   @ApiOperation({
     summary: 'Get my notifications',
-    description: 'Retrieve user notification history with pagination and optional read filter',
+    description: 'Retrieve paginated notifications with optional read status filter. Pass read=true for read notifications, read=false for unread, or omit the parameter for all notifications.',
   })
   @ApiQuery({
     name: 'read',
     required: false,
     type: Boolean,
-    description: 'Filter by read status (true=read only, false=unread only, undefined=all)',
+    description: 'Filter by read status: true=read only, false=unread only, omitted=all notifications. Note: Accepts boolean values "true" or "false" from URL query string.',
   })
   @ApiQuery({
     name: 'page',
@@ -212,6 +220,11 @@ export class NotificationsController {
     @CurrentUser() user: any,
     @Query() query: NotificationQueryDto,
   ): Promise<PaginatedResponse<NotificationEntity>> {
+    if (process.env.DEBUG_NOTIF_QUERY === '1') {
+      console.log('[NotificationsController getMyNotifications]');
+      console.log('  query.read:', query.read, 'typeof:', typeof query.read);
+      console.log('  Full query object:', JSON.stringify(query));
+    }
     return await this.notificationsService.getMyNotifications(
       user.uid,
       query.read,

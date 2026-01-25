@@ -1,5 +1,5 @@
-import { IsOptional, IsNumber, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsNumber } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
@@ -13,8 +13,35 @@ export class NotificationQueryDto {
     required: false,
   })
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  @Transform(({ value }) => {
+    // Debug logging
+    if (process.env.DEBUG_NOTIF_QUERY === '1') {
+      console.log(
+        '[NotificationQueryDto @Transform] Received value:',
+        value,
+        'typeof:',
+        typeof value,
+      );
+    }
+
+    // Handle string from query params: "true" -> true, "false" -> false
+    if (value === 'true' || value === true || value === 1 || value === '1') {
+      if (process.env.DEBUG_NOTIF_QUERY === '1') {
+        console.log('[NotificationQueryDto @Transform] Converted to true');
+      }
+      return true;
+    }
+    if (value === 'false' || value === false || value === 0 || value === '0') {
+      if (process.env.DEBUG_NOTIF_QUERY === '1') {
+        console.log('[NotificationQueryDto @Transform] Converted to false');
+      }
+      return false;
+    }
+    if (process.env.DEBUG_NOTIF_QUERY === '1') {
+      console.log('[NotificationQueryDto @Transform] Returning undefined');
+    }
+    return undefined; // Return undefined if invalid value, so validation can catch it
+  })
   read?: boolean;
 
   @ApiPropertyOptional({

@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsService } from './notifications.service';
 import { FCMService } from './fcm.service';
-import { IDeviceTokensRepository, INotificationsRepository } from '../interfaces';
 import { DeviceTokenEntity, NotificationEntity } from '../entities';
 import { RegisterDeviceTokenDto } from '../dto';
+import { NotificationCategory } from '../dto/admin-batch-send.dto';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
@@ -36,6 +36,18 @@ describe('NotificationsService', () => {
       sendToTopic: jest.fn().mockResolvedValue('message_id'),
     };
 
+    const mockNotificationPreferencesRepository = {
+      findByUserId: jest.fn().mockResolvedValue(null), // Return null preferences (all enabled)
+      getPreferences: jest.fn().mockResolvedValue(null),
+      updatePreferences: jest.fn(),
+    };
+
+    const mockTopicSubscriptionsRepository = {
+      subscribe: jest.fn(),
+      unsubscribe: jest.fn(),
+      getSubscriptions: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationsService,
@@ -46,6 +58,14 @@ describe('NotificationsService', () => {
         {
           provide: 'NOTIFICATIONS_REPOSITORY',
           useValue: mockNotificationsRepository,
+        },
+        {
+          provide: 'NOTIFICATION_PREFERENCES_REPOSITORY',
+          useValue: mockNotificationPreferencesRepository,
+        },
+        {
+          provide: 'TOPIC_SUBSCRIPTIONS_REPOSITORY',
+          useValue: mockTopicSubscriptionsRepository,
         },
         {
           provide: FCMService,
@@ -109,7 +129,7 @@ describe('NotificationsService', () => {
       mockDeviceTokensRepository.updateLastUsed.mockResolvedValue(undefined);
       mockDeviceTokensRepository.findByToken.mockResolvedValueOnce(existingToken);
 
-      const result = await service.registerDeviceToken(userId, dto);
+      await service.registerDeviceToken(userId, dto);
 
       expect(mockDeviceTokensRepository.updateLastUsed).toHaveBeenCalledWith(userId, 'existing_token');
     });
@@ -140,7 +160,7 @@ describe('NotificationsService', () => {
         lastUsedAt: new Date().toISOString(),
       });
 
-      const result = await service.registerDeviceToken(userId, dto);
+      await service.registerDeviceToken(userId, dto);
 
       expect(mockDeviceTokensRepository.deleteByToken).toHaveBeenCalledWith(oldUserId, 'transferred_token');
       expect(mockDeviceTokensRepository.create).toHaveBeenCalledWith(userId, expect.any(Object));
@@ -226,17 +246,77 @@ describe('NotificationsService', () => {
       expect(result.limit).toBe(20);
     });
 
-    it('should filter by read status', async () => {
+    it('should filter by read=false (unread only)', async () => {
+      const userId = 'user_1';
+      const unreadNotification: NotificationEntity = {
+        id: 'notif_1',
+        userId,
+        title: 'Unread notification',
+        body: 'This is unread',
+        type: 'ORDER_CONFIRMED' as any,
+        read: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      mockNotificationsRepository.findByUserId
+        .mockResolvedValueOnce({ items: [unreadNotification], total: 1 }) // For read=false filter
+        .mockResolvedValueOnce({ items: [unreadNotification], total: 1 }); // For unread count
+
+      const result = await service.getMyNotifications(userId, false, 1, 20);
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].read).toBe(false);
+      expect(result.total).toBe(1);
+      expect(result.unreadCount).toBe(1);
+      expect(mockNotificationsRepository.findByUserId).toHaveBeenCalledWith(userId, {
+        read: false,
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it('should filter by read=true (read only)', async () => {
+      const userId = 'user_1';
+      const readNotification: NotificationEntity = {
+        id: 'notif_2',
+        userId,
+        title: 'Read notification',
+        body: 'This is read',
+        type: 'ORDER_CONFIRMED' as any,
+        read: true,
+        createdAt: new Date().toISOString(),
+      };
+
+      mockNotificationsRepository.findByUserId
+        .mockResolvedValueOnce({ items: [readNotification], total: 5 }) // For read=true filter
+        .mockResolvedValueOnce({ items: [], total: 0 }); // For unread count
+
+      const result = await service.getMyNotifications(userId, true, 1, 20);
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].read).toBe(true);
+      expect(result.total).toBe(5);
+      expect(result.unreadCount).toBe(0);
+      expect(mockNotificationsRepository.findByUserId).toHaveBeenCalledWith(userId, {
+        read: true,
+        limit: 20,
+        offset: 0,
+      });
+    });
+
+    it('should return all notifications when read filter is undefined', async () => {
       const userId = 'user_1';
 
       mockNotificationsRepository.findByUserId
-        .mockResolvedValueOnce({ items: [], total: 10 }) // For paginated results
-        .mockResolvedValueOnce({ items: [], total: 15 }); // For unread count
+        .mockResolvedValueOnce({ items: [], total: 10 }) // For no filter (all notifications)
+        .mockResolvedValueOnce({ items: [], total: 3 }); // For unread count
 
-      await service.getMyNotifications(userId, false, 1, 20);
+      const result = await service.getMyNotifications(userId, undefined, 1, 20);
 
+      expect(result.total).toBe(10); // All notifications
+      expect(result.unreadCount).toBe(3); // Only unread
       expect(mockNotificationsRepository.findByUserId).toHaveBeenCalledWith(userId, {
-        read: false,
+        read: undefined,
         limit: 20,
         offset: 0,
       });
@@ -293,4 +373,45 @@ describe('NotificationsService', () => {
       expect(mockNotificationsRepository.markAllAsRead).toHaveBeenCalledWith(userId);
     });
   });
+
+  describe('adminBatchSend', () => {
+    it('should send MARKETING notification without orderId to multiple users', async () => {
+      const userIds = ['user_1', 'user_2'];
+      mockNotificationsRepository.create.mockResolvedValue({
+        id: 'notif_1',
+        userId: userIds[0],
+        title: 'Special Offer',
+        body: '50% off today!',
+        type: 'PROMOTION',
+        read: false,
+        createdAt: new Date().toISOString(),
+        // Note: no orderId in response
+      });
+
+      mockDeviceTokensRepository.findByUserId.mockResolvedValue([
+        { id: 'device_1', token: 'token_1', userId: userIds[0] },
+      ]);
+
+      const result = await service.adminBatchSend({
+        userIds,
+        title: 'Special Offer',
+        body: '50% off today!',
+        type: 'PROMOTION' as any,
+        category: NotificationCategory.MARKETING,
+        data: { promoId: 'promo_123' },
+        // No orderId - should not cause Firestore write failures
+      });
+
+      expect(result.requestedCount).toBe(2);
+      expect(result.successCount).toBeGreaterThan(0);
+      expect(mockNotificationsRepository.create).toHaveBeenCalled();
+      
+      // Verify that the created notification does not have undefined fields
+      const createCall = mockNotificationsRepository.create.mock.calls[0];
+      const createdData = createCall[1];
+      expect(createdData.orderId).toBeUndefined(); // Should not be set, not undefined in the payload
+      expect(createdData.shopId).toBeUndefined(); // Should not be set
+    });
+  });
 });
+

@@ -30,7 +30,10 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: {
-        enableImplicitConversion: true,
+        // NOTE: Disabled enableImplicitConversion to prevent implicit boolean conversion
+        // from interfering with @Transform decorators. Query params like ?read=false
+        // were being converted to true before @Transform could see the string value.
+        enableImplicitConversion: false,
       },
     }),
   );
