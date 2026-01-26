@@ -282,6 +282,7 @@ export class FirestoreVouchersRepository implements IVouchersRepository {
       const usageData: VoucherUsageEntity = {
         id: usageId,
         voucherId,
+        shopId: voucher.shopId, // Denormalize shopId from voucher for efficient filtering
         userId,
         orderId,
         discountAmount,
@@ -304,4 +305,178 @@ export class FirestoreVouchersRepository implements IVouchersRepository {
       };
     });
   }
+
+  /**
+   * Get paginated voucher usage history for a user
+   * Supports filtering by shopId and date range
+   * FIX for VOUCH-009: shopId is now denormalized on usage records for efficient DB-level filtering
+   */
+  async getUsageHistory(
+    userId: string,
+    filters?: {
+      shopId?: string;
+      from?: string;
+      to?: string;
+    },
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ items: VoucherUsageEntity[]; total: number }> {
+    // Build query for all usage records of this user
+    let query = this.firestore
+      .collection(this.voucherUsagesCollection)
+      .where('userId', '==', userId);
+
+    // Apply shopId filter at DB level (FIXED: was previously filtered in-memory after pagination)
+    if (filters?.shopId) {
+      query = query.where('shopId', '==', filters.shopId);
+    }
+
+    // Apply date filters if provided
+    if (filters?.from) {
+      query = query.where('createdAt', '>=', filters.from);
+    }
+    if (filters?.to) {
+      query = query.where('createdAt', '<=', filters.to);
+    }
+
+    // Get total count AFTER applying all filters (now accurate)
+    const countSnapshot = await query.count().get();
+    const total = countSnapshot.data().count;
+
+    // Calculate pagination
+    const offset = (page - 1) * limit;
+
+    // Get paginated results, ordered by createdAt descending (newest first)
+    const snapshot = await query.orderBy('createdAt', 'desc').offset(offset).limit(limit).get();
+
+    const items: VoucherUsageEntity[] = snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() }) as VoucherUsageEntity,
+    );
+
+    return { items, total };
+  }
+
+  /**
+   * Get paginated usage records for a specific voucher (owner view)
+   * Queries voucherUsages where voucherId matches
+   */
+  async getVoucherUsageByVoucherId(
+    voucherId: string,
+    page: number = 1,
+    limit: number = 20,
+    from?: string,
+    to?: string,
+  ): Promise<{ items: VoucherUsageEntity[]; total: number }> {
+    let query = this.firestore
+      .collection(this.voucherUsagesCollection)
+      .where('voucherId', '==', voucherId);
+
+    // Apply date filters if provided
+    if (from) {
+      query = query.where('createdAt', '>=', from);
+    }
+    if (to) {
+      query = query.where('createdAt', '<=', to);
+    }
+
+    // Get total count
+    const countSnapshot = await query.count().get();
+    const total = countSnapshot.data().count;
+
+    // Calculate pagination
+    const offset = (page - 1) * limit;
+
+    // Get paginated results, ordered by createdAt descending (newest first)
+    const snapshot = await query.orderBy('createdAt', 'desc').offset(offset).limit(limit).get();
+
+    const items: VoucherUsageEntity[] = snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() }) as VoucherUsageEntity,
+    );
+
+    return { items, total };
+  }
+
+  /**
+   * Get aggregated statistics for a voucher
+   * Computes: total uses, total discount amount, unique users, last used time
+   */
+  async getVoucherStats(
+    voucherId: string,
+  ): Promise<{
+    totalUses: number;
+    totalDiscountAmount: number;
+    uniqueUsers: number;
+    lastUsedAt: string | null;
+  }> {
+    // Query all usage records for this voucher
+    const snapshot = await this.firestore
+      .collection(this.voucherUsagesCollection)
+      .where('voucherId', '==', voucherId)
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    const docs = snapshot.docs;
+    const totalUses = docs.length;
+
+    // Calculate aggregations in memory
+    let totalDiscountAmount = 0;
+    const uniqueUserSet = new Set<string>();
+    let lastUsedAt: string | null = null;
+
+    for (const doc of docs) {
+      const data = doc.data() as VoucherUsageEntity;
+      totalDiscountAmount += data.discountAmount;
+      uniqueUserSet.add(data.userId);
+
+      // Get the first document's createdAt (already ordered DESC, so first = latest)
+      if (!lastUsedAt && data.createdAt) {
+        lastUsedAt = data.createdAt;
+      }
+    }
+
+    return {
+      totalUses,
+      totalDiscountAmount,
+      uniqueUsers: uniqueUserSet.size,
+      lastUsedAt,
+    };
+  }
+
+  /**
+   * Mark all active vouchers with validTo < now as isActive=false (expiration sweep)
+   * Idempotent: If already inactive, no change
+   * 
+   * @param now Current timestamp (ISO 8601)
+   * @returns { updatedCount: number }
+   */
+  async expireVouchersBeforeDate(now: string): Promise<{ updatedCount: number }> {
+    // Query: Find all ACTIVE vouchers where validTo < now
+    const query = this.firestore
+      .collection(this.vouchersCollection)
+      .where('isActive', '==', true)
+      .where('isDeleted', '==', false)
+      .where('validTo', '<', now);
+
+    const snapshot = await query.get();
+    let updatedCount = 0;
+
+    // Batch update (Firestore allows up to 500 writes per batch)
+    const batch = this.firestore.batch();
+
+    for (const doc of snapshot.docs) {
+      batch.update(doc.ref, {
+        isActive: false,
+        updatedAt: Timestamp.now().toDate().toISOString(),
+      });
+      updatedCount++;
+    }
+
+    // Commit batch if there are changes
+    if (updatedCount > 0) {
+      await batch.commit();
+    }
+
+    return { updatedCount };
+  }
 }
+

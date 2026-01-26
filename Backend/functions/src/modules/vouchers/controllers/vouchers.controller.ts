@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { VouchersService } from '../vouchers.service';
-import { ValidateVoucherDto, AvailableVoucherDto } from '../dto';
+import { ValidateVoucherDto, AvailableVoucherDto, GetVoucherUsageQueryDto, PaginatedVoucherUsageDto } from '../dto';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
 import { Roles } from '../../../core/decorators/roles.decorator';
@@ -133,6 +133,82 @@ export class VouchersController {
   async getAvailableVouchers(@Query('shopId') shopId: string, @CurrentUser('uid') userId: string) {
     const vouchers = await this.vouchersService.getAvailableVouchers(shopId, userId);
     return vouchers;
+  }
+
+  /**
+   * GET /vouchers/me/usage
+   * Get current user's voucher usage history (paginated)
+   */
+  @Get('me/usage')
+  @ApiOperation({
+    summary: 'Get my voucher usage history',
+    description: 'Retrieve paginated list of vouchers used by current user with optional filters (shopId, date range)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Usage history retrieved successfully',
+    type: PaginatedVoucherUsageDto,
+    schema: {
+      example: {
+        success: true,
+        data: {
+          items: [
+            {
+              id: 'voucher_summer_2024_user_123_order_456',
+              voucherId: 'voucher_summer_2024',
+              code: 'SUMMER20',
+              shopId: 'shop_123',
+              orderId: 'order_456',
+              discountAmount: 7500,
+              createdAt: '2026-01-20T15:30:45Z',
+            },
+            {
+              id: 'voucher_newyear_2024_user_123_order_789',
+              voucherId: 'voucher_newyear_2024',
+              code: 'NEWYEAR24',
+              shopId: 'shop_123',
+              orderId: 'order_789',
+              discountAmount: 50000,
+              createdAt: '2026-01-15T10:00:00Z',
+            },
+          ],
+          page: 1,
+          limit: 20,
+          total: 2,
+          pages: 1,
+          hasMore: false,
+        },
+        timestamp: '2026-01-25T12:00:00Z',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - missing or invalid auth token',
+  })
+  async getMyUsageHistory(
+    @CurrentUser('uid') userId: string,
+    @Query() query: GetVoucherUsageQueryDto,
+  ) {
+    const result = await this.vouchersService.getMyVoucherUsageHistory(
+      userId,
+      {
+        shopId: query.shopId,
+        from: query.from,
+        to: query.to,
+      },
+      query.page || 1,
+      query.limit || 20,
+    );
+
+    return {
+      items: result.items,
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      pages: result.pages,
+      hasMore: result.hasMore,
+    };
   }
 
   /**

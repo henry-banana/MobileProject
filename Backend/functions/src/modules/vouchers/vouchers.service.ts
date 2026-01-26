@@ -6,7 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { IVouchersRepository } from './interfaces';
-import { VoucherEntity, VoucherType } from './entities';
+import { VoucherEntity, VoucherType, VoucherUsageEntity } from './entities';
 import {
   CreateVoucherDto,
   UpdateVoucherDto,
@@ -333,6 +333,124 @@ export class VouchersService {
     );
   }
 
+  // ==================== Customer Operations (Read-Only) ====================
+
+  /**
+   * Get current user's voucher usage history (paginated)
+   * Route: GET /vouchers/me/usage
+   * Auth: CUSTOMER
+   */
+  async getMyVoucherUsageHistory(
+    userId: string,
+    filters?: {
+      shopId?: string;
+      from?: string;
+      to?: string;
+    },
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{
+    items: VoucherUsageEntity[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+    hasMore: boolean;
+  }> {
+    const { items, total } = await this.vouchersRepository.getUsageHistory(
+      userId,
+      filters || {},
+      page,
+      limit,
+    );
+
+    const pages = Math.ceil(total / limit);
+    const hasMore = page < pages;
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      pages,
+      hasMore,
+    };
+  }
+
+  // ==================== Owner Operations (Analytics) ====================
+
+  /**
+   * Get usage records for a specific voucher (owner view)
+   * Route: GET /owner/vouchers/:id/usage
+   * Auth: OWNER
+   */
+  async getVoucherUsageRecords(
+    voucherId: string,
+    page: number = 1,
+    limit: number = 20,
+    from?: string,
+    to?: string,
+  ): Promise<{
+    items: VoucherUsageEntity[];
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+    hasMore: boolean;
+  }> {
+    const { items, total } = await this.vouchersRepository.getVoucherUsageByVoucherId(
+      voucherId,
+      page,
+      limit,
+      from,
+      to,
+    );
+
+    const pages = Math.ceil(total / limit);
+    const hasMore = page < pages;
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      pages,
+      hasMore,
+    };
+  }
+
+  /**
+   * Get aggregated statistics for a voucher
+   * Route: GET /owner/vouchers/:id/stats
+   * Auth: OWNER
+   */
+  async getVoucherStatistics(
+    voucherId: string,
+    usageLimit: number,
+  ): Promise<{
+    totalUses: number;
+    totalDiscountAmount: number;
+    uniqueUsers: number;
+    lastUsedAt: string | null;
+    usagePercentage: number;
+    averageDiscount: number;
+  }> {
+    const stats = await this.vouchersRepository.getVoucherStats(voucherId);
+
+    const usagePercentage = (stats.totalUses / usageLimit) * 100;
+    const averageDiscount =
+      stats.totalUses > 0 ? Math.round(stats.totalDiscountAmount / stats.totalUses) : 0;
+
+    return {
+      totalUses: stats.totalUses,
+      totalDiscountAmount: stats.totalDiscountAmount,
+      uniqueUsers: stats.uniqueUsers,
+      lastUsedAt: stats.lastUsedAt,
+      usagePercentage,
+      averageDiscount,
+    };
+  }
+
   // ==================== Helper Methods ====================
 
   /**
@@ -366,4 +484,22 @@ export class VouchersService {
     }
     return voucher;
   }
+
+  /**
+   * Mark all vouchers with validTo < now as inactive (expiration sweep)
+   * 
+   * Can be called by:
+   * - Scheduled job (if @nestjs/schedule is available)
+   * - Manual maintenance command
+   * - Admin endpoint (for manual trigger)
+   * 
+   * **Idempotent:** Already-inactive vouchers are not updated
+   * 
+   * @param now Current timestamp (ISO 8601, defaults to current time)
+   * @returns { updatedCount: number } Count of vouchers marked as inactive
+   */
+  async expireVouchers(now: string = new Date().toISOString()): Promise<{ updatedCount: number }> {
+    return await this.vouchersRepository.expireVouchersBeforeDate(now);
+  }
 }
+

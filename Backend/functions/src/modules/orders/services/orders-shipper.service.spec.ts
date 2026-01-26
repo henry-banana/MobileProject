@@ -13,6 +13,7 @@ import { VouchersService } from '../../vouchers/vouchers.service';
 import { ConfigService } from '../../../core/config/config.service';
 import { FirebaseService } from '../../../core/firebase/firebase.service';
 import { USERS_REPOSITORY } from '../../users/interfaces';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 import { OrderStatus, PaymentStatus, OrderEntity } from '../entities';
 import { Timestamp } from 'firebase-admin/firestore';
 
@@ -78,6 +79,11 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
       enableFirestorePaginationFallback: false,
     };
 
+    const mockNotificationsService = {
+      send: jest.fn().mockResolvedValue(undefined),
+      sendToTopic: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrdersService,
@@ -116,6 +122,10 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
             validateVoucher: jest.fn(),
             applyVoucherAtomic: jest.fn(),
           },
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
         {
           provide: ConfigService,
@@ -220,7 +230,8 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
 
       const result = await service.markShipping(shipperId, 'order_123');
 
-      expect(result.status).toBe(OrderStatus.SHIPPING);
+      expect(result).toBeDefined();
+      expect(result?.status).toBe(OrderStatus.SHIPPING);
     });
 
     it('should throw ForbiddenException if shipper mismatch', async () => {
@@ -272,7 +283,8 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
           status: OrderStatus.DELIVERED,
         }),
       );
-      expect(result.status).toBe(OrderStatus.DELIVERED);
+      expect(result).toBeDefined();
+      expect(result?.status).toBe(OrderStatus.DELIVERED);
     });
 
     it('should mark COD order as PAID upon delivery', async () => {

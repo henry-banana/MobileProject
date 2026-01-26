@@ -4,6 +4,7 @@ import { FirebaseService } from '../../../core/firebase/firebase.service';
 import { IShippersRepository } from '../repositories/shippers-repository.interface';
 import { UsersService } from '../../users/users.service';
 import { ShopsService } from '../../shops/services/shops.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 import { StorageService } from '../../../shared/services/storage.service';
 import { NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { ShipperApplicationEntity, ApplicationStatus } from '../entities/shipper-application.entity';
@@ -99,6 +100,11 @@ describe('ShippersService - Role Synchronization', () => {
 
     storageService = {} as any;
 
+    const mockNotificationsService = {
+      send: jest.fn().mockResolvedValue(undefined),
+      sendToTopic: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ShippersService,
@@ -117,6 +123,10 @@ describe('ShippersService - Role Synchronization', () => {
         {
           provide: ShopsService,
           useValue: shopsService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
         {
           provide: StorageService,

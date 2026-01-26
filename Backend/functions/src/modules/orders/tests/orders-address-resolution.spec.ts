@@ -4,6 +4,7 @@ import { OrdersService } from '../services/orders.service';
 import { ORDERS_REPOSITORY } from '../interfaces';
 import { CartService } from '../../cart/services';
 import { VouchersService } from '../../vouchers/vouchers.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 import { ADDRESSES_REPOSITORY, USERS_REPOSITORY } from '../../users/interfaces';
 import { OrderStateMachineService } from '../services/order-state-machine.service';
 import { ConfigService } from '../../../core/config/config.service';
@@ -43,6 +44,10 @@ describe('OrdersService - Address Resolution', () => {
       validateVoucher: jest.fn(),
       applyVoucherAtomic: jest.fn(),
     };
+    const mockNotificationsService = {
+      send: jest.fn().mockResolvedValue(undefined),
+      sendToTopic: jest.fn().mockResolvedValue(undefined),
+    };
     const mockStateMachine = {};
 
     const mockConfigService = {
@@ -65,6 +70,7 @@ describe('OrdersService - Address Resolution', () => {
         { provide: ADDRESSES_REPOSITORY, useValue: mockAddressesRepo },
         { provide: USERS_REPOSITORY, useValue: { findById: jest.fn() } },
         { provide: VouchersService, useValue: mockVouchersService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: OrderStateMachineService, useValue: mockStateMachine },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: FirebaseService, useValue: mockFirebaseService },
