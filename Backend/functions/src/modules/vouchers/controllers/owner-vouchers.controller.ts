@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,7 +12,14 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { VouchersService } from '../vouchers.service';
-import { CreateVoucherDto, UpdateVoucherDto, UpdateVoucherStatusDto } from '../dto';
+import {
+  CreateVoucherDto,
+  UpdateVoucherDto,
+  UpdateVoucherStatusDto,
+  GetOwnerVoucherUsageQueryDto,
+  PaginatedOwnerVoucherUsageDto,
+  VoucherStatsResponseDto,
+} from '../dto';
 import { ShopsService } from '../../shops/services/shops.service';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
@@ -323,6 +331,170 @@ export class OwnerVouchersController {
     await this.vouchersService.deleteVoucher(shop.id, voucherId);
     return {
       message: 'Voucher đã được xóa',
+    };
+  }
+
+  /**
+   * GET /owner/vouchers/:id/usage
+   * Get usage records for a specific voucher (VOUCH-010)
+   */
+  @Get(':id/usage')
+  @ApiOperation({
+    summary: 'Get voucher usage records',
+    description: 'Owner views paginated usage records for their voucher',
+  })
+  @ApiParam({ name: 'id', description: 'Voucher ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Usage records retrieved successfully',
+    type: PaginatedOwnerVoucherUsageDto,
+    schema: {
+      example: {
+        success: true,
+        data: {
+          items: [
+            {
+              id: 'voucher_summer_2024_user_123_order_456',
+              voucherId: 'voucher_summer_2024',
+              code: 'SUMMER20',
+              userId: 'user_123',
+              displayName: 'John Doe',
+              orderId: 'order_456',
+              discountAmount: 7500,
+              createdAt: '2026-01-20T15:30:45Z',
+            },
+            {
+              id: 'voucher_summer_2024_user_456_order_789',
+              voucherId: 'voucher_summer_2024',
+              code: 'SUMMER20',
+              userId: 'user_456',
+              displayName: 'Jane Smith',
+              orderId: 'order_789',
+              discountAmount: 10000,
+              createdAt: '2026-01-19T10:15:30Z',
+            },
+          ],
+          page: 1,
+          limit: 20,
+          total: 45,
+          pages: 3,
+          hasMore: true,
+        },
+        timestamp: '2026-01-25T12:00:00Z',
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Voucher belongs to different shop' })
+  @ApiResponse({ status: 404, description: 'Voucher not found' })
+  async getVoucherUsageRecords(
+    @CurrentUser('uid') ownerId: string,
+    @Param('id') voucherId: string,
+    @Query() query: GetOwnerVoucherUsageQueryDto,
+  ) {
+    const shop = await this.shopsService.getMyShop(ownerId);
+
+    // Verify voucher exists and belongs to owner's shop
+    const voucher = await this.vouchersService['getVoucherById'](voucherId);
+    if (!voucher) {
+      throw new NotFoundException('Voucher not found');
+    }
+    if (voucher.shopId !== shop.id) {
+      throw new ForbiddenException('Voucher does not belong to your shop');
+    }
+
+    const result = await this.vouchersService.getVoucherUsageRecords(
+      voucherId,
+      query.page || 1,
+      query.limit || 20,
+      query.from,
+      query.to,
+    );
+
+    return {
+      items: result.items,
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      pages: result.pages,
+      hasMore: result.hasMore,
+    };
+  }
+
+  /**
+   * GET /owner/vouchers/:id/stats
+   * Get aggregated statistics for a voucher (VOUCH-010)
+   */
+  @Get(':id/stats')
+  @ApiOperation({
+    summary: 'Get voucher statistics',
+    description:
+      'Owner views aggregated statistics for their voucher (total uses, discount, unique users)',
+  })
+  @ApiParam({ name: 'id', description: 'Voucher ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully',
+    type: VoucherStatsResponseDto,
+    schema: {
+      example: {
+        success: true,
+        data: {
+          stats: {
+            voucherId: 'voucher_summer_2024',
+            code: 'SUMMER20',
+            totalUses: 45,
+            totalDiscountAmount: 337500,
+            uniqueUsers: 38,
+            lastUsedAt: '2026-01-25T14:30:00Z',
+            usagePercentage: 45,
+            voucherCode: 'SUMMER20',
+            usageLimit: 100,
+            averageDiscount: 7500,
+          },
+          generatedAt: '2026-01-25T14:35:00Z',
+        },
+        timestamp: '2026-01-25T14:35:00Z',
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Voucher belongs to different shop' })
+  @ApiResponse({ status: 404, description: 'Voucher not found' })
+  async getVoucherStats(
+    @CurrentUser('uid') ownerId: string,
+    @Param('id') voucherId: string,
+  ) {
+    const shop = await this.shopsService.getMyShop(ownerId);
+
+    // Verify voucher exists and belongs to owner's shop
+    const voucher = await this.vouchersService['getVoucherById'](voucherId);
+    if (!voucher) {
+      throw new NotFoundException('Voucher not found');
+    }
+    if (voucher.shopId !== shop.id) {
+      throw new ForbiddenException('Voucher does not belong to your shop');
+    }
+
+    const stats = await this.vouchersService.getVoucherStatistics(
+      voucherId,
+      voucher.usageLimit,
+    );
+
+    return {
+      stats: {
+        voucherId: voucher.id,
+        code: voucher.code,
+        totalUses: stats.totalUses,
+        totalDiscountAmount: stats.totalDiscountAmount,
+        uniqueUsers: stats.uniqueUsers,
+        lastUsedAt: stats.lastUsedAt,
+        usagePercentage: Math.round(stats.usagePercentage),
+        voucherCode: voucher.code,
+        usageLimit: voucher.usageLimit,
+        averageDiscount: stats.averageDiscount,
+      },
+      generatedAt: new Date().toISOString(),
     };
   }
 }

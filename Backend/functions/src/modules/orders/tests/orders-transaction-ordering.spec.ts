@@ -3,6 +3,7 @@ import { OrdersService } from '../services/orders.service';
 import { IOrdersRepository, ORDERS_REPOSITORY } from '../interfaces';
 import { CartService } from '../../cart/services';
 import { VouchersService } from '../../vouchers/vouchers.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 import { IProductsRepository } from '../../products/interfaces';
 import { IShopsRepository } from '../../shops/interfaces';
 import { IAddressesRepository, ADDRESSES_REPOSITORY, USERS_REPOSITORY } from '../../users/interfaces';
@@ -11,6 +12,7 @@ import { ConfigService } from '../../../core/config/config.service';
 import { FirebaseService } from '../../../core/firebase/firebase.service';
 import { CreateOrderDto } from '../dto';
 import { OrderEntity, OrderStatus, PaymentStatus } from '../entities';
+import { WalletsService } from '../../wallets/wallets.service';
 
 describe('Orders - Firestore Transaction Ordering', () => {
   let service: OrdersService;
@@ -51,9 +53,19 @@ describe('Orders - Firestore Transaction Ordering', () => {
       applyVoucherAtomic: jest.fn().mockResolvedValue({}),
     };
 
+    const mockNotificationsService = {
+      send: jest.fn().mockResolvedValue(undefined),
+      sendToTopic: jest.fn().mockResolvedValue(undefined),
+    };
+
     const mockFirebaseService = {
       firestore: { collection: jest.fn(), batch: jest.fn() },
       auth: { verifyIdToken: jest.fn() },
+    };
+
+    const mockWalletsService = {
+      processOrderPayout: jest.fn().mockResolvedValue(undefined),
+      updateBalance: jest.fn().mockResolvedValue(undefined),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -67,6 +79,8 @@ describe('Orders - Firestore Transaction Ordering', () => {
         { provide: ADDRESSES_REPOSITORY, useValue: mockAddressesRepo },
         { provide: USERS_REPOSITORY, useValue: { findById: jest.fn() } },
         { provide: VouchersService, useValue: mockVouchersService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: WalletsService, useValue: mockWalletsService },
         { provide: ConfigService, useValue: mockConfigService },
         {
           provide: OrderStateMachineService,

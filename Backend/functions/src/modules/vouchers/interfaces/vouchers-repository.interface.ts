@@ -89,4 +89,62 @@ export interface IVouchersRepository {
     orderId: string,
     discountAmount: number,
   ): Promise<VoucherEntity>;
+
+  /**
+   * Get paginated voucher usage history for a user
+   * @param userId Customer user ID
+   * @param filters Optional filters (shopId, date range)
+   * @param page 1-based page number
+   * @param limit Items per page
+   * @returns { items: VoucherUsageEntity[], total: number }
+   */
+  getUsageHistory(
+    userId: string,
+    filters?: {
+      shopId?: string;
+      from?: string;
+      to?: string;
+    },
+    page?: number,
+    limit?: number,
+  ): Promise<{ items: VoucherUsageEntity[]; total: number }>;
+
+  /**
+   * Get paginated usage records for a specific voucher (owner view)
+   * @param voucherId Voucher ID
+   * @param page 1-based page number
+   * @param limit Items per page
+   * @param from Optional start date
+   * @param to Optional end date
+   * @returns { items: VoucherUsageEntity[], total: number }
+   */
+  getVoucherUsageByVoucherId(
+    voucherId: string,
+    page?: number,
+    limit?: number,
+    from?: string,
+    to?: string,
+  ): Promise<{ items: VoucherUsageEntity[]; total: number }>;
+
+  /**
+   * Get aggregated statistics for a voucher
+   * @param voucherId Voucher ID
+   * @returns { totalUses, totalDiscountAmount, uniqueUsers, lastUsedAt }
+   */
+  getVoucherStats(
+    voucherId: string,
+  ): Promise<{
+    totalUses: number;
+    totalDiscountAmount: number;
+    uniqueUsers: number;
+    lastUsedAt: string | null;
+  }>;
+
+  /**
+   * Mark vouchers as inactive where validTo < now (expiration sweep)
+   * Used by scheduled job or manual maintenance command
+   * @param now Current timestamp (ISO 8601)
+   * @returns { updatedCount: number } - Number of vouchers marked as inactive
+   */
+  expireVouchersBeforeDate(now: string): Promise<{ updatedCount: number }>;
 }

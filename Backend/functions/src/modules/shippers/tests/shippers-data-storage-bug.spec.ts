@@ -4,10 +4,12 @@ import { FirebaseService } from '../../../core/firebase/firebase.service';
 import { IShippersRepository } from '../repositories/shippers-repository.interface';
 import { UsersService } from '../../users/users.service';
 import { ShopsService } from '../../shops/services/shops.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 import { StorageService } from '../../../shared/services/storage.service';
 import { BadRequestException } from '@nestjs/common';
 import { ShipperApplicationEntity, ApplicationStatus } from '../entities/shipper-application.entity';
 import { Firestore } from '@google-cloud/firestore';
+import { WalletsService } from '../../wallets/wallets.service';
 
 /**
  * Shippers Service - Data Storage Bug Prevention Tests
@@ -58,6 +60,11 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
     // Mock transaction
     mockTransaction = {
       update: jest.fn(),
+      get: jest.fn().mockResolvedValue({
+        data: () => ({
+          status: 'PENDING',
+        }),
+      }),
     };
 
     firebaseService = {
@@ -71,7 +78,9 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
         await callback(mockTransaction);
       }),
       collection: jest.fn().mockReturnValue({
-        doc: jest.fn().mockReturnValue({}),
+        doc: jest.fn().mockReturnValue({
+          update: jest.fn().mockResolvedValue(undefined),
+        }),
       }),
     } as any;
 
@@ -101,6 +110,17 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
 
     storageService = {} as any;
 
+    const mockNotificationsService = {
+      send: jest.fn().mockResolvedValue(undefined),
+      sendToTopic: jest.fn().mockResolvedValue(undefined),
+    };
+
+    const mockWalletsService = {
+      processOrderPayout: jest.fn().mockResolvedValue(undefined),
+      updateBalance: jest.fn().mockResolvedValue(undefined),
+      initializeWallet: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ShippersService,
@@ -108,12 +128,18 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
         { provide: 'IShippersRepository', useValue: shippersRepository },
         { provide: UsersService, useValue: usersService },
         { provide: ShopsService, useValue: shopsService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: WalletsService, useValue: mockWalletsService },
         { provide: StorageService, useValue: storageService },
         { provide: 'FIRESTORE', useValue: firestore },
       ],
     }).compile();
 
     service = module.get<ShippersService>(ShippersService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('approveApplication - Prevent shipperInfo in wrong document', () => {
