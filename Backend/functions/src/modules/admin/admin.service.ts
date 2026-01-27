@@ -254,6 +254,7 @@ export class AdminService {
   /**
    * Verify payout transfer via SePay
    * Checks if matching outgoing transaction exists, auto-completes if found
+   * Now supports PENDING status - will auto-approve if transfer detected
    */
   async verifyPayoutTransfer(
     adminId: string,
@@ -262,7 +263,7 @@ export class AdminService {
     this.logger.log(`Admin ${adminId} verifying payout ${payoutId}`);
 
     // Get payout
-    const payout = await this.payoutsRepository.findByIdOrThrow(payoutId);
+    let payout = await this.payoutsRepository.findByIdOrThrow(payoutId);
 
     // Check if already transferred (idempotent)
     if (payout.status === 'TRANSFERRED') {
@@ -273,10 +274,10 @@ export class AdminService {
       };
     }
 
-    // Must be APPROVED to verify
-    if (payout.status !== 'APPROVED') {
+    // Allow PENDING or APPROVED status to verify
+    if (payout.status !== 'APPROVED' && payout.status !== 'PENDING') {
       throw new BadRequestException(
-        `Payout must be APPROVED to verify. Current status: ${payout.status}`,
+        `Payout must be PENDING or APPROVED to verify. Current status: ${payout.status}`,
       );
     }
 
@@ -292,6 +293,12 @@ export class AdminService {
 
     if (detected) {
       this.logger.log(`✅ Transfer detected for payout ${payoutId}! Auto-completing...`);
+
+      // If still PENDING, approve first
+      if (payout.status === 'PENDING') {
+        this.logger.log(`Auto-approving PENDING payout ${payoutId} because transfer was detected`);
+        payout = await this.payoutsRepository.approve(payoutId, adminId);
+      }
 
       // Mark as transferred
       const updatedPayout = await this.payoutsRepository.markTransferred(
@@ -321,10 +328,10 @@ export class AdminService {
       };
     }
 
-    // Not detected yet
+    // Not detected yet - return current status
     return {
       matched: false,
-      status: 'APPROVED',
+      status: payout.status,
       payout,
     };
   }
@@ -517,6 +524,58 @@ export class AdminService {
     ]);
 
     return { pending, totalPendingAmount };
+  }
+
+  /**
+   * Get wallet stats for admin dashboard
+   * Returns total balance across all wallets, split by type
+   */
+  async getWalletStats(): Promise<{
+    totalBalance: number;
+    ownerBalance: number;
+    shipperBalance: number;
+    walletCount: number;
+  }> {
+    this.logger.log('Getting wallet stats');
+
+    try {
+      // Query all wallets from Firestore
+      const walletsSnapshot = await this.walletsService.getAllWalletsForAdmin();
+      
+      let totalBalance = 0;
+      let ownerBalance = 0;
+      let shipperBalance = 0;
+      let walletCount = 0;
+
+      for (const wallet of walletsSnapshot) {
+        const balance = wallet.balance || 0;
+        totalBalance += balance;
+        walletCount++;
+        
+        if (wallet.type === 'OWNER') {
+          ownerBalance += balance;
+        } else if (wallet.type === 'SHIPPER') {
+          shipperBalance += balance;
+        }
+      }
+
+      return {
+        totalBalance,
+        ownerBalance,
+        shipperBalance,
+        walletCount,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error('Error getting wallet stats:', errorMessage);
+      
+      return {
+        totalBalance: 0,
+        ownerBalance: 0,
+        shipperBalance: 0,
+        walletCount: 0,
+      };
+    }
   }
 
   /**

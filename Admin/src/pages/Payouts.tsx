@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Table,
   Button,
@@ -12,6 +12,10 @@ import {
   message,
   Card,
   Descriptions,
+  Alert,
+  Progress,
+  Image,
+  Spin,
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -19,14 +23,22 @@ import {
   DollarOutlined,
   ReloadOutlined,
   EyeOutlined,
+  QrcodeOutlined,
+  LoadingOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import api from '../api/client';
-import type { Payout, PaginatedResponse, ListPayoutsQuery } from '../types';
+import type { Payout, ListPayoutsQuery } from '../types';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+
+// Extended Payout type with qrUrl
+interface PayoutWithQr extends Payout {
+  qrUrl?: string;
+}
 
 export default function Payouts() {
   const [payouts, setPayouts] = useState<Payout[]>([]);
@@ -39,15 +51,60 @@ export default function Payouts() {
   const [filters, setFilters] = useState<ListPayoutsQuery>({
     status: 'PENDING',
   });
+  
+  // Detail modal
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [actionModalVisible, setActionModalVisible] = useState(false);
   const [selectedPayout, setSelectedPayout] = useState<Payout | null>(null);
-  const [actionType, setActionType] = useState<'approve' | 'reject' | 'transferred'>('approve');
+  
+  // Reject/Transfer action modal
+  const [actionModalVisible, setActionModalVisible] = useState(false);
+  const [actionType, setActionType] = useState<'reject' | 'transferred'>('reject');
   const [form] = Form.useForm();
+  
+  // QR Transfer modal state
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [qrPayout, setQrPayout] = useState<PayoutWithQr | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollingAttempt, setPollingAttempt] = useState(0);
+  const [pollingMessage, setPollingMessage] = useState('');
+  // Polling ref to track and cancel polling
+  const pollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollingAttemptRef = useRef(0);
+  const maxPollingAttempts = 20;
 
   useEffect(() => {
     loadPayouts();
   }, [pagination.current, pagination.pageSize, filters.status]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-start polling when QR modal opens (after 3 seconds delay)
+  useEffect(() => {
+    if (qrModalVisible && qrPayout && !isPolling) {
+      const timeout = setTimeout(() => {
+        startPolling();
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [qrModalVisible, qrPayout]);
+
+  // Generate QR URL for payout (SePay format) - defined early for use in handleProcess
+  const generateQrUrl = (payout: Payout) => {
+    const content = `PAYOUT${payout.id?.substring(0, 8).toUpperCase() || ''}`;
+    // Use backend field names first, fallback to legacy names
+    const bank = payout.bankCode || payout.bankName || '';
+    const acc = payout.accountNumber || payout.bankAccountNumber || '';
+    const amount = payout.amount || 0;
+    // Use correct SePay QR template URL format
+    return `https://qr.sepay.vn/img?acc=${acc}&bank=${bank}&amount=${amount}&des=${encodeURIComponent(content)}&template=compact`;
+  };
 
   const loadPayouts = async () => {
     try {
@@ -58,11 +115,38 @@ export default function Payouts() {
         ...filters,
       };
 
-      const response = await api.get<PaginatedResponse<Payout>>('/admin/payouts', { params });
-      setPayouts(response.data.data);
+      const response = await api.get<any>('/admin/payouts', { params });
+      
+      // Handle different response formats from backend
+      const responseData = response.data;
+      let payoutsArray: Payout[] = [];
+      let totalCount = 0;
+
+      console.log('Payouts API Response:', responseData);
+
+      if (Array.isArray(responseData)) {
+        payoutsArray = responseData;
+        totalCount = responseData.length;
+      } else if (Array.isArray(responseData.data)) {
+        payoutsArray = responseData.data;
+        totalCount = responseData.pagination?.total || responseData.data.length;
+      } else if (responseData.data && Array.isArray(responseData.data.payouts)) {
+        payoutsArray = responseData.data.payouts;
+        totalCount = responseData.data.total || responseData.data.payouts.length;
+      } else if (responseData.data && Array.isArray(responseData.data.data)) {
+        payoutsArray = responseData.data.data;
+        totalCount = responseData.data.pagination?.total || responseData.data.data.length;
+      } else if (responseData.payouts && Array.isArray(responseData.payouts)) {
+        payoutsArray = responseData.payouts;
+        totalCount = responseData.total || responseData.payouts.length;
+      }
+
+      console.log('Parsed payoutsArray:', payoutsArray, 'Total:', totalCount);
+
+      setPayouts(payoutsArray);
       setPagination((prev) => ({
         ...prev,
-        total: response.data.pagination?.total || 0,
+        total: totalCount,
       }));
     } catch (error: any) {
       console.error('Failed to load payouts:', error);
@@ -72,9 +156,110 @@ export default function Payouts() {
     }
   };
 
-  const handleAction = async (payout: Payout, type: 'approve' | 'reject' | 'transferred') => {
+  // Process payout - shows QR modal WITHOUT calling approve API yet
+  // Status only changes when transfer is verified
+  const handleProcess = (payout: Payout) => {
+    console.log('Processing payout:', payout); // Debug log to see all fields
+    // Generate QR URL locally for PENDING payout
+    const qrUrl = generateQrUrl(payout);
+    console.log('Generated QR URL:', qrUrl); // Debug log
+    setQrPayout({ ...payout, qrUrl });
+    setQrModalVisible(true);
+    message.info('Vui lòng quét mã QR để chuyển tiền. Trạng thái sẽ chỉ thay đổi khi xác nhận được giao dịch.');
+  };
+
+  // Start polling for transfer verification
+  // Only call approve API when transfer is actually detected
+  const startPolling = async () => {
+    if (!qrPayout) return;
+    
+    setIsPolling(true);
+    setPollingAttempt(0);
+    setPollingMessage('Đang kiểm tra giao dịch...');
+    
+    const poll = async (attempt: number) => {
+      if (attempt >= maxPollingAttempts) {
+        setIsPolling(false);
+        setPollingMessage('Không phát hiện giao dịch. Vui lòng thử lại.');
+        return;
+      }
+      
+      try {
+        setPollingAttempt(attempt + 1);
+        setPollingMessage(`Đang kiểm tra... (Lần ${attempt + 1}/${maxPollingAttempts})`);
+        
+        // Only call verify - backend will auto-approve when transfer is detected
+        // This prevents premature APPROVED status when admin cancels
+        const verifyResponse = await api.post<any>(`/admin/payouts/${qrPayout.id}/verify`);
+        const result = verifyResponse.data?.data || verifyResponse.data;
+        
+        console.log('Verify response:', result);
+        
+        if (result.matched) {
+          // Success! Transfer detected and auto-approved
+          setIsPolling(false);
+          setPollingMessage('');
+          message.success('Chuyển tiền thành công! Giao dịch đã được xác nhận.');
+          setQrModalVisible(false);
+          setQrPayout(null);
+          loadPayouts();
+          return;
+        }
+        
+        // Not matched yet - continue polling
+        pollingRef.current = setTimeout(() => poll(attempt + 1), 5000);
+      } catch (error: any) {
+        console.error('Poll error:', error);
+        // Continue polling on error
+        pollingRef.current = setTimeout(() => poll(attempt + 1), 5000);
+      }
+    };
+    
+    poll(0);
+  };
+
+  // Stop polling
+  const stopPolling = () => {
+    if (pollingRef.current) {
+      clearTimeout(pollingRef.current);
+    }
+    setIsPolling(false);
+    setPollingMessage('');
+    setPollingAttempt(0);
+  };
+
+  // Manual mark as transferred
+  const handleManualTransfer = async () => {
+    if (!qrPayout) return;
+    
+    setSelectedPayout(qrPayout);
+    setActionType('transferred');
+    form.resetFields();
+    setQrModalVisible(false);
+    stopPolling();
+    setActionModalVisible(true);
+  };
+
+  // Close QR modal - just close, no status change (payout stays PENDING)
+  const closeQrModal = () => {
+    stopPolling();
+    setQrModalVisible(false);
+    setQrPayout(null);
+    // Don't reload - nothing changed since we didn't call approve API
+  };
+
+  // Handle reject action
+  const handleReject = (payout: Payout) => {
     setSelectedPayout(payout);
-    setActionType(type);
+    setActionType('reject');
+    form.resetFields();
+    setActionModalVisible(true);
+  };
+
+  // Handle mark transferred action (for APPROVED status from table)
+  const handleMarkTransferred = (payout: Payout) => {
+    setSelectedPayout(payout);
+    setActionType('transferred');
     form.resetFields();
     setActionModalVisible(true);
   };
@@ -87,9 +272,6 @@ export default function Payouts() {
       let payload = {};
 
       switch (actionType) {
-        case 'approve':
-          endpoint = `/admin/payouts/${selectedPayout.id}/approve`;
-          break;
         case 'reject':
           endpoint = `/admin/payouts/${selectedPayout.id}/reject`;
           payload = { reason: values.reason };
@@ -101,7 +283,7 @@ export default function Payouts() {
       }
 
       await api.post(endpoint, payload);
-      message.success(`Payout ${actionType}d successfully`);
+      message.success(`Payout ${actionType === 'reject' ? 'rejected' : 'marked as transferred'} successfully`);
       setActionModalVisible(false);
       loadPayouts();
     } catch (error: any) {
@@ -128,9 +310,9 @@ export default function Payouts() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       PENDING: 'processing',
-      APPROVED: 'success',
+      APPROVED: 'warning',
       REJECTED: 'error',
-      TRANSFERRED: 'default',
+      TRANSFERRED: 'success',
     };
     return colors[status] || 'default';
   };
@@ -161,12 +343,12 @@ export default function Payouts() {
       key: 'bankInfo',
       render: (_, record) => (
         <div>
-          <div>{record.bankName || '-'}</div>
+          <div>{record.bankCode || record.bankName || '-'}</div>
           <div style={{ fontSize: 12, color: '#999' }}>
-            {record.bankAccountNumber || '-'}
+            {record.accountNumber || record.bankAccountNumber || '-'}
           </div>
           <div style={{ fontSize: 12, color: '#999' }}>
-            {record.bankAccountName || '-'}
+            {record.accountName || record.bankAccountName || '-'}
           </div>
         </div>
       ),
@@ -187,7 +369,7 @@ export default function Payouts() {
       title: 'Action',
       key: 'action',
       fixed: 'right',
-      width: 200,
+      width: 220,
       render: (_, record) => (
         <Space direction="vertical" size="small" style={{ width: '100%' }}>
           <Button
@@ -205,35 +387,30 @@ export default function Payouts() {
               <Button
                 type="primary"
                 size="small"
-                icon={<CheckCircleOutlined />}
-                onClick={() => handleAction(record, 'approve')}
+                icon={<QrcodeOutlined />}
+                onClick={() => handleProcess(record)}
               >
-                Approve
+                Process
               </Button>
               <Button
                 danger
                 size="small"
                 icon={<CloseCircleOutlined />}
-                onClick={() => handleAction(record, 'reject')}
+                onClick={() => handleReject(record)}
               >
                 Reject
               </Button>
             </Space>
           )}
-          {record.status === 'APPROVED' && (
-            <Button
-              type="primary"
-              size="small"
-              icon={<DollarOutlined />}
-              onClick={() => handleAction(record, 'transferred')}
-            >
-              Mark Transferred
-            </Button>
-          )}
         </Space>
       ),
     },
   ];
+
+  // Generate expected transfer content
+  const getTransferContent = (payoutId: string) => {
+    return `PAYOUT${payoutId.substring(0, 8).toUpperCase()}`;
+  };
 
   return (
     <div>
@@ -294,12 +471,12 @@ export default function Payouts() {
                 {formatCurrency(selectedPayout.amount)}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Bank Name">{selectedPayout.bankName}</Descriptions.Item>
+            <Descriptions.Item label="Bank Name">{selectedPayout.bankCode || selectedPayout.bankName || '-'}</Descriptions.Item>
             <Descriptions.Item label="Account Number">
-              {selectedPayout.bankAccountNumber}
+              {selectedPayout.accountNumber || selectedPayout.bankAccountNumber || '-'}
             </Descriptions.Item>
             <Descriptions.Item label="Account Name">
-              {selectedPayout.bankAccountName}
+              {selectedPayout.accountName || selectedPayout.bankAccountName || '-'}
             </Descriptions.Item>
             <Descriptions.Item label="Status">
               <Tag color={getStatusColor(selectedPayout.status)}>{selectedPayout.status}</Tag>
@@ -324,9 +501,128 @@ export default function Payouts() {
         )}
       </Modal>
 
-      {/* Action Modal */}
+      {/* QR Transfer Modal */}
       <Modal
-        title={`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} Payout`}
+        title={
+          <Space>
+            <QrcodeOutlined />
+            <span>Chuyển tiền cho {qrPayout?.userName || 'Owner/Shipper'}</span>
+          </Space>
+        }
+        open={qrModalVisible}
+        onCancel={closeQrModal}
+        footer={null}
+        width={500}
+        maskClosable={!isPolling}
+        closable={!isPolling}
+      >
+        {qrPayout && (
+          <div style={{ textAlign: 'center' }}>
+            {/* QR Code Image */}
+            {qrPayout.qrUrl ? (
+              <Image
+                src={qrPayout.qrUrl}
+                alt="Payout QR Code"
+                style={{ maxWidth: 280, marginBottom: 16 }}
+                fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+              />
+            ) : (
+              <Alert
+                message="QR không khả dụng"
+                description="Vui lòng chuyển khoản thủ công theo thông tin bên dưới"
+                type="warning"
+                style={{ marginBottom: 16 }}
+              />
+            )}
+
+            {/* Transfer Info */}
+            <Descriptions column={1} bordered size="small" style={{ textAlign: 'left', marginBottom: 16 }}>
+              <Descriptions.Item label="Số tiền">
+                <Text strong style={{ color: '#cf1322', fontSize: 16 }}>
+                  {formatCurrency(qrPayout.amount)}
+                </Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngân hàng">{qrPayout.bankCode || qrPayout.bankName || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Số tài khoản">
+                <Text copyable>{qrPayout.accountNumber || qrPayout.bankAccountNumber || '-'}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Tên tài khoản">{qrPayout.accountName || qrPayout.bankAccountName || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Nội dung CK">
+                <Text copyable strong style={{ color: '#1890ff' }}>
+                  {getTransferContent(qrPayout.id)}
+                </Text>
+              </Descriptions.Item>
+            </Descriptions>
+
+            <Alert
+              message="Quan trọng"
+              description="Vui lòng nhập chính xác nội dung chuyển khoản để hệ thống tự động xác nhận."
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16, textAlign: 'left' }}
+            />
+
+            {/* Polling Progress */}
+            {isPolling && (
+              <div style={{ marginBottom: 16 }}>
+                <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+                <div style={{ marginTop: 8 }}>{pollingMessage}</div>
+                <Progress
+                  percent={Math.round((pollingAttempt / maxPollingAttempts) * 100)}
+                  status="active"
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+            )}
+
+            {/* Polling result message */}
+            {!isPolling && pollingMessage && (
+              <Alert
+                message={pollingMessage}
+                type="info"
+                style={{ marginBottom: 16 }}
+              />
+            )}
+
+            {/* Action Buttons */}
+            <Space direction="vertical" style={{ width: '100%' }}>
+              {isPolling ? (
+                <Button
+                  danger
+                  block
+                  onClick={() => {
+                    stopPolling();
+                  }}
+                >
+                  Hủy bỏ
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="primary"
+                    size="large"
+                    block
+                    loading
+                    icon={<SyncOutlined spin />}
+                  >
+                    Đang chờ xác nhận...
+                  </Button>
+                  <Button
+                    block
+                    onClick={closeQrModal}
+                  >
+                    Hủy bỏ
+                  </Button>
+                </>
+              )}
+            </Space>
+          </div>
+        )}
+      </Modal>
+
+      {/* Reject/Manual Transfer Action Modal */}
+      <Modal
+        title={actionType === 'reject' ? 'Reject Payout' : 'Mark as Transferred'}
         open={actionModalVisible}
         onCancel={() => setActionModalVisible(false)}
         onOk={() => form.submit()}
@@ -347,11 +643,8 @@ export default function Payouts() {
               name="transferNote"
               rules={[{ required: true, message: 'Please enter transfer note' }]}
             >
-              <Input placeholder="e.g., KTX_PAYOUT_20260127_001" />
+              <Input placeholder="e.g., Đã CK lúc 22:30, mã GD: ABC123" />
             </Form.Item>
-          )}
-          {actionType === 'approve' && (
-            <div>Are you sure you want to approve this payout request?</div>
           )}
         </Form>
       </Modal>
