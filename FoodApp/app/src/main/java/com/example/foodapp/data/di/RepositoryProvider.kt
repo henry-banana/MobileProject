@@ -194,6 +194,16 @@ object RepositoryProvider {
         )
     }
     
+    // ==================== OWNER VOUCHER REPOSITORY ====================
+    
+    fun getVoucherRepository(): com.example.foodapp.data.repository.owner.base.OwnerVoucherRepository {
+        return com.example.foodapp.data.repository.owner.vouchers.RealVoucherRepository(
+            com.example.foodapp.data.remote.api.ApiClient.createService(
+                com.example.foodapp.data.remote.owner.VoucherApiService::class.java
+            )
+        )
+    }
+    
     // ==================== USER PROFILE REPOSITORY ====================
     
     fun getUserProfileRepository(): com.example.foodapp.data.repository.user.base.UserProfileRepository {
