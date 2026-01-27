@@ -381,4 +381,27 @@ export class WalletsService {
 
     this.logger.log(`Payout transfer processed: ${payoutId}, new balance: ${newBalance}đ`);
   }
+
+  /**
+   * Get all wallets for admin statistics
+   * Used by AdminService to calculate total wallet balances
+   */
+  async getAllWalletsForAdmin(): Promise<WalletEntity[]> {
+    this.logger.log('Fetching all wallets for admin stats');
+    
+    try {
+      const snapshot = await this.firestore.collection('wallets').get();
+      const wallets: WalletEntity[] = [];
+      
+      snapshot.forEach((doc) => {
+        wallets.push({ id: doc.id, ...doc.data() } as WalletEntity);
+      });
+      
+      this.logger.log(`Found ${wallets.length} wallets for admin stats`);
+      return wallets;
+    } catch (error) {
+      this.logger.error('Failed to fetch wallets for admin stats:', error);
+      return [];
+    }
+  }
 }
