@@ -98,4 +98,29 @@ export class AdminDashboardController {
   async getRevenueStats() {
     return this.adminService.getRevenueStats();
   }
+
+  /**
+   * GET /admin/dashboard/wallets
+   * Thống kê ví (tổng số dư)
+   */
+  @Get('wallets')
+  @ApiOperation({ summary: 'Thống kê tổng số dư ví' })
+  @ApiResponse({
+    status: 200,
+    description: 'Wallet stats',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          totalBalance: 50000000,
+          ownerBalance: 35000000,
+          shipperBalance: 15000000,
+          walletCount: 150,
+        },
+      },
+    },
+  })
+  async getWalletStats() {
+    return this.adminService.getWalletStats();
+  }
 }

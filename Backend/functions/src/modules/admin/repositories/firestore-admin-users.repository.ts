@@ -38,9 +38,9 @@ export class FirestoreAdminUsersRepository
 
     let query: FirebaseFirestore.Query = this.collection;
 
-    // Filter by role (array-contains)
+    // Filter by role (single value field, not array)
     if (filters.role) {
-      query = query.where('roles', 'array-contains', filters.role);
+      query = query.where('role', '==', filters.role);
     }
 
     // Filter by status
@@ -110,9 +110,10 @@ export class FirestoreAdminUsersRepository
 
   /**
    * Count users by role
+   * NOTE: Users store role as single value field 'role', not 'roles' array
    */
   async countByRole(role: UserRole): Promise<number> {
-    const snapshot = await this.collection.where('roles', 'array-contains', role).count().get();
+    const snapshot = await this.collection.where('role', '==', role).count().get();
 
     return snapshot.data().count;
   }
