@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import com.example.foodapp.pages.owner.dashboard.DashBoardRootScreen
 
 sealed class Screen(val route: String) {
     object Intro : Screen("intro")
@@ -430,9 +431,7 @@ fun FoodAppNavHost(
 
         composable(Screen.OwnerHome.route) {
             // Thay thế bằng màn hình Owner Home thực tế của bạn
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Owner Home Screen")
-            }
+            DashBoardRootScreen(navController = navController)
         }
     }
 }
