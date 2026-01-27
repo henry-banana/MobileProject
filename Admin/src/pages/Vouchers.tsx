@@ -27,45 +27,44 @@ import api from '../api/client';
 import type { ApiResponse } from '../types';
 
 const { Title } = Typography;
-const { RangePicker } = DatePicker;
 
+// Match backend VoucherEntity schema
 interface Voucher {
   id: string;
   code: string;
-  name: string;
+  name?: string;
   description?: string;
-  discountType: 'PERCENTAGE' | 'FIXED';
-  discountValue: number;
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIP';
+  value: number;
   maxDiscount?: number;
-  minOrderAmount: number;
+  minOrderAmount?: number;
   usageLimit: number;
   currentUsage: number;
   usageLimitPerUser: number;
   validFrom: string;
   validTo: string;
   isActive: boolean;
-  ownerType: 'PLATFORM' | 'SHOP';
-  shopId?: string;
-  shopName?: string;
+  isDeleted: boolean;
+  ownerType: 'ADMIN' | 'SHOP';
+  shopId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+// Match backend CreateVoucherDto
 interface VoucherFormData {
   code: string;
-  name: string;
+  name?: string;
   description?: string;
-  discountType: 'PERCENTAGE' | 'FIXED';
-  discountValue: number;
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIP';
+  value: number;
   maxDiscount?: number;
-  minOrderAmount: number;
+  minOrderAmount?: number;
   usageLimit: number;
   usageLimitPerUser: number;
   validFrom: string;
   validTo: string;
-  isActive: boolean;
-  ownerType: 'PLATFORM' | 'SHOP';
-  shopId?: string;
+  isActive?: boolean;
 }
 
 export default function Vouchers() {
@@ -82,13 +81,13 @@ export default function Vouchers() {
   const loadVouchers = async () => {
     try {
       setLoading(true);
-      // TODO: Implement admin voucher list API
-      // For now, this will fail - need backend implementation
       const response = await api.get<ApiResponse<Voucher[]>>('/admin/vouchers');
-      setVouchers(response.data.data || []);
+      // Handle nested data structure from backend
+      const data = response.data?.data;
+      setVouchers(Array.isArray(data) ? data : []);
     } catch (error: any) {
       console.error('Failed to load vouchers:', error);
-      message.error('Failed to load vouchers - API not yet implemented');
+      message.error('Failed to load vouchers');
     } finally {
       setLoading(false);
     }
@@ -99,8 +98,7 @@ export default function Vouchers() {
     form.resetFields();
     form.setFieldsValue({
       isActive: true,
-      discountType: 'PERCENTAGE',
-      ownerType: 'PLATFORM',
+      type: 'PERCENTAGE',
       usageLimit: 100,
       usageLimitPerUser: 1,
       minOrderAmount: 0,
@@ -132,9 +130,18 @@ export default function Vouchers() {
   const handleSubmit = async (values: any) => {
     try {
       const payload: VoucherFormData = {
-        ...values,
+        code: values.code,
+        name: values.name,
+        description: values.description,
+        type: values.type,
+        value: values.value,
+        maxDiscount: values.type === 'PERCENTAGE' ? values.maxDiscount : undefined,
+        minOrderAmount: values.minOrderAmount,
+        usageLimit: values.usageLimit,
+        usageLimitPerUser: values.usageLimitPerUser,
         validFrom: values.validFrom.toISOString(),
         validTo: values.validTo.toISOString(),
+        isActive: values.isActive,
       };
 
       if (editingVoucher) {
@@ -163,6 +170,15 @@ export default function Vouchers() {
     }
   };
 
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'PERCENTAGE': return 'Phần trăm';
+      case 'FIXED_AMOUNT': return 'Giảm tiền';
+      case 'FREE_SHIP': return 'Free Ship';
+      default: return type;
+    }
+  };
+
   const columns: ColumnsType<Voucher> = [
     {
       title: 'Code',
@@ -174,14 +190,15 @@ export default function Vouchers() {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
+      render: (text) => text || '-',
     },
     {
-      title: 'Type',
+      title: 'Owner',
       dataIndex: 'ownerType',
       key: 'ownerType',
       render: (type: string) => (
-        <Tag color={type === 'PLATFORM' ? 'blue' : 'green'}>
-          {type}
+        <Tag color={type === 'ADMIN' ? 'blue' : 'green'}>
+          {type === 'ADMIN' ? 'Platform' : 'Shop'}
         </Tag>
       ),
     },
@@ -190,10 +207,12 @@ export default function Vouchers() {
       key: 'discount',
       render: (_, record) => (
         <div>
-          {record.discountType === 'PERCENTAGE' 
-            ? `${record.discountValue}%` 
-            : `${record.discountValue.toLocaleString()}đ`}
-          {record.maxDiscount && (
+          {record.type === 'PERCENTAGE' 
+            ? `${record.value}%` 
+            : record.type === 'FREE_SHIP'
+            ? 'Free Ship'
+            : `${record.value.toLocaleString()}đ`}
+          {record.maxDiscount && record.type === 'PERCENTAGE' && (
             <div style={{ fontSize: 12, color: '#999' }}>
               Max: {record.maxDiscount.toLocaleString()}đ
             </div>
@@ -205,7 +224,7 @@ export default function Vouchers() {
       title: 'Min Order',
       dataIndex: 'minOrderAmount',
       key: 'minOrderAmount',
-      render: (amount) => `${amount.toLocaleString()}đ`,
+      render: (amount) => amount ? `${amount.toLocaleString()}đ` : '-',
     },
     {
       title: 'Usage',
@@ -280,7 +299,7 @@ export default function Vouchers() {
             Refresh
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Add Voucher
+            Add Platform Voucher
           </Button>
         </Space>
       </div>
@@ -295,7 +314,7 @@ export default function Vouchers() {
       />
 
       <Modal
-        title={editingVoucher ? 'Edit Voucher' : 'Create Voucher'}
+        title={editingVoucher ? 'Edit Voucher' : 'Create Platform Voucher'}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
@@ -320,9 +339,8 @@ export default function Vouchers() {
           <Form.Item
             label="Name"
             name="name"
-            rules={[{ required: true, message: 'Please enter voucher name' }]}
           >
-            <Input placeholder="e.g., Free Shipping 10k" />
+            <Input placeholder="e.g., Miễn phí ship 10k" />
           </Form.Item>
 
           <Form.Item label="Description" name="description">
@@ -330,32 +348,22 @@ export default function Vouchers() {
           </Form.Item>
 
           <Form.Item
-            label="Owner Type"
-            name="ownerType"
-            rules={[{ required: true }]}
-          >
-            <Select>
-              <Select.Option value="PLATFORM">Platform (Admin)</Select.Option>
-              <Select.Option value="SHOP">Shop Owner</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
             label="Discount Type"
-            name="discountType"
+            name="type"
             rules={[{ required: true }]}
           >
             <Select>
               <Select.Option value="PERCENTAGE">Percentage (%)</Select.Option>
-              <Select.Option value="FIXED">Fixed Amount (đ)</Select.Option>
+              <Select.Option value="FIXED_AMOUNT">Fixed Amount (đ)</Select.Option>
+              <Select.Option value="FREE_SHIP">Free Ship</Select.Option>
             </Select>
           </Form.Item>
 
           <Form.Item
-            label="Discount Value"
-            name="discountValue"
+            label="Value"
+            name="value"
             rules={[
-              { required: true, message: 'Please enter discount value' },
+              { required: true, message: 'Please enter value' },
               { type: 'number', min: 0, message: 'Must be >= 0' },
             ]}
           >
@@ -372,7 +380,6 @@ export default function Vouchers() {
           <Form.Item
             label="Min Order Amount (đ)"
             name="minOrderAmount"
-            rules={[{ required: true }]}
           >
             <InputNumber style={{ width: '100%' }} min={0} placeholder="e.g., 50000" />
           </Form.Item>

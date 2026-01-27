@@ -340,7 +340,9 @@ export class PaymentsService {
 
       // Check if any transaction matches
       for (const txn of transactions) {
-        const amountMatch = txn.amount_in === payment.amount;
+        // Parse amount_in to number for comparison (Sepay returns string like "350000.00")
+        const txnAmount = parseFloat(txn.amount_in || '0');
+        const amountMatch = txnAmount === payment.amount;
         const contentMatch = txn.transaction_content
           ?.toLowerCase()
           .includes(expectedContent.toLowerCase());

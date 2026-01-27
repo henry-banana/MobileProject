@@ -61,8 +61,13 @@ export class AdminPayoutsController {
   @ApiResponse({ status: 409, description: 'Payout đã được xử lý' })
   async approvePayout(@Req() req: any, @Param('payoutId') payoutId: string) {
     const adminId = req.user.uid;
-    await this.adminService.approvePayout(adminId, payoutId);
-    return { message: 'Payout đã được approve' };
+    const result = await this.adminService.approvePayout(adminId, payoutId);
+    
+    return { 
+      message: 'Payout đã được approve',
+      payout: result,
+      qrUrl: result.qrUrl,
+    };
   }
 
   /**
@@ -85,6 +90,45 @@ export class AdminPayoutsController {
     const adminId = req.user.uid;
     await this.adminService.rejectPayout(adminId, payoutId, dto.reason);
     return { message: 'Payout đã bị reject' };
+  }
+
+  /**
+   * POST /admin/payouts/:payoutId/verify
+   * Verify if payout transfer has been detected in SePay
+   *
+   * Similar to payment verification - polls SePay API to check for matching outgoing transaction
+   */
+  @Post(':payoutId/verify')
+  @ApiOperation({ 
+    summary: 'Verify payout transfer via SePay',
+    description: 'Checks SePay API for outgoing transaction matching payout amount and recipient. Auto-completes if found.'
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Verification result',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          matched: true,
+          status: 'TRANSFERRED',
+          payout: { id: '...', amount: 100000, status: 'TRANSFERRED' }
+        }
+      }
+    }
+  })
+  @ApiResponse({ status: 404, description: 'Payout không tồn tại' })
+  @ApiResponse({ status: 400, description: 'Payout chưa được approve hoặc đã transferred' })
+  async verifyPayoutTransfer(
+    @Req() req: any,
+    @Param('payoutId') payoutId: string,
+  ) {
+    const adminId = req.user.uid;
+    const result = await this.adminService.verifyPayoutTransfer(adminId, payoutId);
+    return {
+      success: true,
+      data: result,
+    };
   }
 
   /**

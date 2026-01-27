@@ -207,7 +207,7 @@ export class WalletsService {
         });
 
         // Create ledger entries
-        const ownerLedgerRef = this.firestore.collection('wallet_ledger').doc();
+        const ownerLedgerRef = this.firestore.collection('walletLedger').doc();
         transaction.set(ownerLedgerRef, {
           walletId: ownerWalletId,
           userId: ownerId,
@@ -221,7 +221,7 @@ export class WalletsService {
           createdAt: Timestamp.now(),
         });
 
-        const shipperLedgerRef = this.firestore.collection('wallet_ledger').doc();
+        const shipperLedgerRef = this.firestore.collection('walletLedger').doc();
         transaction.set(shipperLedgerRef, {
           walletId: shipperWalletId,
           userId: shipperId,
@@ -308,5 +308,77 @@ export class WalletsService {
       accountName: payoutRequest.accountName,
       createdAt: payoutRequest.createdAt,
     };
+  }
+
+  /**
+   * Process payout transfer - deduct wallet balance when payout is completed
+   * Called by AdminService when marking payout as TRANSFERRED
+   */
+  async processPayoutTransfer(
+    payoutId: string,
+    userId: string,
+    walletId: string,
+    amount: number,
+  ): Promise<void> {
+    this.logger.log(`Processing payout transfer: ${payoutId}, wallet: ${walletId}, amount: ${amount}đ`);
+
+    const walletRef = this.firestore.collection('wallets').doc(walletId);
+    const walletDoc = await walletRef.get();
+
+    if (!walletDoc.exists) {
+      throw new NotFoundException({
+        code: 'WALLET_001',
+        message: 'Wallet not found',
+        statusCode: 404,
+      });
+    }
+
+    const wallet = walletDoc.data();
+    if (!wallet) {
+      throw new NotFoundException({
+        code: 'WALLET_001',
+        message: 'Wallet data not found',
+        statusCode: 404,
+      });
+    }
+
+    // Validate sufficient balance
+    if (wallet.balance < amount) {
+      this.logger.warn(`Insufficient balance for payout ${payoutId}: ${wallet.balance}đ < ${amount}đ`);
+      throw new BadRequestException({
+        code: 'WALLET_002',
+        message: `Insufficient balance. Available: ${wallet.balance}đ, Required: ${amount}đ`,
+        statusCode: 400,
+      });
+    }
+
+    // Deduct balance and update totalWithdrawn
+    const newBalance = wallet.balance - amount;
+    const newTotalWithdrawn = (wallet.totalWithdrawn || 0) + amount;
+
+    await walletRef.update({
+      balance: newBalance,
+      totalWithdrawn: newTotalWithdrawn,
+      updatedAt: Timestamp.now(),
+    });
+
+    // Create ledger entry
+    const ledgerRef = this.firestore.collection('walletLedger').doc();
+    await ledgerRef.set({
+      id: ledgerRef.id,
+      walletId,
+      userId,
+      type: 'PAYOUT',
+      amount: -amount, // Negative for withdrawal
+      balanceBefore: wallet.balance,
+      balanceAfter: newBalance,
+      status: 'COMPLETED',
+      referenceType: 'PAYOUT',
+      referenceId: payoutId,
+      description: `Withdrawal via payout ${payoutId}`,
+      createdAt: Timestamp.now(),
+    });
+
+    this.logger.log(`Payout transfer processed: ${payoutId}, new balance: ${newBalance}đ`);
   }
 }
