@@ -107,12 +107,23 @@ export default function Layout() {
             alignItems: 'center',
             justifyContent: 'center',
             color: 'white',
-            fontSize: collapsed ? 20 : 18,
-            fontWeight: 'bold',
-            transition: 'all 0.2s',
+            fontSize: collapsed ? 16 : 14,
+            fontWeight: 600,
+            fontFamily: "'Fira Code', monospace",
+            letterSpacing: collapsed ? 0 : '0.5px',
+            transition: 'all 0.2s ease',
+            background: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)',
+            borderBottom: '1px solid #334155',
           }}
         >
-          {collapsed ? '🏢' : '🏢 KTX Admin'}
+          <span style={{ 
+            color: '#22C55E', 
+            marginRight: collapsed ? 0 : 6,
+            fontSize: collapsed ? 20 : 16,
+          }}>
+            ⬢
+          </span>
+          {!collapsed && 'KTX Admin'}
         </div>
         <Menu
           theme="dark"
