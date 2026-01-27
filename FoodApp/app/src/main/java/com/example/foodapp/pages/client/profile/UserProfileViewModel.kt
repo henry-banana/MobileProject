@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.foodapp.data.model.Client
-import com.example.foodapp.data.model.client.DeliveryAddress
 import com.example.foodapp.data.remote.client.response.profile.*
 import com.example.foodapp.data.repository.shared.AuthRepository
 import com.example.foodapp.data.repository.firebase.AuthManager
@@ -54,6 +53,22 @@ sealed class DeleteAddressState {
     data class Error(val message: String) : DeleteAddressState()
 }
 
+// Thêm state cho cập nhật địa chỉ
+sealed class UpdateAddressState {
+    object Idle : UpdateAddressState()
+    object Loading : UpdateAddressState()
+    data class Success(val message: String) : UpdateAddressState()
+    data class Error(val message: String) : UpdateAddressState()
+}
+
+// Thêm state cho đặt địa chỉ mặc định
+sealed class SetDefaultAddressState {
+    object Idle : SetDefaultAddressState()
+    object Loading : SetDefaultAddressState()
+    data class Success(val message: String) : SetDefaultAddressState()
+    data class Error(val message: String) : SetDefaultAddressState()
+}
+
 class ProfileViewModel(
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository,
@@ -80,6 +95,14 @@ class ProfileViewModel(
     private val _deleteAddressState = MutableLiveData<DeleteAddressState>(DeleteAddressState.Idle)
     val deleteAddressState: LiveData<DeleteAddressState> = _deleteAddressState
 
+    // State cho việc cập nhật địa chỉ
+    private val _updateAddressState = MutableLiveData<UpdateAddressState>(UpdateAddressState.Idle)
+    val updateAddressState: LiveData<UpdateAddressState> = _updateAddressState
+
+    // State cho việc đặt địa chỉ mặc định
+    private val _setDefaultAddressState = MutableLiveData<SetDefaultAddressState>(SetDefaultAddressState.Idle)
+    val setDefaultAddressState: LiveData<SetDefaultAddressState> = _setDefaultAddressState
+
     // State cho logout
     private val _logoutState = MutableLiveData<Boolean>(false)
     val logoutState: LiveData<Boolean> = _logoutState
@@ -95,7 +118,7 @@ class ProfileViewModel(
     // Format date cho ngày tham gia
     private val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    //Load thông tin của người dùng ngay khi vừa vào app
+    // Load thông tin của người dùng ngay khi vừa vào app
     init {
         fetchUserData()
     }
@@ -128,7 +151,7 @@ class ProfileViewModel(
 
                             // Xử lý địa chỉ
                             val addresses = when (addressesResult) {
-                                is ApiResult.Success -> (addressesResult.data as? List<AddressResponse>) ?: emptyList()
+                                is ApiResult.Success -> addressesResult.data
                                 is ApiResult.Failure -> emptyList()
                             }
 
@@ -150,14 +173,13 @@ class ProfileViewModel(
         }
     }
 
-    // Tải lại danh sách địa chỉ
     fun refreshAddresses() {
         viewModelScope.launch {
             try {
                 val result = profileRepository.getAddresses()
                 when (result) {
                     is ApiResult.Success -> {
-                        val addresses = (result.data as? List<AddressResponse>) ?: emptyList()
+                        val addresses = result.data
                         _addresses.value = addresses
 
                         // Cập nhật state nếu có current user
@@ -174,12 +196,6 @@ class ProfileViewModel(
                 println("DEBUG: [ViewModel] Refresh addresses exception: ${e.message}")
             }
         }
-    }
-
-
-    // Reset delete address state
-    fun resetDeleteAddressState() {
-        _deleteAddressState.value = DeleteAddressState.Idle
     }
 
     fun updateProfile(displayName: String?, phone: String?) {
@@ -234,11 +250,6 @@ class ProfileViewModel(
         }
     }
 
-    private fun isValidPhone(phone: String): Boolean {
-        val phoneRegex = "^[0-9]{10,11}\$".toRegex()
-        return phone.matches(phoneRegex)
-    }
-
     // Hàm thêm địa chỉ mới
     fun createAddress(
         label: String,
@@ -262,39 +273,157 @@ class ProfileViewModel(
                     isDefault = isDefault
                 )
 
-                println("DEBUG: [ViewModel] Create address request: $request")
-
                 val result = profileRepository.createAddress(request)
 
                 when (result) {
                     is ApiResult.Success -> {
                         val addressData = result.data
-                        println("DEBUG: [ViewModel] Address created successfully: ${addressData}")
-
                         // Refresh danh sách địa chỉ
                         refreshAddresses()
-
                         _createAddressState.value = CreateAddressState.Success("Thêm địa chỉ thành công")
-                        println("DEBUG: [ViewModel] Create address state set to success")
                     }
 
                     is ApiResult.Failure -> {
                         val errorMessage = result.exception.message ?: "Thêm địa chỉ thất bại"
                         _createAddressState.value = CreateAddressState.Error(errorMessage)
-                        println("DEBUG: [ViewModel] Create address failed: $errorMessage")
                     }
                 }
             } catch (e: Exception) {
                 val errorMessage = e.message ?: "Lỗi không xác định khi thêm địa chỉ"
                 _createAddressState.value = CreateAddressState.Error(errorMessage)
-                println("DEBUG: [ViewModel] Create address exception: $errorMessage")
             }
         }
     }
 
-    // Reset create address state
+    // Hàm xóa địa chỉ
+    fun deleteAddress(addressId: String) {
+        viewModelScope.launch {
+            _deleteAddressState.value = DeleteAddressState.Loading
+
+            try {
+                val result = profileRepository.deleteAddress(addressId)
+
+                when (result) {
+                    is ApiResult.Success -> {
+                        // Xóa thành công
+                        if (result.data) {
+                            // Refresh danh sách địa chỉ
+                            refreshAddresses()
+                            _deleteAddressState.value = DeleteAddressState.Success("Xóa địa chỉ thành công")
+                        } else {
+                            _deleteAddressState.value = DeleteAddressState.Error("Xóa địa chỉ thất bại")
+                        }
+                    }
+
+                    is ApiResult.Failure -> {
+                        val errorMessage = result.exception.message ?: "Xóa địa chỉ thất bại"
+                        _deleteAddressState.value = DeleteAddressState.Error(errorMessage)
+                    }
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.message ?: "Lỗi không xác định khi xóa địa chỉ"
+                _deleteAddressState.value = DeleteAddressState.Error(errorMessage)
+            }
+        }
+    }
+
+    // Hàm cập nhật địa chỉ
+    fun updateAddress(
+        addressId: String,
+        label: String,
+        fullAddress: String,
+        building: String? = null,
+        room: String? = null,
+        note: String? = null,
+        isDefault: Boolean = false
+    ) {
+        viewModelScope.launch {
+            _updateAddressState.value = UpdateAddressState.Loading
+
+            try {
+                // Tạo request
+                val request = UpdateAddressRequest(
+                    label = label,
+                    fullAddress = fullAddress,
+                    building = building,
+                    room = room,
+                    note = note,
+                    isDefault = isDefault
+                )
+
+                val result = profileRepository.updateAddress(addressId, request)
+
+                when (result) {
+                    is ApiResult.Success -> {
+                        val addressData = result.data
+                        // Refresh danh sách địa chỉ
+                        refreshAddresses()
+                        _updateAddressState.value = UpdateAddressState.Success("Cập nhật địa chỉ thành công")
+                    }
+
+                    is ApiResult.Failure -> {
+                        val errorMessage = result.exception.message ?: "Cập nhật địa chỉ thất bại"
+                        _updateAddressState.value = UpdateAddressState.Error(errorMessage)
+                    }
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.message ?: "Lỗi không xác định khi cập nhật địa chỉ"
+                _updateAddressState.value = UpdateAddressState.Error(errorMessage)
+            }
+        }
+    }
+
+    // Hàm đặt địa chỉ mặc định
+    fun setDefaultAddress(addressId: String) {
+        viewModelScope.launch {
+            _setDefaultAddressState.value = SetDefaultAddressState.Loading
+
+            try {
+                val result = profileRepository.setDefaultAddress(addressId)
+
+                when (result) {
+                    is ApiResult.Success -> {
+                        // Đặt mặc định thành công
+                        if (result.data) {
+                            // Refresh danh sách địa chỉ
+                            refreshAddresses()
+                            _setDefaultAddressState.value = SetDefaultAddressState.Success("Đặt địa chỉ mặc định thành công")
+                        } else {
+                            _setDefaultAddressState.value = SetDefaultAddressState.Error("Đặt địa chỉ mặc định thất bại")
+                        }
+                    }
+
+                    is ApiResult.Failure -> {
+                        val errorMessage = result.exception.message ?: "Đặt địa chỉ mặc định thất bại"
+                        _setDefaultAddressState.value = SetDefaultAddressState.Error(errorMessage)
+                    }
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.message ?: "Lỗi không xác định khi đặt địa chỉ mặc định"
+                _setDefaultAddressState.value = SetDefaultAddressState.Error(errorMessage)
+            }
+        }
+    }
+
+    // Reset các state
     fun resetCreateAddressState() {
         _createAddressState.value = CreateAddressState.Idle
+    }
+
+    fun resetDeleteAddressState() {
+        _deleteAddressState.value = DeleteAddressState.Idle
+    }
+
+    fun resetUpdateAddressState() {
+        _updateAddressState.value = UpdateAddressState.Idle
+    }
+
+    fun resetSetDefaultAddressState() {
+        _setDefaultAddressState.value = SetDefaultAddressState.Idle
+    }
+
+    fun resetUpdateProfileState() {
+        _updateState.value = UpdateProfileState.Idle
     }
 
     // Factory cho ViewModel

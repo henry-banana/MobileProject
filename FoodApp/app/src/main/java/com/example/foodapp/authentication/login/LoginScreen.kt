@@ -40,9 +40,6 @@ fun LoginScreen(
     onLoginSuccess: (String) -> Unit,
     onBackClicked: () -> Unit,
     onSignUpClicked: () -> Unit,
-    onCustomerDemo: () -> Unit,
-    onShipperDemo: () -> Unit,
-    onOwnerDemo: () -> Unit,
     onForgotPasswordClicked: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -114,9 +111,6 @@ fun LoginScreen(
             onBackClicked()
         },
         onSignUpClicked = onSignUpClicked,
-        onCustomerDemo = onCustomerDemo,
-        onShipperDemo = onShipperDemo,
-        onOwnerDemo = onOwnerDemo,
         onForgotPasswordClicked = onForgotPasswordClicked
     )
 }
@@ -131,9 +125,6 @@ fun LoginContent(
     onGoogleClick: () -> Unit,
     onBackClicked: () -> Unit,
     onSignUpClicked: () -> Unit,
-    onCustomerDemo: () -> Unit,
-    onShipperDemo: () -> Unit,
-    onOwnerDemo: () -> Unit,
     onForgotPasswordClicked: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -420,72 +411,7 @@ fun LoginContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Demo Role Chips
-            if (!isLoading && !isSuccess) {
-                Text(
-                    text = "Đăng nhập nhanh",
-                    fontSize = 14.sp,
-                    color = Color(0xFF666666),
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    DemoChip(
-                        text = "Customer",
-                        icon = Icons.Default.Person,
-                        onClick = onCustomerDemo,
-                        modifier = Modifier.weight(1f)
-                    )
-                    DemoChip(
-                        text = "Shipper",
-                        icon = Icons.Default.DeliveryDining,
-                        onClick = onShipperDemo,
-                        modifier = Modifier.weight(1f)
-                    )
-                    DemoChip(
-                        text = "Owner",
-                        icon = Icons.Default.Store,
-                        onClick = onOwnerDemo,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Divider
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        thickness = 1.dp,
-                        color = Color(0xFFE0E0E0)
-                    )
-                    Text(
-                        "hoặc",
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        color = Color(0xFF999999),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        thickness = 1.dp,
-                        color = Color(0xFFE0E0E0)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
+            Spacer(modifier = Modifier.height(32.dp))
             // Google Sign-In Button
             OutlinedButton(
                 onClick = onGoogleClick,

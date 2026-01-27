@@ -23,6 +23,8 @@ import com.example.foodapp.pages.owner.orders.OrdersScreen
 import com.example.foodapp.pages.owner.revenue.RevenueScreen
 // Import ShippersScreen
 import com.example.foodapp.pages.owner.shippers.ShippersScreen
+// Import VouchersScreen
+import com.example.foodapp.pages.owner.vouchers.VouchersScreen
 // Import SettingsScreen
 import com.example.foodapp.pages.owner.settings.SettingsNavHost
 import androidx.navigation.NavHostController
@@ -190,6 +192,15 @@ fun DashBoardRootScreen(navController: NavHostController) {
                     }
 
                     DrawerItem(
+                        text = "Quản lý Voucher", 
+                        iconRes = R.drawable.ic_voucher,
+                        isSelected = currentScreen == "vouchers"
+                    ) {
+                        currentScreen = "vouchers"
+                        scope.launch { drawerState.close() }
+                    }
+
+                    DrawerItem(
                         text = "Khách hàng", 
                         iconRes = R.drawable.ic_customer,
                         isSelected = currentScreen == "customers"
@@ -239,7 +250,7 @@ fun DashBoardRootScreen(navController: NavHostController) {
                 // HIDE TopBar if we are on Dashboard
 
                 // HIDE TopBar if we are on Dashboard
-                if (currentScreen != "dashboard" && currentScreen != "orders" && currentScreen != "foods" && currentScreen != "shippers" && currentScreen != "customers") {
+                if (currentScreen != "dashboard" && currentScreen != "orders" && currentScreen != "foods" && currentScreen != "shippers" && currentScreen != "vouchers" && currentScreen != "customers") {
 
                     Row(
                         modifier = Modifier
@@ -260,6 +271,7 @@ fun DashBoardRootScreen(navController: NavHostController) {
                                 "orders" -> "Quản lý đơn hàng"
                                 "foods" -> "Quản lý món ăn"
                                 "shippers" -> "Quản lý Shipper"
+                                "vouchers" -> "Quản lý Voucher"
                                 "customers" -> "Quản lý khách hàng"
                                 "revenue" -> "Báo cáo doanh thu"
                                 "settings" -> "Cài đặt"
@@ -282,6 +294,7 @@ fun DashBoardRootScreen(navController: NavHostController) {
                     "orders" -> OrdersScreen(onMenuClick = { scope.launch { drawerState.open() } })
                     "foods" -> FoodsScreen(onMenuClick = { scope.launch { drawerState.open() } })
                     "shippers" -> ShippersScreen(onMenuClick = { scope.launch { drawerState.open() } })
+                    "vouchers" -> VouchersScreen(onMenuClick = { scope.launch { drawerState.open() } })
                     "customers" -> CustomerScreenMain(onMenuClick = { scope.launch { drawerState.open() } }) 
                     "revenue" -> RevenueScreen()
                     "settings" -> SettingsNavHost(navController = settingsNavController)
