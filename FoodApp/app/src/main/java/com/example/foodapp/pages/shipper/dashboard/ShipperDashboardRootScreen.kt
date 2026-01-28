@@ -157,6 +157,15 @@ fun ShipperDashboardRootScreen(navController: NavHostController) {
                     color = Color(0xFFE0E0E0)
                 )
                 DrawerMenuItem(
+                    icon = "📋",
+                    title = "Đơn ứng tuyển",
+                    isSelected = currentScreen == "applications",
+                    onClick = {
+                        currentScreen = "applications"
+                        scope.launch { drawerState.close() }
+                    }
+                )
+                DrawerMenuItem(
                     icon = "👤",
                     title = "Hồ sơ",
                     isSelected = currentScreen == "profile",
@@ -209,6 +218,7 @@ fun ShipperDashboardRootScreen(navController: NavHostController) {
                                     "home" -> "Trang chủ"
                                     "earnings" -> "Thu nhập của tôi"
                                     "history" -> "Lịch sử giao hàng"
+                                    "applications" -> "Đơn ứng tuyển"
                                     "profile" -> "Hồ sơ"
                                     "notifications" -> "Thông báo"
                                     "help" -> "Trợ giúp & Hỗ trợ"
@@ -255,6 +265,10 @@ fun ShipperDashboardRootScreen(navController: NavHostController) {
                         )
                         "earnings" -> EarningsScreen()
                         "history" -> HistoryScreen()
+                        "applications" -> com.example.foodapp.pages.shipper.application.MyApplicationsScreen(
+                            onBack = { currentScreen = "home" },
+                            showTopBar = false
+                        )
                         "profile" -> ShipperSettingsNavHost(navController = settingsNavController)
                         "notifications" -> NotificationsScreen()
                         "help" -> HelpScreen()

@@ -64,41 +64,106 @@ data class ShopsApiResponse(
 
 // API Response wrapper for applications: { success: true, data: [...] }
 data class ApplicationsApiResponse(
+    @SerializedName("success")
     val success: Boolean = false,
+    
+    @SerializedName("data")
     val data: List<ShipperApplication>? = null
 )
 
 // API Response wrapper for single application
 data class ApplicationApiResponse(
+    @SerializedName("success")
     val success: Boolean = false,
+    
+    @SerializedName("data")
     val data: ShipperApplication? = null
 )
 
-// Shipper Application model
+// Cancel application response
+data class CancelApplicationResponse(
+    @SerializedName("success")
+    val success: Boolean = false,
+    
+    @SerializedName("message")
+    val message: String? = null
+)
+
+// Shipper Application model - matches backend ShipperApplicationEntity
 data class ShipperApplication(
+    @SerializedName("id")
     val id: String,
+    
+    @SerializedName("userId")
     val userId: String? = null,
+    
+    @SerializedName("userName")
     val userName: String? = null,
+    
+    @SerializedName("userPhone")
     val userPhone: String? = null,
+    
+    @SerializedName("userAvatar")
+    val userAvatar: String? = null,
+    
+    @SerializedName("shopId")
     val shopId: String,
+    
+    @SerializedName("shopName")
     val shopName: String? = null,
-    val vehicleType: String? = null,
+    
+    @SerializedName("vehicleType")
+    val vehicleType: String? = null, // MOTORBIKE, CAR, BICYCLE
+    
+    @SerializedName("vehicleNumber")
     val vehicleNumber: String? = null,
+    
+    @SerializedName("idCardNumber")
     val idCardNumber: String? = null,
+    
+    @SerializedName("idCardFrontUrl")
+    val idCardFrontUrl: String? = null,
+    
+    @SerializedName("idCardBackUrl")
+    val idCardBackUrl: String? = null,
+    
+    @SerializedName("driverLicenseUrl")
+    val driverLicenseUrl: String? = null,
+    
+    @SerializedName("message")
     val message: String? = null,
+    
+    @SerializedName("status")
     val status: String = "PENDING", // PENDING, APPROVED, REJECTED
-    val createdAt: String? = null,
-    val rejectedReason: String? = null
+    
+    @SerializedName("reviewedBy")
+    val reviewedBy: String? = null,
+    
+    @SerializedName("reviewedAt")
+    val reviewedAt: String? = null,
+    
+    @SerializedName("rejectReason")
+    val rejectReason: String? = null,
+    
+    @SerializedName("createdAt")
+    val createdAt: String? = null
 )
 
 // Apply request DTO
 data class ApplyShipperRequest(
     val shopId: String,
-    val vehicleType: String, // MOTORBIKE, BICYCLE
+    val vehicleType: String, // MOTORBIKE, CAR, BICYCLE
     val vehicleNumber: String,
     val idCardNumber: String,
     val message: String? = null
 )
+
+// Vehicle type enum for display
+enum class VehicleType(val displayName: String, val icon: String) {
+    MOTORBIKE("Xe máy", "🏍️"),
+    CAR("Ô tô", "🚗"),
+    BICYCLE("Xe đạp", "🚲")
+}
 
 // Status enum for display
 enum class ApplicationStatus(val displayName: String, val color: Long) {
@@ -106,3 +171,4 @@ enum class ApplicationStatus(val displayName: String, val color: Long) {
     APPROVED("Đã duyệt", 0xFF4CAF50),
     REJECTED("Bị từ chối", 0xFFF44336)
 }
+

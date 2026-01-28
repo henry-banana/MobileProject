@@ -35,6 +35,7 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShopSelectionScreen(
+    onBack: () -> Unit = {},
     onApplicationSubmitted: () -> Unit = {},
     viewModel: ShopSelectionViewModel = viewModel()
 ) {
@@ -61,6 +62,15 @@ fun ShopSelectionScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Chọn cửa hàng") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = Color.White
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White
