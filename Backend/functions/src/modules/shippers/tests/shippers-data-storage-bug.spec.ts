@@ -7,21 +7,24 @@ import { ShopsService } from '../../shops/services/shops.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { StorageService } from '../../../shared/services/storage.service';
 import { BadRequestException } from '@nestjs/common';
-import { ShipperApplicationEntity, ApplicationStatus } from '../entities/shipper-application.entity';
+import {
+  ShipperApplicationEntity,
+  ApplicationStatus,
+} from '../entities/shipper-application.entity';
 import { Firestore } from '@google-cloud/firestore';
 import { WalletsService } from '../../wallets/wallets.service';
 
 /**
  * Shippers Service - Data Storage Bug Prevention Tests
- * 
+ *
  * Regression tests to prevent the bug where shipperInfo is written
  * to the owner's document instead of the shipper's document.
- * 
+ *
  * Bug Details:
  * - shipperInfo was found in owner's document (wrong location)
  * - shipperInfo was missing from shipper's document (correct location)
  * - Result: Shipper endpoints failed with "not assigned to shop"
- * 
+ *
  * Fixes Tested:
  * 1. approveApplication validates app.userId !== ownerId
  * 2. Writes shipperInfo to users/{app.userId} (shipper's doc)
@@ -39,7 +42,7 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
 
   const mockShipperApp: ShipperApplicationEntity = {
     id: 'app_data_bug_001',
-    userId: 'shipper_user_correct',  // ← SHIPPER uid (not owner)
+    userId: 'shipper_user_correct', // ← SHIPPER uid (not owner)
     userName: 'Real Shipper',
     userPhone: '0901234567',
     userAvatar: 'https://...',
@@ -147,7 +150,7 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
       const ownerId = 'owner_user_123';
       const sameAsOwner: ShipperApplicationEntity = {
         ...mockShipperApp,
-        userId: ownerId,  // ← BUG: App was created by owner for themselves
+        userId: ownerId, // ← BUG: App was created by owner for themselves
       };
 
       shippersRepository.findApplicationById.mockResolvedValue(sameAsOwner);
@@ -158,7 +161,7 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
 
       // Should throw BadRequestException
       await expect(service.approveApplication(ownerId, 'app_123')).rejects.toThrow(
-        BadRequestException
+        BadRequestException,
       );
     });
 
@@ -168,7 +171,7 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
 
       shippersRepository.findApplicationById.mockResolvedValue({
         ...mockShipperApp,
-        userId: shipperId,  // Different from owner
+        userId: shipperId, // Different from owner
       });
 
       await service.approveApplication(ownerId, 'app_001');
@@ -181,9 +184,7 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
       expect(updateCalls.length).toBeGreaterThan(0);
 
       // There should be a call with shipperInfo object
-      const shipperInfoCall = updateCalls.find(
-        (call: any[]) => call[1]?.shipperInfo !== undefined
-      );
+      const shipperInfoCall = updateCalls.find((call: any[]) => call[1]?.shipperInfo !== undefined);
       expect(shipperInfoCall).toBeDefined();
       expect(shipperInfoCall?.[1]).toMatchObject({
         role: 'SHIPPER',
@@ -192,7 +193,7 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
           shopName: mockShipperApp.shopName,
           vehicleType: mockShipperApp.vehicleType,
           vehicleNumber: mockShipperApp.vehicleNumber,
-          status: 'AVAILABLE',  // FIX: Changed from ACTIVE to AVAILABLE
+          status: 'AVAILABLE', // FIX: Changed from ACTIVE to AVAILABLE
         },
       });
     });
@@ -204,10 +205,9 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
       await service.approveApplication(ownerId, 'app_001');
 
       // Verify custom claims were updated to SHIPPER role
-      expect(firebaseService.auth.setCustomUserClaims).toHaveBeenCalledWith(
-        shipperId,
-        { role: 'SHIPPER' }
-      );
+      expect(firebaseService.auth.setCustomUserClaims).toHaveBeenCalledWith(shipperId, {
+        role: 'SHIPPER',
+      });
     });
   });
 
@@ -217,7 +217,7 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
 
       const badApp: ShipperApplicationEntity = {
         ...mockShipperApp,
-        userId: ownerId,  // ← Same as owner
+        userId: ownerId, // ← Same as owner
       };
 
       shippersRepository.findApplicationById.mockResolvedValue(badApp);
@@ -227,7 +227,7 @@ describe('ShippersService - Data Storage Bug Prevention (SHIPPER-DATA-BUG-FIX)',
       } as any);
 
       await expect(service.approveApplication(ownerId, 'app_001')).rejects.toThrow(
-        BadRequestException
+        BadRequestException,
       );
     });
 

@@ -184,13 +184,10 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
       // Verify validation checks were performed
       expect(ordersRepo.findById).toHaveBeenCalledWith('order_123');
       expect(shippersRepo.findById).toHaveBeenCalledWith(shipperId);
-      
+
       // Verify atomic transaction was called (not separate update calls)
-      expect(ordersRepo.acceptOrderAtomically).toHaveBeenCalledWith(
-        'order_123',
-        shipperId,
-      );
-      
+      expect(ordersRepo.acceptOrderAtomically).toHaveBeenCalledWith('order_123', shipperId);
+
       // Verify result
       expect(result.shipperId).toBe(shipperId);
       expect(result.status).toBe(OrderStatus.SHIPPING);
@@ -199,9 +196,9 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
     it('should throw NotFoundException if order not found', async () => {
       ordersRepo.findById.mockResolvedValueOnce(null);
 
-      await expect(
-        service.acceptOrder('shipper_1', 'order_999'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.acceptOrder('shipper_1', 'order_999')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ConflictException if order not READY', async () => {
@@ -210,9 +207,9 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         status: OrderStatus.PENDING,
       });
 
-      await expect(
-        service.acceptOrder('shipper_1', 'order_123'),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.acceptOrder('shipper_1', 'order_123')).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('should throw ConflictException if shipper already assigned', async () => {
@@ -221,9 +218,9 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         shipperId: 'shipper_other',
       });
 
-      await expect(
-        service.acceptOrder('shipper_1', 'order_123'),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.acceptOrder('shipper_1', 'order_123')).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -256,9 +253,9 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         status: OrderStatus.READY,
       });
 
-      await expect(
-        service.markShipping('shipper_1', 'order_123'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.markShipping('shipper_1', 'order_123')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw ConflictException if not in SHIPPING status', async () => {
@@ -268,23 +265,26 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         status: OrderStatus.SHIPPING,
       });
 
-      await expect(
-        service.markShipping('shipper_1', 'order_123'),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.markShipping('shipper_1', 'order_123')).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
   describe('markDelivered (ORDER-015)', () => {
     it('should mark order as delivered from SHIPPING', async () => {
       const shipperId = 'shipper_1';
-      
+
       ordersRepo.findById.mockResolvedValueOnce({
         ...mockOrder,
         shipperId,
         status: OrderStatus.SHIPPING,
       });
       ordersRepo.update.mockResolvedValueOnce(undefined);
-      shippersRepo.findById.mockResolvedValueOnce({ shipperInfo: { status: 'SHIPPING' }, name: 'Test Shipper' });
+      shippersRepo.findById.mockResolvedValueOnce({
+        shipperInfo: { status: 'SHIPPING' },
+        name: 'Test Shipper',
+      });
       shippersRepo.update.mockResolvedValueOnce(undefined);
       ordersRepo.findById.mockResolvedValueOnce({
         ...mockOrder,
@@ -294,7 +294,7 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         paymentStatus: PaymentStatus.PAID,
         paidOut: false,
       });
-      
+
       // Mock for shop/owner notification lookup
       shopsRepo.findById = jest.fn().mockResolvedValue({ id: 'shop_1', ownerId: 'owner_1' });
       usersRepo.findById = jest.fn().mockResolvedValue({ displayName: 'Test Shipper' });
@@ -343,9 +343,9 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         status: OrderStatus.SHIPPING,
       });
 
-      await expect(
-        service.markDelivered('shipper_1', 'order_123'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.markDelivered('shipper_1', 'order_123')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw ConflictException if not in SHIPPING status', async () => {
@@ -355,9 +355,9 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         status: OrderStatus.READY,
       });
 
-      await expect(
-        service.markDelivered('shipper_1', 'order_123'),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.markDelivered('shipper_1', 'order_123')).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -488,16 +488,14 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
         status: OrderStatus.SHIPPING,
       });
 
-      await expect(service.acceptOrder(shipper2, 'order_123')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.acceptOrder(shipper2, 'order_123')).rejects.toThrow(ConflictException);
     });
   });
 
   describe('Error Handling - Firestore Indexes', () => {
     it('should propagate Firestore index errors to caller', async () => {
       const shipperId = 'shipper_1';
-      
+
       // Simulate Firestore error for missing index
       const firestoreError = {
         code: 'FAILED_PRECONDITION',
@@ -509,9 +507,7 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
       ordersRepo.count.mockRejectedValueOnce(firestoreError);
 
       // The error should propagate up from the repository
-      await expect(
-        service.getShipperOrders(shipperId, { limit: 10 })
-      ).rejects.toBeDefined();
+      await expect(service.getShipperOrders(shipperId, { limit: 10 })).rejects.toBeDefined();
     });
   });
 
@@ -519,7 +515,7 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
     it('should return READY unassigned orders for shipper shop (reads from users collection)', async () => {
       const shipperId = 'shipper_1';
       const shopId = 'shop_123';
-      
+
       // Mock user/shipper with shipperInfo.shopId (from users collection)
       const mockUser = {
         id: shipperId,
@@ -576,7 +572,7 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
 
     it('should throw BadRequestException if shipper missing shopId (not assigned to shop)', async () => {
       const shipperId = 'shipper_1';
-      
+
       // Mock user without shipperInfo.shopId
       const mockUserNoShop = {
         id: shipperId,
@@ -590,9 +586,9 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
 
       usersRepo.findById.mockResolvedValueOnce(mockUserNoShop);
 
-      await expect(
-        service.getShipperOrdersAvailable(shipperId, { limit: 10 })
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.getShipperOrdersAvailable(shipperId, { limit: 10 })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw NotFoundException if shipper not found', async () => {
@@ -600,15 +596,15 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
 
       usersRepo.findById.mockResolvedValueOnce(null);
 
-      await expect(
-        service.getShipperOrdersAvailable(shipperId, { limit: 10 })
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getShipperOrdersAvailable(shipperId, { limit: 10 })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should support pagination correctly', async () => {
       const shipperId = 'shipper_1';
       const shopId = 'shop_123';
-      
+
       const mockUser = {
         id: shipperId,
         displayName: 'Shipper A',
@@ -658,7 +654,7 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
     it('REGRESSION: should return matching total and orders count (null filter bug fix)', async () => {
       const shipperId = 'shipper_1';
       const shopId = 'shop_123';
-      
+
       const mockUser = {
         id: shipperId,
         displayName: 'Shipper A',
@@ -707,13 +703,13 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
 
       // VERIFY FIX: total and orders.length must match
       expect(result.total).toBe(2);
-      expect(result.orders).toHaveLength(2);  // ← Bug was: total=2 but orders=0
+      expect(result.orders).toHaveLength(2); // ← Bug was: total=2 but orders=0
       expect(result.totalPages).toBe(1);
 
       // VERIFY: ordersRepo.count was called with null value for shipperId filter
       expect(ordersRepo.count).toHaveBeenCalledWith({
         status: OrderStatus.READY,
-        shipperId: null,  // ← Must include null (not skip it)
+        shipperId: null, // ← Must include null (not skip it)
         shopId,
       });
 

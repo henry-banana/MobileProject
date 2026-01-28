@@ -1,6 +1,6 @@
 /**
  * Orders Role Access Control Test
- * 
+ *
  * Unit tests validating role-based access guard behavior.
  * These tests verify the RolesGuard throws ForbiddenException (403)
  * when users lack required roles.
@@ -11,11 +11,11 @@ describe('Orders Role Access Control', () => {
     it('should throw ForbiddenException (403) when user lacks required role', () => {
       // RolesGuard implementation throws:
       // throw new ForbiddenException(`Access denied. Required roles: ${requiredRoles.join(', ')}`);
-      
+
       // This results in:
       // Status: 403 Forbidden
       // Body: { success: false, message: "Access denied. Required roles: OWNER", errorCode: "FORBIDDEN", timestamp: "..." }
-      
+
       expect(true).toBe(true);
     });
 
@@ -23,21 +23,21 @@ describe('Orders Role Access Control', () => {
       // RolesGuard returns true when:
       // - User has at least one of the required roles
       // Then the request proceeds to the controller handler
-      
+
       expect(true).toBe(true);
     });
 
     it('should not use 404 (endpoint hiding) - uses 403 (role denied)', () => {
       // The current implementation uses 403 Forbidden
       // NOT 404 Not Found (endpoint hiding)
-      
+
       // This is correct HTTP semantics:
       // 403 = authenticated but not authorized (user lacks role)
       // 404 = resource doesn't exist
-      
+
       const httpStatus403 = 403;
       const semanticallyCorrect = httpStatus403;
-      
+
       expect(semanticallyCorrect).toBe(403);
     });
   });
@@ -67,7 +67,7 @@ describe('Orders Role Access Control', () => {
       // Common mistake:
       const incorrectPath = '/api/orders/owner';
       const correctPath = '/api/orders/shop';
-      
+
       expect(incorrectPath).not.toBe(correctPath);
       expect(correctPaths.ownerOrders).toBe(correctPath);
     });
@@ -97,4 +97,3 @@ describe('Orders Role Access Control', () => {
     });
   });
 });
-

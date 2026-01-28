@@ -131,7 +131,10 @@ describe('NotificationsService', () => {
 
       await service.registerDeviceToken(userId, dto);
 
-      expect(mockDeviceTokensRepository.updateLastUsed).toHaveBeenCalledWith(userId, 'existing_token');
+      expect(mockDeviceTokensRepository.updateLastUsed).toHaveBeenCalledWith(
+        userId,
+        'existing_token',
+      );
     });
 
     it('should transfer token if it belongs to another user', async () => {
@@ -162,7 +165,10 @@ describe('NotificationsService', () => {
 
       await service.registerDeviceToken(userId, dto);
 
-      expect(mockDeviceTokensRepository.deleteByToken).toHaveBeenCalledWith(oldUserId, 'transferred_token');
+      expect(mockDeviceTokensRepository.deleteByToken).toHaveBeenCalledWith(
+        oldUserId,
+        'transferred_token',
+      );
       expect(mockDeviceTokensRepository.create).toHaveBeenCalledWith(userId, expect.any(Object));
     });
   });
@@ -348,7 +354,10 @@ describe('NotificationsService', () => {
       const result = await service.markAsRead(userId, notificationId);
 
       expect(result.read).toBe(true);
-      expect(mockNotificationsRepository.updateReadStatus).toHaveBeenCalledWith(userId, notificationId);
+      expect(mockNotificationsRepository.updateReadStatus).toHaveBeenCalledWith(
+        userId,
+        notificationId,
+      );
     });
 
     it('should throw error if notification not found', async () => {
@@ -357,7 +366,9 @@ describe('NotificationsService', () => {
 
       mockNotificationsRepository.findById.mockResolvedValue(null);
 
-      await expect(service.markAsRead(userId, notificationId)).rejects.toThrow('Notification not found');
+      await expect(service.markAsRead(userId, notificationId)).rejects.toThrow(
+        'Notification not found',
+      );
     });
   });
 
@@ -405,7 +416,7 @@ describe('NotificationsService', () => {
       expect(result.requestedCount).toBe(2);
       expect(result.successCount).toBeGreaterThan(0);
       expect(mockNotificationsRepository.create).toHaveBeenCalled();
-      
+
       // Verify that the created notification does not have undefined fields
       const createCall = mockNotificationsRepository.create.mock.calls[0];
       const createdData = createCall[1];
@@ -414,4 +425,3 @@ describe('NotificationsService', () => {
     });
   });
 });
-

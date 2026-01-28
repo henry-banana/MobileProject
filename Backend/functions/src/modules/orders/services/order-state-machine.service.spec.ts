@@ -33,10 +33,7 @@ describe('OrderStateMachineService', () => {
 
     it('should allow CONFIRMED → PREPARING', async () => {
       await expect(
-        service.validateTransition(
-          OrderStatus.CONFIRMED,
-          OrderStatus.PREPARING,
-        ),
+        service.validateTransition(OrderStatus.CONFIRMED, OrderStatus.PREPARING),
       ).resolves.not.toThrow();
     });
 
@@ -54,10 +51,7 @@ describe('OrderStateMachineService', () => {
 
     it('should allow PREPARING → CANCELLED', async () => {
       await expect(
-        service.validateTransition(
-          OrderStatus.PREPARING,
-          OrderStatus.CANCELLED,
-        ),
+        service.validateTransition(OrderStatus.PREPARING, OrderStatus.CANCELLED),
       ).resolves.not.toThrow();
     });
 
@@ -69,10 +63,7 @@ describe('OrderStateMachineService', () => {
 
     it('should allow SHIPPING → DELIVERED', async () => {
       await expect(
-        service.validateTransition(
-          OrderStatus.SHIPPING,
-          OrderStatus.DELIVERED,
-        ),
+        service.validateTransition(OrderStatus.SHIPPING, OrderStatus.DELIVERED),
       ).resolves.not.toThrow();
     });
 
@@ -90,10 +81,7 @@ describe('OrderStateMachineService', () => {
 
     it('should reject SHIPPING → CANCELLED', async () => {
       await expect(
-        service.validateTransition(
-          OrderStatus.SHIPPING,
-          OrderStatus.CANCELLED,
-        ),
+        service.validateTransition(OrderStatus.SHIPPING, OrderStatus.CANCELLED),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -173,18 +161,12 @@ describe('OrderStateMachineService', () => {
   describe('getValidTransitions', () => {
     it('should return correct transitions for PENDING', () => {
       const transitions = service.getValidTransitions(OrderStatus.PENDING);
-      expect(transitions).toEqual([
-        OrderStatus.CONFIRMED,
-        OrderStatus.CANCELLED,
-      ]);
+      expect(transitions).toEqual([OrderStatus.CONFIRMED, OrderStatus.CANCELLED]);
     });
 
     it('should return correct transitions for CONFIRMED', () => {
       const transitions = service.getValidTransitions(OrderStatus.CONFIRMED);
-      expect(transitions).toEqual([
-        OrderStatus.PREPARING,
-        OrderStatus.CANCELLED,
-      ]);
+      expect(transitions).toEqual([OrderStatus.PREPARING, OrderStatus.CANCELLED]);
     });
 
     it('should return correct transitions for READY', () => {

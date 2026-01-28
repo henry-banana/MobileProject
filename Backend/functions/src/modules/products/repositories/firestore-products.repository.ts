@@ -4,6 +4,7 @@ import { IProductsRepository } from '../interfaces';
 import { ProductEntity } from '../entities';
 import { ProductFilterDto, ProductSortOption } from '../dto';
 import { ShopStatus } from '../../shops/entities/shop.entity';
+import { globalCache, CACHE_TTL } from '../../../shared/utils';
 
 @Injectable()
 export class FirestoreProductsRepository implements IProductsRepository {
@@ -49,6 +50,9 @@ export class FirestoreProductsRepository implements IProductsRepository {
 
     await productRef.set(productData);
 
+    // Invalidate cache for this shop
+    this.invalidateShopCache(shopId);
+
     return this.mapToEntity({ id: productRef.id, ...productData });
   }
 
@@ -66,6 +70,18 @@ export class FirestoreProductsRepository implements IProductsRepository {
     shopId: string,
     filters: ProductFilterDto,
   ): Promise<{ products: ProductEntity[]; total: number }> {
+    // Build cache key based on shopId and filters
+    const cacheKey = this.buildMenuCacheKey(shopId, filters);
+
+    // Check cache first
+    const cached = globalCache.get<{ products: ProductEntity[]; total: number }>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    // Cache miss - fetch from Firestore
+    console.log(`📦 Cache MISS: ${cacheKey}`);
+
     let query: FirebaseFirestore.Query = this.firestore
       .collection(this.collection)
       .where('shopId', '==', shopId)
@@ -113,7 +129,14 @@ export class FirestoreProductsRepository implements IProductsRepository {
     const offset = (page - 1) * limit;
     const paginatedProducts = products.slice(offset, offset + limit);
 
-    return { products: paginatedProducts, total };
+    const result = { products: paginatedProducts, total };
+
+    // Cache the result (only for basic queries without pagination to maximize cache hits)
+    if (!filters.q && page === 1 && limit >= 20) {
+      globalCache.set(cacheKey, result, CACHE_TTL.MENU);
+    }
+
+    return result;
   }
 
   async searchGlobal(
@@ -189,26 +212,53 @@ export class FirestoreProductsRepository implements IProductsRepository {
   }
 
   async update(id: string, data: Partial<ProductEntity>): Promise<void> {
+    // Fetch product to get shopId for cache invalidation
+    const productDoc = await this.firestore.collection(this.collection).doc(id).get();
+    const shopId = productDoc.data()?.shopId;
+
     const updateData: Record<string, unknown> = {
       ...data,
       updatedAt: FieldValue.serverTimestamp(),
     };
 
     await this.firestore.collection(this.collection).doc(id).update(updateData);
+
+    // Invalidate cache for this shop
+    if (shopId) {
+      this.invalidateShopCache(shopId);
+    }
   }
 
   async toggleAvailability(id: string, isAvailable: boolean): Promise<void> {
+    // Fetch product to get shopId for cache invalidation
+    const productDoc = await this.firestore.collection(this.collection).doc(id).get();
+    const shopId = productDoc.data()?.shopId;
+
     await this.firestore.collection(this.collection).doc(id).update({
       isAvailable,
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    // Invalidate cache for this shop
+    if (shopId) {
+      this.invalidateShopCache(shopId);
+    }
   }
 
   async softDelete(id: string): Promise<void> {
+    // Fetch product to get shopId for cache invalidation
+    const productDoc = await this.firestore.collection(this.collection).doc(id).get();
+    const shopId = productDoc.data()?.shopId;
+
     await this.firestore.collection(this.collection).doc(id).update({
       isDeleted: true,
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    // Invalidate cache for this shop
+    if (shopId) {
+      this.invalidateShopCache(shopId);
+    }
   }
 
   async updateStats(
@@ -278,5 +328,33 @@ export class FirestoreProductsRepository implements IProductsRepository {
           return dateB - dateA;
         });
     }
+  }
+
+  // ==================== Cache Helper Methods ====================
+
+  /**
+   * Build a cache key for shop menu queries
+   */
+  private buildMenuCacheKey(shopId: string, filters: ProductFilterDto): string {
+    const parts = [`shop:${shopId}:products`];
+
+    if (filters.categoryId) {
+      parts.push(`cat:${filters.categoryId}`);
+    }
+
+    if (filters.isAvailable !== undefined) {
+      parts.push(`avail:${filters.isAvailable}`);
+    }
+
+    return parts.join(':');
+  }
+
+  /**
+   * Invalidate all cache entries for a specific shop
+   */
+  invalidateShopCache(shopId: string): void {
+    globalCache.invalidateByPrefix(`shop:${shopId}:`);
+    // Also invalidate global search index
+    globalCache.invalidate('products:search:index');
   }
 }

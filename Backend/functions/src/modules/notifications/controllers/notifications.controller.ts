@@ -150,13 +150,15 @@ export class NotificationsController {
   @Get()
   @ApiOperation({
     summary: 'Get my notifications',
-    description: 'Retrieve paginated notifications with optional read status filter. Pass read=true for read notifications, read=false for unread, or omit the parameter for all notifications.',
+    description:
+      'Retrieve paginated notifications with optional read status filter. Pass read=true for read notifications, read=false for unread, or omit the parameter for all notifications.',
   })
   @ApiQuery({
     name: 'read',
     required: false,
     type: Boolean,
-    description: 'Filter by read status: true=read only, false=unread only, omitted=all notifications. Note: Accepts boolean values "true" or "false" from URL query string.',
+    description:
+      'Filter by read status: true=read only, false=unread only, omitted=all notifications. Note: Accepts boolean values "true" or "false" from URL query string.',
   })
   @ApiQuery({
     name: 'page',

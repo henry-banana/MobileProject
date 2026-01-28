@@ -119,7 +119,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 3 };
-      
+
       cartRepo.findByCustomerId.mockResolvedValue(null);
       cartRepo.create.mockResolvedValue({
         customerId,
@@ -143,7 +143,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 2 };
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -181,7 +181,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 3 };
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -216,7 +216,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
     it('should INCREMENT correctly with multiple adds (1 + 2 + 3 = 6)', async () => {
       // Arrange
       const customerId = 'customer_123';
-      
+
       let currentCart: CartEntity = {
         customerId,
         items: [],
@@ -251,7 +251,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 100 };
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -275,7 +275,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Act & Assert
       await expect(service.addToCart(customerId, dto)).rejects.toThrow(ConflictException);
       await expect(service.addToCart(customerId, dto)).rejects.toThrow(
-        /Tổng số lượng không được vượt quá 999/
+        /Tổng số lượng không được vượt quá 999/,
       );
 
       // Should not update cart
@@ -286,7 +286,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 99 };
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -320,9 +320,9 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 1 };
-      
+
       const originalAddedAt = Timestamp.fromDate(new Date('2026-01-01T00:00:00.000Z'));
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -356,7 +356,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 1 };
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -391,13 +391,13 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'nonexistent_prod', quantity: 1 };
-      
+
       productsRepo.findById.mockResolvedValue(null);
 
       // Act & Assert
       await expect(service.addToCart(customerId, dto)).rejects.toThrow(NotFoundException);
       await expect(service.addToCart(customerId, dto)).rejects.toThrow(
-        /Product not found or unavailable/
+        /Product not found or unavailable/,
       );
     });
 
@@ -405,7 +405,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 1 };
-      
+
       productsRepo.findById.mockResolvedValue({
         ...mockProduct,
         isAvailable: false, // Unavailable
@@ -419,7 +419,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const dto: AddToCartDto = { productId: 'prod_123', quantity: 1 };
-      
+
       shopsRepo.findById.mockResolvedValue({
         ...mockShop,
         isOpen: false, // Shop closed
@@ -427,9 +427,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
 
       // Act & Assert
       await expect(service.addToCart(customerId, dto)).rejects.toThrow(ConflictException);
-      await expect(service.addToCart(customerId, dto)).rejects.toThrow(
-        /Shop is currently closed/
-      );
+      await expect(service.addToCart(customerId, dto)).rejects.toThrow(/Shop is currently closed/);
     });
 
     it('should handle items from different shops correctly', async () => {
@@ -437,7 +435,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       const customerId = 'customer_123';
       const dto1: AddToCartDto = { productId: 'prod_123', quantity: 2 };
       const dto2: AddToCartDto = { productId: 'prod_456', quantity: 3 };
-      
+
       const product2 = {
         ...mockProduct,
         id: 'prod_456',
@@ -498,7 +496,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const shopIdToRemove = 'shop_456';
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -545,12 +543,12 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Assert
       expect(result.removedCount).toBe(2); // 2 items from shop_456
       expect(cartRepo.update).toHaveBeenCalledTimes(1);
-      
+
       const updatedCart = cartRepo.update.mock.calls[0][0];
       expect(updatedCart.items).toHaveLength(1); // Only 1 item left
       expect(updatedCart.items[0].shopId).toBe('shop_999'); // From other shop
       expect(updatedCart.items[0].productId).toBe('prod_789');
-      
+
       expect(result.groups).toHaveLength(1); // Only one shop group left
     });
 
@@ -558,7 +556,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const shopIdNotInCart = 'shop_nonexistent';
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -585,7 +583,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Assert
       expect(result.removedCount).toBe(0); // No items removed
       expect(cartRepo.update).toHaveBeenCalledTimes(1);
-      
+
       const updatedCart = cartRepo.update.mock.calls[0][0];
       expect(updatedCart.items).toHaveLength(1); // Cart unchanged
       expect(updatedCart.items[0].shopId).toBe('shop_456');
@@ -595,7 +593,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const shopId = 'shop_456';
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -640,7 +638,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const shopId = 'shop_456';
-      
+
       cartRepo.findByCustomerId.mockResolvedValue(null); // No cart
 
       // Act
@@ -657,7 +655,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const shopId = 'shop_456';
-      
+
       const emptyCart: CartEntity = {
         customerId,
         items: [], // Empty cart
@@ -681,7 +679,7 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Arrange
       const customerId = 'customer_123';
       const shopIdToRemove = 'shop_456';
-      
+
       const existingCart: CartEntity = {
         customerId,
         items: [
@@ -728,11 +726,11 @@ describe('CartService - Add to Cart Increment Logic', () => {
       // Assert
       expect(result.removedCount).toBe(1); // 1 item from shop_456
       expect(cartRepo.update).toHaveBeenCalledTimes(1);
-      
+
       const updatedCart = cartRepo.update.mock.calls[0][0];
       expect(updatedCart.items).toHaveLength(2); // 2 items remaining
-      expect(updatedCart.items.map(i => i.shopId)).toEqual(['shop_789', 'shop_999']);
-      expect(updatedCart.items.map(i => i.productId)).toEqual(['prod_2', 'prod_3']);
+      expect(updatedCart.items.map((i) => i.shopId)).toEqual(['shop_789', 'shop_999']);
+      expect(updatedCart.items.map((i) => i.productId)).toEqual(['prod_2', 'prod_3']);
     });
   });
 
@@ -771,7 +769,8 @@ describe('CartService - Add to Cart Increment Logic', () => {
       cartRepo.findByCustomerId.mockResolvedValue(cart);
       shopsRepo.findById.mockImplementation((id) => {
         if (id === 'shop_456') return Promise.resolve(mockShop);
-        if (id === 'shop_789') return Promise.resolve({ ...mockShop, id: 'shop_789', name: 'Different Shop' });
+        if (id === 'shop_789')
+          return Promise.resolve({ ...mockShop, id: 'shop_789', name: 'Different Shop' });
         return Promise.resolve(null);
       });
 
@@ -894,12 +893,15 @@ describe('CartService - getCartGrouped pagination and ordering', () => {
     cartRepo = module.get(CART_REPOSITORY);
     shopsRepo = module.get('SHOPS_REPOSITORY');
 
-    shopsRepo.findById.mockImplementation(async (id: string) => ({
-      id,
-      name: id,
-      isOpen: true,
-      status: ShopStatus.OPEN,
-    } as any));
+    shopsRepo.findById.mockImplementation(
+      async (id: string) =>
+        ({
+          id,
+          name: id,
+          isOpen: true,
+          status: ShopStatus.OPEN,
+        }) as any,
+    );
   });
 
   it('orders groups by lastUpdated desc', async () => {
@@ -1235,13 +1237,19 @@ describe('CartService - getCartGrouped pagination and ordering', () => {
 
     // Verify group has lastActivityAt
     expect(result.groups[0]).toHaveProperty('lastActivityAt');
-    expect(result.groups[0].lastActivityAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    expect(result.groups[0].lastActivityAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
 
     // Verify items have timestamps
     expect(result.groups[0].items[0]).toHaveProperty('addedAt');
     expect(result.groups[0].items[0]).toHaveProperty('updatedAt');
-    expect(result.groups[0].items[0].addedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-    expect(result.groups[0].items[0].updatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    expect(result.groups[0].items[0].addedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
+    expect(result.groups[0].items[0].updatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+    );
   });
 
   it('handles boolean false for includeAll correctly', async () => {

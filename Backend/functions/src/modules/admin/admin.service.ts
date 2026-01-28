@@ -194,10 +194,13 @@ export class AdminService {
   /**
    * Approve payout request
    * ADMIN-009: Approve Payout Request
-   * 
+   *
    * Returns payout with QR URL for admin to scan and transfer money
    */
-  async approvePayout(adminId: string, payoutId: string): Promise<AdminPayoutEntity & { qrUrl?: string }> {
+  async approvePayout(
+    adminId: string,
+    payoutId: string,
+  ): Promise<AdminPayoutEntity & { qrUrl?: string }> {
     this.logger.log(`Admin ${adminId} approving payout ${payoutId}`);
 
     const payout = await this.payoutsRepository.approve(payoutId, adminId);
@@ -212,10 +215,9 @@ export class AdminService {
       payout.walletId,
       payout.amount,
       payout.accountNumber || '',
-    )
-      .catch(err => {
-        this.logger.error(`Auto-complete polling failed for payout ${payoutId}:`, err);
-      });
+    ).catch((err) => {
+      this.logger.error(`Auto-complete polling failed for payout ${payoutId}:`, err);
+    });
 
     // TODO: Send notification khi có NotificationsService (EPIC 11)
     // await this.notificationsService.sendToUser(payout.userId, {
@@ -541,7 +543,7 @@ export class AdminService {
     try {
       // Query all wallets from Firestore
       const walletsSnapshot = await this.walletsService.getAllWalletsForAdmin();
-      
+
       let totalBalance = 0;
       let ownerBalance = 0;
       let shipperBalance = 0;
@@ -551,7 +553,7 @@ export class AdminService {
         const balance = wallet.balance || 0;
         totalBalance += balance;
         walletCount++;
-        
+
         if (wallet.type === 'OWNER') {
           ownerBalance += balance;
         } else if (wallet.type === 'SHIPPER') {
@@ -568,7 +570,7 @@ export class AdminService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.logger.error('Error getting wallet stats:', errorMessage);
-      
+
       return {
         totalBalance: 0,
         ownerBalance: 0,
@@ -644,8 +646,11 @@ export class AdminService {
    * Generate QR URL for admin to transfer money to user
    */
   private generatePayoutQrUrl(payout: AdminPayoutEntity): string {
-    const qrTemplate = this.configService.get('SEPAY_TEMPLATE_QR', 'https://qr.sepay.vn/img?acc={account}&bank={bank}&amount={amount}&des={content}&template=compact');
-    
+    const qrTemplate = this.configService.get(
+      'SEPAY_TEMPLATE_QR',
+      'https://qr.sepay.vn/img?acc={account}&bank={bank}&amount={amount}&des={content}&template=compact',
+    );
+
     // Generate content for payout tracking
     const payoutId = payout.id || 'UNKNOWN';
     const content = `PAYOUT${payoutId.substring(0, 8).toUpperCase()}`;
@@ -659,7 +664,7 @@ export class AdminService {
       .replace('{content}', content);
 
     this.logger.log(`Generated QR for payout ${payoutId}: ${content}`);
-    
+
     return qrUrl;
   }
 
@@ -684,39 +689,43 @@ export class AdminService {
       try {
         // Generate expected content for matching
         const expectedContent = `PAYOUT${payoutId.substring(0, 8).toUpperCase()}`;
-        const detected = await this.pollOutgoingTransaction(amount, recipientAccount, expectedContent);
-        
+        const detected = await this.pollOutgoingTransaction(
+          amount,
+          recipientAccount,
+          expectedContent,
+        );
+
         if (detected) {
           this.logger.log(`✅ Transaction detected for payout ${payoutId}! Auto-completing...`);
-          
+
           // Mark as transferred (using dummy admin ID for auto-complete)
           await this.payoutsRepository.markTransferred(
             payoutId,
             'SYSTEM_AUTO',
             `Auto-detected transfer to ${recipientAccount}`,
           );
-          
+
           // Process wallet deduction
           try {
             if (!userId || !walletId) {
-              this.logger.error(`Cannot deduct wallet: missing userId or walletId for payout ${payoutId}`);
+              this.logger.error(
+                `Cannot deduct wallet: missing userId or walletId for payout ${payoutId}`,
+              );
               return true;
             }
-            await this.walletsService.processPayoutTransfer(
-              payoutId,
-              userId,
-              walletId,
-              amount,
-            );
+            await this.walletsService.processPayoutTransfer(payoutId, userId, walletId, amount);
             this.logger.log(`Wallet balance deducted for auto-completed payout ${payoutId}`);
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
-            this.logger.error(`Failed to deduct wallet for auto-completed payout ${payoutId}:`, errorMessage);
+            this.logger.error(
+              `Failed to deduct wallet for auto-completed payout ${payoutId}:`,
+              errorMessage,
+            );
           }
-          
+
           return true;
         }
-        
+
         return false;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
@@ -728,14 +737,14 @@ export class AdminService {
     // Poll repeatedly
     while (Date.now() - startTime < maxDuration) {
       const detected = await poll();
-      
+
       if (detected) {
         this.logger.log(`Auto-complete successful for payout ${payoutId}`);
         return;
       }
 
       // Wait before next poll
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
 
     this.logger.log(`Auto-polling timeout for payout ${payoutId} (no transaction detected)`);
@@ -784,7 +793,9 @@ export class AdminService {
       }
 
       // Log transactions for debugging
-      this.logger.log(`Checking ${transactions.length} transactions for payout content: ${expectedContent}`);
+      this.logger.log(
+        `Checking ${transactions.length} transactions for payout content: ${expectedContent}`,
+      );
 
       // Look for OUTGOING transaction matching amount AND content
       // Note: For payout verification, we only check amount + content (content is unique per payout)
@@ -793,15 +804,19 @@ export class AdminService {
         // Check if it's an outgoing transaction (amount_out field)
         const txnAmountOut = parseFloat(txn.amount_out || '0');
         const txnContent = txn.transaction_content || txn.description || '';
-        
+
         // Match amount and transaction content
         const amountMatch = txnAmountOut === amount;
         const contentMatch = txnContent.toLowerCase().includes(expectedContent.toLowerCase());
-        
-        this.logger.log(`Transaction ${txn.id}: amount_out=${txnAmountOut}, content="${txnContent}", amountMatch=${amountMatch}, contentMatch=${contentMatch}`);
-        
+
+        this.logger.log(
+          `Transaction ${txn.id}: amount_out=${txnAmountOut}, content="${txnContent}", amountMatch=${amountMatch}, contentMatch=${contentMatch}`,
+        );
+
         if (amountMatch && contentMatch) {
-          this.logger.log(`✅ Found matching outgoing transaction: ${txn.id}, amount: ${txnAmountOut}, content: ${txnContent}`);
+          this.logger.log(
+            `✅ Found matching outgoing transaction: ${txn.id}, amount: ${txnAmountOut}, content: ${txnContent}`,
+          );
           return true;
         }
       }

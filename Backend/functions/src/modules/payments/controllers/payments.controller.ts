@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Param,
-  Body,
-  UseGuards,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Param, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
 import { Roles } from '../../../core/decorators/roles.decorator';
@@ -33,7 +25,7 @@ export class PaymentsController {
     @Body() dto: CreatePaymentDto,
   ) {
     const payment = await this.paymentsService.createPayment(customerId, orderId, dto);
-    
+
     return {
       message: 'Payment created successfully',
       payment: {
@@ -55,17 +47,12 @@ export class PaymentsController {
   @Post(':orderId/payment/verify')
   @Roles(UserRole.CUSTOMER)
   @HttpCode(HttpStatus.OK)
-  async verifyPayment(
-    @CurrentUser('uid') customerId: string,
-    @Param('orderId') orderId: string,
-  ) {
+  async verifyPayment(@CurrentUser('uid') customerId: string, @Param('orderId') orderId: string) {
     const result = await this.paymentsService.verifyPayment(customerId, orderId);
-    
+
     return {
       matched: result.matched,
-      message: result.matched 
-        ? 'Payment verified successfully' 
-        : 'Payment not yet confirmed',
+      message: result.matched ? 'Payment verified successfully' : 'Payment not yet confirmed',
       payment: {
         id: result.payment.id,
         status: result.payment.status,

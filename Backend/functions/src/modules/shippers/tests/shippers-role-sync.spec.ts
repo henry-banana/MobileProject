@@ -7,7 +7,10 @@ import { ShopsService } from '../../shops/services/shops.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { StorageService } from '../../../shared/services/storage.service';
 import { NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
-import { ShipperApplicationEntity, ApplicationStatus } from '../entities/shipper-application.entity';
+import {
+  ShipperApplicationEntity,
+  ApplicationStatus,
+} from '../entities/shipper-application.entity';
 import { Firestore } from '@google-cloud/firestore';
 import { WalletsService } from '../../wallets/wallets.service';
 
@@ -171,12 +174,9 @@ describe('ShippersService - Role Synchronization', () => {
       await service.approveApplication(ownerId, mockShipperApp.id);
 
       // Verify custom claims was updated to SHIPPER
-      expect(firebaseService.auth.setCustomUserClaims).toHaveBeenCalledWith(
-        mockShipperApp.userId,
-        {
-          role: 'SHIPPER',
-        }
-      );
+      expect(firebaseService.auth.setCustomUserClaims).toHaveBeenCalledWith(mockShipperApp.userId, {
+        role: 'SHIPPER',
+      });
     });
 
     it('should log error if custom claims update fails but NOT throw', async () => {
@@ -185,7 +185,7 @@ describe('ShippersService - Role Synchronization', () => {
       shopsService.getMyShop.mockResolvedValueOnce(mockShop as any);
       shippersRepository.findApplicationById.mockResolvedValueOnce(mockShipperApp);
       (firebaseService.auth.setCustomUserClaims as jest.Mock).mockRejectedValueOnce(
-        new Error('Firebase error')
+        new Error('Firebase error'),
       );
 
       // P0-FIX: approveApplication should NOT throw when claims sync fails
@@ -200,9 +200,9 @@ describe('ShippersService - Role Synchronization', () => {
       shopsService.getMyShop.mockResolvedValueOnce(mockShop as any);
       shippersRepository.findApplicationById.mockResolvedValueOnce(null);
 
-      await expect(
-        service.approveApplication(ownerId, 'nonexistent_app')
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.approveApplication(ownerId, 'nonexistent_app')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw if owner does not own shop', async () => {
@@ -213,7 +213,7 @@ describe('ShippersService - Role Synchronization', () => {
       shippersRepository.findApplicationById.mockResolvedValueOnce(appWithDifferentShop);
 
       await expect(service.approveApplication(ownerId, appWithDifferentShop.id)).rejects.toThrow(
-        ForbiddenException
+        ForbiddenException,
       );
     });
 
@@ -225,7 +225,7 @@ describe('ShippersService - Role Synchronization', () => {
       shippersRepository.findApplicationById.mockResolvedValueOnce(approvedApp);
 
       await expect(service.approveApplication(ownerId, approvedApp.id)).rejects.toThrow(
-        ConflictException
+        ConflictException,
       );
     });
   });
@@ -276,11 +276,11 @@ describe('ShippersService - Role Synchronization', () => {
       shopsService.getMyShop.mockResolvedValueOnce(mockShop as any);
       usersService.getProfile.mockResolvedValueOnce(shipperUser as any);
       (firebaseService.auth.setCustomUserClaims as jest.Mock).mockRejectedValueOnce(
-        new Error('Firebase error')
+        new Error('Firebase error'),
       );
 
       await expect(service.removeShipper(ownerId, shipperId)).rejects.toThrow(
-        /Failed to sync Firebase custom claims/
+        /Failed to sync Firebase custom claims/,
       );
     });
 
@@ -311,9 +311,7 @@ describe('ShippersService - Role Synchronization', () => {
       shopsService.getMyShop.mockResolvedValueOnce(mockShop as any);
       usersService.getProfile.mockResolvedValueOnce(shipperUser as any);
 
-      await expect(service.removeShipper(ownerId, shipperId)).rejects.toThrow(
-        ForbiddenException
-      );
+      await expect(service.removeShipper(ownerId, shipperId)).rejects.toThrow(ForbiddenException);
     });
   });
 });

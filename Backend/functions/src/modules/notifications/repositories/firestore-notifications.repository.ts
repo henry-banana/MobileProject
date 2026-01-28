@@ -87,7 +87,7 @@ export class FirestoreNotificationsRepository implements INotificationsRepositor
 
     // Write cleaned entity to Firestore (no undefined values)
     await docRef.set(entity);
-    
+
     // Return entity with only defined fields
     return cleanUndefinedValues(entity) as NotificationEntity;
   }

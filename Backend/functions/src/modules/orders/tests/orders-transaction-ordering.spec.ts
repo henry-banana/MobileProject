@@ -6,7 +6,11 @@ import { VouchersService } from '../../vouchers/vouchers.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { IProductsRepository } from '../../products/interfaces';
 import { IShopsRepository } from '../../shops/interfaces';
-import { IAddressesRepository, ADDRESSES_REPOSITORY, USERS_REPOSITORY } from '../../users/interfaces';
+import {
+  IAddressesRepository,
+  ADDRESSES_REPOSITORY,
+  USERS_REPOSITORY,
+} from '../../users/interfaces';
 import { OrderStateMachineService } from '../services/order-state-machine.service';
 import { ConfigService } from '../../../core/config/config.service';
 import { FirebaseService } from '../../../core/firebase/firebase.service';
@@ -165,9 +169,7 @@ describe('Orders - Firestore Transaction Ordering', () => {
 
       // Mock repository createOrderAndClearCartGroup
       // This should NOT throw "reads after writes" error
-      mockOrdersRepo.createOrderAndClearCartGroup = jest
-        .fn()
-        .mockResolvedValue(mockOrderEntity);
+      mockOrdersRepo.createOrderAndClearCartGroup = jest.fn().mockResolvedValue(mockOrderEntity);
 
       const dto: CreateOrderDto = {
         shopId,

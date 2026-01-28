@@ -1,11 +1,18 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { OrderStateMachineService, OrdersService } from './services';
-import { FirestoreOrdersRepository } from './repositories';
+import {
+  OrderStateMachineService,
+  OrdersService,
+  ReviewsService,
+  REVIEWS_REPOSITORY,
+} from './services';
+import { FirestoreOrdersRepository, FirestoreReviewsRepository } from './repositories';
 import {
   OrdersController,
   OrdersOwnerController,
   OrdersShipperController,
   OrdersAdminController,
+  ReviewsController,
+  OwnerReviewsController,
 } from './controllers';
 import { ProductsModule } from '../products/products.module';
 import { ShopsModule } from '../shops/shops.module';
@@ -35,15 +42,28 @@ import { ORDERS_REPOSITORY } from './interfaces';
     OrdersShipperController,
     OrdersAdminController,
     OrdersController,
+    ReviewsController,
+    OwnerReviewsController,
   ],
   providers: [
     OrderStateMachineService,
     OrdersService,
+    ReviewsService,
     {
       provide: ORDERS_REPOSITORY,
       useClass: FirestoreOrdersRepository,
     },
+    {
+      provide: REVIEWS_REPOSITORY,
+      useClass: FirestoreReviewsRepository,
+    },
   ],
-  exports: [OrderStateMachineService, OrdersService, ORDERS_REPOSITORY],
+  exports: [
+    OrderStateMachineService,
+    OrdersService,
+    ReviewsService,
+    ORDERS_REPOSITORY,
+    REVIEWS_REPOSITORY,
+  ],
 })
 export class OrdersModule {}

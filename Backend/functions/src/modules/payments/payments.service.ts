@@ -147,9 +147,7 @@ export class PaymentsService {
       await this.ordersRepo.update(orderId, {
         paymentStatus: OrderPaymentStatus.PROCESSING,
       });
-      this.logger.log(
-        `Order ${order.orderNumber} payment initiated (${dto.method})`,
-      );
+      this.logger.log(`Order ${order.orderNumber} payment initiated (${dto.method})`);
     }
 
     return payment;
@@ -203,7 +201,7 @@ export class PaymentsService {
     content: string,
   ): string {
     const template = this.configService.sePayQrTemplate;
-    
+
     return template
       .replace('{account}', accountNumber)
       .replace('{bank}', bankCode)
@@ -348,9 +346,7 @@ export class PaymentsService {
           .includes(expectedContent.toLowerCase());
 
         if (amountMatch && contentMatch) {
-          this.logger.log(
-            `SEPAY transaction matched: ${txn.transaction_content}`,
-          );
+          this.logger.log(`SEPAY transaction matched: ${txn.transaction_content}`);
           return true;
         }
       }
@@ -378,7 +374,7 @@ export class PaymentsService {
 
     // Find payment for this order
     const payment = await this.paymentsRepo.findByOrderId(orderId);
-    
+
     if (!payment) {
       this.logger.warn(`Payment not found for order ${orderId}, skipping confirmation`);
       return;

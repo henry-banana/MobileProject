@@ -206,7 +206,7 @@ describe('OrdersService - Owner List DTO Mapping', () => {
       expect(dto.itemCount).toBe(5); // Total items
       expect(dto.itemsPreview).toHaveLength(3); // Max preview
       expect(dto.itemsPreviewCount).toBe(3);
-      
+
       // Verify first 3 items are in preview
       expect(dto.itemsPreview![0].productName).toBe('Cơm Tấm Sườn');
       expect(dto.itemsPreview![1].productName).toBe('Cơm Tấm Bì');
@@ -536,11 +536,14 @@ describe('OrdersService - Owner List DTO Mapping', () => {
       };
 
       const shipperMap = new Map([
-        ['shipper_resolved_123', {
-          id: 'shipper_resolved_123',
-          displayName: 'Resolved Shipper',
-          phone: '0999888777',
-        }],
+        [
+          'shipper_resolved_123',
+          {
+            id: 'shipper_resolved_123',
+            displayName: 'Resolved Shipper',
+            phone: '0999888777',
+          },
+        ],
       ]);
 
       const dto = service['mapToListDto'](order, shipperMap);
@@ -590,11 +593,14 @@ describe('OrdersService - Owner List DTO Mapping', () => {
       };
 
       const shipperMap = new Map([
-        ['shipper_123', {
-          id: 'shipper_123',
-          displayName: 'Map Shipper (should be ignored)',
-          phone: '0988999000',
-        }],
+        [
+          'shipper_123',
+          {
+            id: 'shipper_123',
+            displayName: 'Map Shipper (should be ignored)',
+            phone: '0988999000',
+          },
+        ],
       ]);
 
       const dto = service['mapToListDto'](order, shipperMap);
@@ -678,11 +684,14 @@ describe('OrdersService - Owner List DTO Mapping', () => {
       };
 
       const customerMap = new Map([
-        ['user_cust_legacy_123', {
-          id: 'user_cust_legacy_123',
-          displayName: 'Resolved Customer',
-          phone: '0901111111',
-        }],
+        [
+          'user_cust_legacy_123',
+          {
+            id: 'user_cust_legacy_123',
+            displayName: 'Resolved Customer',
+            phone: '0901111111',
+          },
+        ],
       ]);
 
       const shipperMap = new Map();
@@ -729,11 +738,14 @@ describe('OrdersService - Owner List DTO Mapping', () => {
       };
 
       const customerMap = new Map([
-        ['user_cust_no_phone', {
-          id: 'user_cust_no_phone',
-          displayName: 'Customer No Phone',
-          // phone field is undefined
-        }],
+        [
+          'user_cust_no_phone',
+          {
+            id: 'user_cust_no_phone',
+            displayName: 'Customer No Phone',
+            // phone field is undefined
+          },
+        ],
       ]);
 
       const shipperMap = new Map();
@@ -785,11 +797,14 @@ describe('OrdersService - Owner List DTO Mapping', () => {
       };
 
       const customerMap = new Map([
-        ['user_cust_priority_123', {
-          id: 'user_cust_priority_123',
-          displayName: 'Map Customer (should be ignored)',
-          phone: '0933333333',
-        }],
+        [
+          'user_cust_priority_123',
+          {
+            id: 'user_cust_priority_123',
+            displayName: 'Map Customer (should be ignored)',
+            phone: '0933333333',
+          },
+        ],
       ]);
 
       const shipperMap = new Map();
@@ -838,19 +853,25 @@ describe('OrdersService - Owner List DTO Mapping', () => {
       };
 
       const customerMap = new Map([
-        ['user_cust_both_001', {
-          id: 'user_cust_both_001',
-          displayName: 'Customer From Map',
-          phone: '0944444444',
-        }],
+        [
+          'user_cust_both_001',
+          {
+            id: 'user_cust_both_001',
+            displayName: 'Customer From Map',
+            phone: '0944444444',
+          },
+        ],
       ]);
 
       const shipperMap = new Map([
-        ['shipper_resolved_456', {
-          id: 'shipper_resolved_456',
-          displayName: 'Shipper From Map',
-          phone: '0955555555',
-        }],
+        [
+          'shipper_resolved_456',
+          {
+            id: 'shipper_resolved_456',
+            displayName: 'Shipper From Map',
+            phone: '0955555555',
+          },
+        ],
       ]);
 
       const dto = service['mapToListDto'](order, shipperMap, customerMap);

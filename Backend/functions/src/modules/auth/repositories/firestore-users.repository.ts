@@ -123,10 +123,10 @@ export class FirestoreUsersRepository
 
   /**
    * Find user by email, excluding soft-deleted accounts
-   * 
+   *
    * Returns users with status in [ACTIVE, BANNED] only.
    * Excludes DELETED users to allow re-registration after account deletion.
-   * 
+   *
    * IMPORTANT: Soft-deleted users (status=DELETED) are excluded from registration
    * uniqueness checks, allowing re-registration with the same email.
    * However, BANNED users still block registration (can be unbanned later).
@@ -147,10 +147,10 @@ export class FirestoreUsersRepository
 
   /**
    * Find user by phone, excluding soft-deleted accounts
-   * 
+   *
    * Returns users with status in [ACTIVE, BANNED] only.
    * Excludes DELETED users to allow re-registration after account deletion.
-   * 
+   *
    * IMPORTANT: Soft-deleted users (status=DELETED) are excluded from registration
    * uniqueness checks, allowing re-registration with the same phone.
    * However, BANNED users still block registration (can be unbanned later).

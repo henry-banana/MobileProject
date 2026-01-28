@@ -756,7 +756,11 @@ export class OrdersService {
    * ORDER-009: Owner cancels order
    * Can only cancel from CONFIRMED or PREPARING status
    */
-  async ownerCancelOrder(ownerId: string, orderId: string, reason?: string): Promise<OrderEntity | null> {
+  async ownerCancelOrder(
+    ownerId: string,
+    orderId: string,
+    reason?: string,
+  ): Promise<OrderEntity | null> {
     // 1. Get order
     const order = await this.ordersRepo.findById(orderId);
     if (!order) {
@@ -1398,10 +1402,7 @@ export class OrdersService {
     // 8. Process payout (atomic transaction)
     // Only payout if order is PAID and not already paid out
     // P0-FIX: processOrderPayout now handles Order.paidOut update atomically
-    if (
-      deliveredOrder.paymentStatus === PaymentStatus.PAID &&
-      !deliveredOrder.paidOut
-    ) {
+    if (deliveredOrder.paymentStatus === PaymentStatus.PAID && !deliveredOrder.paidOut) {
       try {
         const shop = await this.shopsRepo.findById(order.shopId);
         if (!shop?.ownerId) {

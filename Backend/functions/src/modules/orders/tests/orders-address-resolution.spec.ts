@@ -72,7 +72,13 @@ describe('OrdersService - Address Resolution', () => {
         { provide: USERS_REPOSITORY, useValue: { findById: jest.fn() } },
         { provide: VouchersService, useValue: mockVouchersService },
         { provide: NotificationsService, useValue: mockNotificationsService },
-        { provide: WalletsService, useValue: { processOrderPayout: jest.fn().mockResolvedValue(undefined), updateBalance: jest.fn().mockResolvedValue(undefined) } },
+        {
+          provide: WalletsService,
+          useValue: {
+            processOrderPayout: jest.fn().mockResolvedValue(undefined),
+            updateBalance: jest.fn().mockResolvedValue(undefined),
+          },
+        },
         { provide: OrderStateMachineService, useValue: mockStateMachine },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: FirebaseService, useValue: mockFirebaseService },

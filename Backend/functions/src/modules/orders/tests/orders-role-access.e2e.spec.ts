@@ -1,10 +1,10 @@
 /**
  * Role-based Endpoint Access Test
- * 
+ *
  * Tests to verify role-based access control behavior for orders endpoints:
  * - What happens when CUSTOMER tries to access OWNER/SHIPPER endpoints?
  * - Do they get 403 Forbidden (role denied) or 404 Not Found (endpoint hidden)?
- * 
+ *
  * NOTE: These are template tests. Actual e2e testing requires Firebase tokens.
  */
 
@@ -62,4 +62,3 @@ describe('Orders - Role-Based Access Control (e2e) [Template]', () => {
     });
   });
 });
-

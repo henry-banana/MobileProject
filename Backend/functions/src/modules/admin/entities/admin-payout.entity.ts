@@ -34,7 +34,7 @@ export interface AdminPayoutEntity extends IBaseEntity {
 
   /** Wallet ID */
   walletId: string;
-  
+
   /** Wallet type */
   walletType?: string;
 
@@ -43,10 +43,10 @@ export interface AdminPayoutEntity extends IBaseEntity {
 
   /** Bank code (e.g., ICB, MB, VCB) */
   bankCode: string;
-  
+
   /** Account number */
   accountNumber: string;
-  
+
   /** Account name */
   accountName: string;
 

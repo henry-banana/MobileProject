@@ -233,7 +233,7 @@ export class ShippersService {
       // Check if already approved (idempotent)
       const appDoc = await transaction.get(appRef);
       const currentApp = appDoc.data() as any;
-      
+
       if (currentApp.status === ApplicationStatus.APPROVED) {
         // Already approved, skip Firestore update (will still sync claims below)
         this.logger.log(`Application ${applicationId} already approved (idempotent)`);
@@ -280,41 +280,44 @@ export class ShippersService {
       await this.firebaseService.auth.setCustomUserClaims(app.userId, {
         role: 'SHIPPER',
       });
-      
+
       // Mark claims sync as successful
       await this.firestore.collection('users').doc(app.userId).update({
         claimsSyncStatus: 'OK',
         claimsSyncedAt: FieldValue.serverTimestamp(),
       });
-      
+
       this.logger.log(`Claims synced successfully for shipper ${app.userId}`);
     } catch (error) {
       // P0-FIX: DO NOT THROW - this would fail the API even though data is committed
       // Instead: log error and mark status for manual/automatic retry
-      const errorMsg = `Failed to sync Firebase custom claims for shipper ${app.userId} after approval. ` +
+      const errorMsg =
+        `Failed to sync Firebase custom claims for shipper ${app.userId} after approval. ` +
         `User has role SHIPPER in Firestore but claims not updated. ` +
         `User should re-login or admin should retry sync.`;
-      
+
       this.logger.error(errorMsg, error);
-      
+
       // Mark status as FAILED for backfill/retry
-      await this.firestore.collection('users').doc(app.userId).update({
-        claimsSyncStatus: 'FAILED',
-        claimsSyncError: error instanceof Error ? error.message : String(error),
-      }).catch(err => {
-        this.logger.error(`Failed to update claimsSyncStatus: ${err}`);
-      });
-      
+      await this.firestore
+        .collection('users')
+        .doc(app.userId)
+        .update({
+          claimsSyncStatus: 'FAILED',
+          claimsSyncError: error instanceof Error ? error.message : String(error),
+        })
+        .catch((err) => {
+          this.logger.error(`Failed to update claimsSyncStatus: ${err}`);
+        });
+
       // DO NOT THROW - approval succeeded, just claims sync failed
       // API returns success, shipper can re-login to get fresh claims
     }
 
     // Initialize shipper wallet (non-blocking, best-effort)
-    this.walletsService
-      .initializeWallet(app.userId, WalletType.SHIPPER)
-      .catch((err) => {
-        console.error(`Failed to initialize shipper wallet for ${app.userId}:`, err);
-      });
+    this.walletsService.initializeWallet(app.userId, WalletType.SHIPPER).catch((err) => {
+      console.error(`Failed to initialize shipper wallet for ${app.userId}:`, err);
+    });
 
     // Notify shipper about approval
     try {

@@ -15,7 +15,7 @@ export class PaymentsRepository implements IPaymentsRepository {
   async create(payment: Omit<PaymentEntity, 'id'>): Promise<PaymentEntity> {
     const docRef = this.firestore.collection(this.collection).doc();
     const now = Timestamp.now();
-    
+
     const data = {
       ...payment,
       createdAt: now,
@@ -32,7 +32,7 @@ export class PaymentsRepository implements IPaymentsRepository {
 
   async findById(id: string): Promise<PaymentEntity | null> {
     const doc = await this.firestore.collection(this.collection).doc(id).get();
-    
+
     if (!doc.exists) {
       return null;
     }

@@ -1,9 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  ForbiddenException,
-  ConflictException,
-} from '@nestjs/common';
+import { NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { Timestamp } from 'firebase-admin/firestore';
 import { OrdersService } from './orders.service';
 import { OrderStateMachineService } from './order-state-machine.service';
@@ -14,11 +10,7 @@ import { ConfigService } from '../../../core/config/config.service';
 import { FirebaseService } from '../../../core/firebase/firebase.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 import { USERS_REPOSITORY } from '../../users/interfaces';
-import {
-  OrderEntity,
-  OrderStatus,
-  PaymentStatus,
-} from '../entities';
+import { OrderEntity, OrderStatus, PaymentStatus } from '../entities';
 
 describe('OrdersService - Owner Flow', () => {
   let service: OrdersService;
@@ -262,9 +254,7 @@ describe('OrdersService - Owner Flow', () => {
 
       ordersRepo.findById.mockResolvedValueOnce(null);
 
-      await expect(
-        service.ownerCancelOrder(ownerId, orderId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.ownerCancelOrder(ownerId, orderId)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException when owner does not own the shop', async () => {
@@ -276,9 +266,7 @@ describe('OrdersService - Owner Flow', () => {
       ordersRepo.findById.mockResolvedValueOnce(confirmedOrder);
       shopsRepo.findById.mockResolvedValueOnce(mockShop);
 
-      await expect(
-        service.ownerCancelOrder(ownerId, orderId),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.ownerCancelOrder(ownerId, orderId)).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw ConflictException when order is in READY status', async () => {
@@ -290,9 +278,7 @@ describe('OrdersService - Owner Flow', () => {
       ordersRepo.findById.mockResolvedValueOnce(readyOrder);
       shopsRepo.findById.mockResolvedValueOnce(mockShop);
 
-      await expect(
-        service.ownerCancelOrder(ownerId, orderId),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.ownerCancelOrder(ownerId, orderId)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException when order is in SHIPPING status', async () => {
@@ -304,9 +290,7 @@ describe('OrdersService - Owner Flow', () => {
       ordersRepo.findById.mockResolvedValueOnce(shippingOrder);
       shopsRepo.findById.mockResolvedValueOnce(mockShop);
 
-      await expect(
-        service.ownerCancelOrder(ownerId, orderId),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.ownerCancelOrder(ownerId, orderId)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException when order is DELIVERED', async () => {
@@ -318,9 +302,7 @@ describe('OrdersService - Owner Flow', () => {
       ordersRepo.findById.mockResolvedValueOnce(deliveredOrder);
       shopsRepo.findById.mockResolvedValueOnce(mockShop);
 
-      await expect(
-        service.ownerCancelOrder(ownerId, orderId),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.ownerCancelOrder(ownerId, orderId)).rejects.toThrow(ConflictException);
     });
 
     it('should throw ConflictException when order is already CANCELLED', async () => {
@@ -332,9 +314,7 @@ describe('OrdersService - Owner Flow', () => {
       ordersRepo.findById.mockResolvedValueOnce(cancelledOrder);
       shopsRepo.findById.mockResolvedValueOnce(mockShop);
 
-      await expect(
-        service.ownerCancelOrder(ownerId, orderId),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.ownerCancelOrder(ownerId, orderId)).rejects.toThrow(ConflictException);
     });
 
     it('should set default reason when not provided', async () => {
@@ -374,9 +354,7 @@ describe('OrdersService - Owner Flow', () => {
       shopsRepo.findById.mockResolvedValueOnce(mockShop);
 
       // Second call should fail because order is already cancelled
-      await expect(
-        service.ownerCancelOrder(ownerId, orderId),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.ownerCancelOrder(ownerId, orderId)).rejects.toThrow(ConflictException);
     });
 
     it('should trigger refund if order is already paid', async () => {
@@ -421,9 +399,7 @@ describe('OrdersService - Owner Flow', () => {
       ordersRepo.findById.mockResolvedValueOnce(confirmedOrder);
       shopsRepo.findById.mockResolvedValueOnce(null);
 
-      await expect(
-        service.ownerCancelOrder(ownerId, orderId),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.ownerCancelOrder(ownerId, orderId)).rejects.toThrow(ForbiddenException);
     });
   });
 });

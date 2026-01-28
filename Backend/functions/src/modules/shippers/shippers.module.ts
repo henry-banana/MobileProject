@@ -12,7 +12,14 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { WalletsModule } from '../wallets/wallets.module';
 
 @Module({
-  imports: [FirebaseModule, UsersModule, ShopsModule, SharedModule, NotificationsModule, WalletsModule],
+  imports: [
+    FirebaseModule,
+    UsersModule,
+    ShopsModule,
+    SharedModule,
+    NotificationsModule,
+    WalletsModule,
+  ],
   controllers: [
     ShipperApplicationsController,
     OwnerShippersController,

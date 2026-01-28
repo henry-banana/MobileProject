@@ -1,10 +1,10 @@
 /**
  * Orders Detail Endpoints Test
- * 
+ *
  * Unit tests for OWNER and SHIPPER order detail endpoints:
  * - GET /api/orders/shop/:id (OWNER)
  * - GET /api/orders/shipper/:id (SHIPPER)
- * 
+ *
  * Tests cover:
  * - Authorization (403 for wrong role, 404 for missing order)
  * - Response structure (no double wrap)
@@ -115,10 +115,7 @@ describe('Orders Detail Endpoints', () => {
     it('should return full order detail for owner', async () => {
       ordersService.getShopOrderDetail.mockResolvedValue(mockOrderEntity as any);
 
-      const result = await ownerController.getShopOrderDetail(
-        mockRequest,
-        'order_abc123def456',
-      );
+      const result = await ownerController.getShopOrderDetail(mockRequest, 'order_abc123def456');
 
       expect(result).toEqual(mockOrderEntity);
       expect(ordersService.getShopOrderDetail).toHaveBeenCalledWith(
@@ -158,10 +155,7 @@ describe('Orders Detail Endpoints', () => {
     it('should include all order fields (full detail)', async () => {
       ordersService.getShopOrderDetail.mockResolvedValue(mockOrderEntity as any);
 
-      const result = await ownerController.getShopOrderDetail(
-        mockRequest,
-        'order_abc123def456',
-      );
+      const result = await ownerController.getShopOrderDetail(mockRequest, 'order_abc123def456');
 
       // Verify all required fields are present in new OwnerOrderDetailDto format
       expect(result.id).toBeDefined();
@@ -192,10 +186,7 @@ describe('Orders Detail Endpoints', () => {
     it('should NOT double wrap response', async () => {
       ordersService.getShopOrderDetail.mockResolvedValue(mockOrderEntity as any);
 
-      const result = await ownerController.getShopOrderDetail(
-        mockRequest,
-        'order_abc123def456',
-      );
+      const result = await ownerController.getShopOrderDetail(mockRequest, 'order_abc123def456');
 
       // Verify result is OwnerOrderDetailDto (not wrapped in additional layer)
       expect(result).toHaveProperty('id');
