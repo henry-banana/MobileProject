@@ -22,6 +22,7 @@ import { VouchersModule } from './modules/vouchers/vouchers.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -60,6 +61,9 @@ import { WalletsModule } from './modules/wallets/wallets.module';
     // EPIC 06: Payments & Wallets ✅
     PaymentsModule,
     WalletsModule,
+
+    // AI Features
+    ChatbotModule,
   ],
 })
 export class AppModule {}

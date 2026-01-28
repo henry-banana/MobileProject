@@ -141,4 +141,3 @@ export const orphanFilesCleanup = onSchedule(
     await runOrphanFilesCleanup(firestore);
   },
 );
-
