@@ -11,6 +11,7 @@ import { ConfigService } from '../../../core/config/config.service';
 import { FirebaseService } from '../../../core/firebase/firebase.service';
 import { WalletsService } from '../../wallets/wallets.service';
 import { PaymentsService } from '../../payments/payments.service';
+import { BuyersStatsService } from '../../buyers/services/buyers-stats.service';
 
 describe('OrdersService - Address Resolution', () => {
   let service: OrdersService;
@@ -87,6 +88,14 @@ describe('OrdersService - Address Resolution', () => {
         { provide: OrderStateMachineService, useValue: mockStateMachine },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: FirebaseService, useValue: mockFirebaseService },
+        {
+          provide: BuyersStatsService,
+          useValue: {
+            incrementOrderCount: jest.fn().mockResolvedValue(undefined),
+            updateTotalSpent: jest.fn().mockResolvedValue(undefined),
+            updateBuyerStatsOnDelivery: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
