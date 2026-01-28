@@ -25,6 +25,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { BuyersModule } from './modules/buyers/buyers.module';
 import { RevenueModule } from './modules/revenue/revenue.module';
+import { GpsModule } from './modules/gps/gps.module';
 
 @Module({
   imports: [
@@ -68,6 +69,9 @@ import { RevenueModule } from './modules/revenue/revenue.module';
 
     // AI Features
     ChatbotModule,
+
+    // GPS / Shipper Route Optimization ✅
+    GpsModule,
   ],
 })
 export class AppModule {}
