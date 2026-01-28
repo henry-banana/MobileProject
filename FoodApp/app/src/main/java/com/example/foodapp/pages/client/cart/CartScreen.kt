@@ -36,7 +36,8 @@ import com.example.foodapp.utils.CurrencyUtils
 fun CartScreen(
     navController: NavHostController,
     onBackClick: () -> Unit,
-    onCheckoutShop: (List<Product>, List<Int>, String, String) -> Unit = { _, _, _, _ -> }
+    onCheckoutShop: (List<Product>, List<Int>, String, String) -> Unit = { _, _, _, _ -> },
+    onViewUsedVouchers: () -> Unit = {}
 ) {
 
     val viewModel: CartViewModel = viewModel(
@@ -106,6 +107,20 @@ fun CartScreen(
                         }
                     },
                     actions = {
+                        // NEW: Nút Voucher đã dùng trong top bar (icon nhỏ)
+                        if (filteredShopGroups.isNotEmpty()) {
+                            IconButton(
+                                onClick = onViewUsedVouchers,
+                                enabled = cartState !is CartState.Loading
+                            ) {
+                                Icon(
+                                    Icons.Default.History,
+                                    contentDescription = "Voucher đã dùng",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+
                         // Nút Filter chỉ hiện khi có nhiều cửa hàng
                         if (shopGroups.size > 1) {
                             // Box để đặt dropdown
@@ -260,7 +275,6 @@ fun CartScreen(
                         CartBottomBar(
                             totalPrice = filteredGrandTotal,
                             formattedTotalPrice = filteredFormattedTotalAmount,
-                            totalShippingFee = filteredTotalShippingFee,
                             subtotal = filteredTotalAmount,
                             onCheckout = {
                                 handleCheckoutAll(filteredShopGroups, onCheckoutShop)
@@ -313,6 +327,13 @@ fun CartScreen(
                                 }
                             )
 
+                            // NEW: Thêm section Voucher đã dùng (chỉ hiện khi có sản phẩm)
+                            if (filteredShopGroups.isNotEmpty()) {
+                                UsedVoucherCard(
+                                    onViewUsedVouchers = onViewUsedVouchers
+                                )
+                            }
+
                             // Hiển thị sản phẩm theo từng shop
                             ShopGroupsContent(
                                 shopGroups = filteredShopGroups,
@@ -355,6 +376,74 @@ fun CartScreen(
                 deleteShopState = deleteShopState,
                 onConfirm = { viewModel.deleteShop() },
                 onDismiss = { viewModel.hideDeleteShopDialog() }
+            )
+        }
+    }
+}
+
+// NEW: Card hiển thị Voucher đã dùng
+@Composable
+private fun UsedVoucherCard(
+    onViewUsedVouchers: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onViewUsedVouchers
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Icon voucher
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(Color(0xFFFFF8E1), RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(10.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Discount,
+                    contentDescription = "Voucher đã dùng",
+                    tint = Color(0xFFFF9800),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            // Nội dung
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Voucher đã sử dụng",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "Xem lại các voucher bạn đã sử dụng",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+            }
+
+            // Mũi tên điều hướng
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = "Xem chi tiết",
+                tint = Color(0xFFFF9800),
+                modifier = Modifier.size(24.dp)
             )
         }
     }
@@ -551,23 +640,6 @@ private fun ShopFooterWithCheckout(
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "Phí vận chuyển:",
-                    fontSize = 13.sp,
-                    color = Color.Gray
-                )
-                Text(
-                    text = CurrencyUtils.formatCurrency(shopGroup.shipFee),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1233,7 +1305,6 @@ private fun ClearCartConfirmationDialog(
 private fun CartBottomBar(
     totalPrice: Double,
     formattedTotalPrice: String,
-    totalShippingFee: Double,
     subtotal: Double,
     onCheckout: () -> Unit
 ) {
@@ -1248,22 +1319,6 @@ private fun CartBottomBar(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    "Phí vận chuyển:",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-                Text(
-                    CurrencyUtils.formatCurrency(totalShippingFee),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 14.sp
-                )
-            }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween

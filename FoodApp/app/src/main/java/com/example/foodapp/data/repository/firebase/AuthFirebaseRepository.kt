@@ -33,29 +33,18 @@ class AuthManager(private val context: Context) {
 
     /**
      * Lưu Firebase ID Token với thời gian hết hạn
-     * @param idToken Firebase ID Token
-     * @param expiryTime Thời gian hết hạn (timestamp), mặc định 1 giờ
      */
     fun saveFirebaseToken(idToken: String, expiryTime: Long? = null) {
         try {
             val editor = authPrefs.edit()
-
-            // Save token
             editor.putString(KEY_FIREBASE_TOKEN, idToken)
 
-            // Save expiry time (default 1 hour if not provided)
             val expiry = expiryTime ?: (System.currentTimeMillis() + 60 * 60 * 1000)
             editor.putLong(KEY_TOKEN_EXPIRY, expiry)
-
-            // Save last refresh time
             editor.putLong(KEY_LAST_REFRESH, System.currentTimeMillis())
-
             editor.apply()
 
-            Log.d("AuthManager", "✅ Đã lưu Firebase ID Token")
-            Log.d("AuthManager", "   Token: ${idToken.take(10)}...")
-            Log.d("AuthManager", "   Hết hạn: ${Date(expiry)}")
-
+            Log.d("AuthManager", "✅ Đã lưu Firebase ID Token, hết hạn: ${Date(expiry)}")
         } catch (e: Exception) {
             Log.e("AuthManager", "❌ Lỗi khi lưu token", e)
         }
@@ -63,21 +52,16 @@ class AuthManager(private val context: Context) {
 
     /**
      * Kiểm tra token còn valid không
-     * @return true nếu token còn valid, false nếu không
      */
     fun isTokenValid(): Boolean {
         val token = authPrefs.getString(KEY_FIREBASE_TOKEN, null)
         val expiryTime = authPrefs.getLong(KEY_TOKEN_EXPIRY, 0)
 
-        // Token valid nếu tồn tại và chưa hết hạn (trừ buffer 5 phút)
         val isValid = !token.isNullOrEmpty() &&
                 (expiryTime - TOKEN_EXPIRY_BUFFER) > System.currentTimeMillis()
 
         if (!isValid) {
             Log.w("AuthManager", "⚠ Token không hợp lệ hoặc sắp hết hạn")
-            Log.w("AuthManager", "   Token exists: ${!token.isNullOrEmpty()}")
-            Log.w("AuthManager", "   Expiry time: ${Date(expiryTime)}")
-            Log.w("AuthManager", "   Current time: ${Date(System.currentTimeMillis())}")
         }
 
         return isValid
@@ -85,7 +69,6 @@ class AuthManager(private val context: Context) {
 
     /**
      * Lấy token hiện tại (nếu valid)
-     * @return Firebase ID Token hoặc null nếu không valid
      */
     fun getCurrentToken(): String? {
         return if (isTokenValid()) {
@@ -96,8 +79,7 @@ class AuthManager(private val context: Context) {
     }
 
     /**
-     * Refresh Firebase token
-     * @return New token hoặc null nếu refresh thất bại
+     * Refresh Firebase token (Firebase tự động refresh bằng getIdToken(true))
      */
     suspend fun refreshFirebaseToken(): String? {
         return try {
@@ -115,12 +97,8 @@ class AuthManager(private val context: Context) {
             val newToken = tokenResult.token
 
             if (newToken != null) {
-                // Lưu token mới với expiry time từ Firebase
                 saveFirebaseToken(newToken, tokenResult.expirationTimestamp)
                 Log.d("AuthManager", "✅ Đã refresh token mới")
-                Log.d("AuthManager", "   New expiry: ${Date(tokenResult.expirationTimestamp)}")
-            } else {
-                Log.e("AuthManager", "❌ Firebase trả về null token")
             }
 
             newToken
@@ -133,9 +111,10 @@ class AuthManager(private val context: Context) {
 
     /**
      * Lấy token valid (tự động refresh nếu cần)
-     * @return Valid token hoặc null nếu không thể lấy
      */
     suspend fun getValidToken(): String? {
+        Log.d("AuthManager", "🔍 Kiểm tra và lấy valid token...")
+
         // 1. Kiểm tra token hiện tại còn valid không
         if (isTokenValid()) {
             Log.d("AuthManager", "✅ Token còn valid, sử dụng token cache")
@@ -143,33 +122,21 @@ class AuthManager(private val context: Context) {
         }
 
         // 2. Token không valid, thử refresh
-        Log.d("AuthManager", "🔁 Token không valid, đang refresh...")
+        Log.d("AuthManager", "⚠ Token không valid, đang refresh...")
         return refreshFirebaseToken()
     }
 
-    /**
-     * Xử lý khi API trả về 401 (Unauthorized)
-     * @return true nếu refresh thành công, false nếu thất bại
-     */
-    suspend fun handleUnauthorizedError(): Boolean {
-        Log.d("AuthManager", "🔐 API trả 401, đang refresh token...")
-
-        // Thử refresh token
-        val newToken = refreshFirebaseToken()
-
-        return newToken != null
-    }
+    // ==================== AUTHENTICATION METHODS ====================
 
     fun signInWithCustomToken(customToken: String, callback: (Boolean, String?, Exception?) -> Unit) {
-        auth.signInWithCustomToken(customToken) //Lưu thông tin Firebase Auth
+        auth.signInWithCustomToken(customToken)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     auth.currentUser?.getIdToken(false)?.addOnCompleteListener { tokenTask ->
                         if (tokenTask.isSuccessful) {
                             val idToken = tokenTask.result?.token
-
                             if (idToken != null) {
-                                saveAuthToken(idToken)
+                                saveFirebaseToken(idToken, tokenTask.result?.expirationTimestamp)
                             }
                             callback(true, idToken, null)
                         } else {
@@ -182,28 +149,8 @@ class AuthManager(private val context: Context) {
             }
     }
 
-    // Hàm lưu token vào SharedPreferences
-    private fun saveAuthToken(token: String) {
-        val sharedPref = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
-        with(sharedPref.edit()) {
-            putString("firebase_id_token", token)
-            apply()
-        }
-
-        // Debug log
-        println("Token saved to SharedPreferences: ${token.take(10)}...")
-    }
-
     // ==================== USER MANAGEMENT ====================
 
-    /**
-     * Lưu thông tin user vào SharedPreferences
-     * @param userId User ID
-     * @param email User email
-     * @param name User display name
-     * @param role User role
-     * @param status User status
-     */
     fun saveUserInfo(userId: String, email: String, name: String, role: String, status: String) {
         try {
             val editor = userPrefs.edit()
@@ -215,16 +162,11 @@ class AuthManager(private val context: Context) {
             editor.apply()
 
             Log.d("AuthManager", "✅ Đã lưu thông tin user: $email")
-
         } catch (e: Exception) {
             Log.e("AuthManager", "❌ Lỗi khi lưu user info", e)
         }
     }
 
-    /**
-     * Kiểm tra user đã login chưa
-     * @return true nếu user đã login, false nếu chưa
-     */
     fun isUserLoggedIn(): Boolean {
         val userId = userPrefs.getString("user_id", null)
         val hasFirebaseUser = auth.currentUser != null
@@ -241,40 +183,22 @@ class AuthManager(private val context: Context) {
         return isLoggedIn
     }
 
-    /**
-     * Xóa toàn bộ auth data
-     */
     fun clearAuthData() {
-        // Clear SharedPreferences
         authPrefs.edit().clear().apply()
         userPrefs.edit().clear().apply()
-
-        // Sign out from Firebase
         auth.signOut()
 
         Log.d("AuthManager", "🧹 Đã xóa toàn bộ auth data và logout Firebase")
     }
 
-    /**
-     * Lấy user ID hiện tại
-     * @return User ID hoặc null nếu chưa login
-     */
     fun getCurrentUserId(): String? {
         return userPrefs.getString("user_id", null)
     }
 
-    /**
-     * Lấy user email hiện tại
-     * @return User email hoặc null nếu chưa login
-     */
     fun getCurrentUserEmail(): String? {
         return userPrefs.getString("user_email", null)
     }
 
-    /**
-     * Lấy thông tin user đầy đủ
-     * @return Map chứa thông tin user
-     */
     fun getUserInfo(): Map<String, String?> {
         return mapOf(
             "user_id" to userPrefs.getString("user_id", null),
@@ -285,23 +209,14 @@ class AuthManager(private val context: Context) {
         )
     }
 
-    /**
-     * Lấy thời gian token còn lại (tính bằng phút)
-     * @return Số phút còn lại trước khi token hết hạn, hoặc 0 nếu đã hết hạn
-     */
     fun getTokenRemainingMinutes(): Long {
         val expiryTime = authPrefs.getLong(KEY_TOKEN_EXPIRY, 0)
         val currentTime = System.currentTimeMillis()
 
         if (expiryTime <= currentTime) return 0
-
-        val remainingMillis = expiryTime - currentTime
-        return remainingMillis / (60 * 1000) // Convert to minutes
+        return (expiryTime - currentTime) / (60 * 1000)
     }
 
-    /**
-     * Debug: In thông tin token
-     */
     fun debugTokenInfo() {
         Log.d("AuthManager", "=== DEBUG TOKEN INFO ===")
         Log.d("AuthManager", "Token exists: ${authPrefs.contains(KEY_FIREBASE_TOKEN)}")

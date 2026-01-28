@@ -6,14 +6,10 @@ import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.io.IOException
 import com.example.foodapp.data.remote.api.ApiClient
-import com.example.foodapp.data.remote.client.ProductApiService
-import com.example.foodapp.data.remote.client.response.product.ProductFilterDto
+import com.example.foodapp.data.remote.client.response.product.*
 import com.example.foodapp.data.model.shared.product.Product
 import com.example.foodapp.data.remote.client.response.product.ApiResult
 import com.example.foodapp.data.remote.client.response.product.FavoriteProductsApiResponse
-import com.example.foodapp.data.remote.client.response.product.FavoriteQueryParams
-import com.example.foodapp.data.remote.client.response.product.CheckFavoriteResponse
-import javax.inject.Inject
 
 class ProductRepository {
 
@@ -245,141 +241,6 @@ class ProductRepository {
         }
     }
 
-    /**
-     * Lấy danh sách sản phẩm yêu thích dưới dạng danh sách Product
-     * @param params Đối tượng chứa thông tin phân trang
-     */
-    suspend fun getFavoriteProducts(
-        params: FavoriteQueryParams
-    ): ApiResult<List<Product>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                println("DEBUG: [ProductRepository] Getting favorite products with params: page=${params.page}, limit=${params.limit}")
-
-                val apiResponse = productService.getFavoriteProducts(params.page, params.limit)
-
-                if (apiResponse.isValid) {
-                    // Chuyển đổi sang list Product
-                    val products = if (apiResponse.data != null && apiResponse.data!!.data != null) {
-                        apiResponse.data!!.data.map { it.toProduct() }
-                    } else {
-                        emptyList()
-                    }
-                    println("DEBUG: [ProductRepository] Successfully got ${products.size} favorite products")
-                    ApiResult.Success(products)
-                } else {
-                    // Nếu API trả về success=true nhưng không có data, coi như empty list
-                    if (apiResponse.success) {
-                        println("DEBUG: [ProductRepository] No favorite products found (empty list)")
-                        ApiResult.Success(emptyList())
-                    } else {
-                        val errorMessage = apiResponse.message ?: "Không thể lấy danh sách yêu thích"
-                        println("DEBUG: [ProductRepository] Error: $errorMessage")
-                        ApiResult.Failure(Exception(errorMessage))
-                    }
-                }
-            } catch (e: IOException) {
-                println("DEBUG: [ProductRepository] IOException: ${e.message}")
-                e.printStackTrace()
-                ApiResult.Failure(
-                    Exception("Lỗi kết nối mạng: ${e.message}")
-                )
-            } catch (e: HttpException) {
-                println("DEBUG: [ProductRepository] HttpException ${e.code()}: ${e.message}")
-                val errorMsg = when (e.code()) {
-                    401 -> "Vui lòng đăng nhập để xem danh sách yêu thích"
-                    403 -> "Không có quyền truy cập"
-                    404 -> "Không tìm thấy danh sách yêu thích"
-                    500 -> "Lỗi server"
-                    else -> "Lỗi ${e.code()}: ${e.message}"
-                }
-                ApiResult.Failure(Exception(errorMsg))
-            } catch (e: Exception) {
-                println("DEBUG: [ProductRepository] Exception: ${e.message}")
-                e.printStackTrace()
-                ApiResult.Failure(
-                    Exception("Lỗi không xác định: ${e.message}")
-                )
-            }
-        }
-    }
-
-    /**
-     * Lấy danh sách ID sản phẩm yêu thích
-     * @return Danh sách ID sản phẩm yêu thích
-     */
-    suspend fun getFavoriteProductIds(): ApiResult<List<String>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                // Lấy trang đầu tiên với limit lớn để lấy tất cả ID
-                val apiResponse = productService.getFavoriteProducts(page = 1, limit = 100)
-
-                if (apiResponse.isValid) {
-                    // Lấy productIds trực tiếp từ response
-                    val productIds = if (apiResponse.data != null && apiResponse.data!!.data != null) {
-                        apiResponse.data!!.data.map { it.productId }
-                    } else {
-                        emptyList()
-                    }
-                    println("DEBUG: [ProductRepository] Got ${productIds.size} favorite product IDs")
-                    ApiResult.Success(productIds)
-                } else {
-                    // Nếu API trả về success=true nhưng không có data, trả về empty list
-                    if (apiResponse.success) {
-                        ApiResult.Success(emptyList())
-                    } else {
-                        ApiResult.Failure(Exception("Không thể lấy danh sách ID yêu thích"))
-                    }
-                }
-            } catch (e: IOException) {
-                println("DEBUG: [ProductRepository] IOException: ${e.message}")
-                ApiResult.Failure(
-                    Exception("Lỗi kết nối mạng: ${e.message}")
-                )
-            } catch (e: HttpException) {
-                if (e.code() == 401 || e.code() == 403) {
-                    // User chưa đăng nhập, trả về danh sách rỗng
-                    ApiResult.Success(emptyList())
-                } else {
-                    ApiResult.Failure(Exception("Lỗi ${e.code()}: ${e.message}"))
-                }
-            } catch (e: Exception) {
-                println("DEBUG: [ProductRepository] Exception: ${e.message}")
-                ApiResult.Failure(
-                    Exception("Lỗi không xác định: ${e.message}")
-                )
-            }
-        }
-    }
-
-    /**
-     * Kiểm tra sản phẩm có trong danh sách yêu thích không (Dùng danh sách local)
-     * @param productId ID sản phẩm cần kiểm tra
-     */
-    suspend fun isProductFavorite(productId: String): ApiResult<Boolean> {
-        return withContext(Dispatchers.IO) {
-            try {
-                // Lấy danh sách ID yêu thích
-                val result = getFavoriteProductIds()
-
-                when (result) {
-                    is ApiResult.Success -> {
-                        val isFavorite = result.data.contains(productId)
-                        println("DEBUG: [ProductRepository] isProductFavorite: $productId = $isFavorite")
-                        ApiResult.Success(isFavorite)
-                    }
-                    is ApiResult.Failure -> {
-                        ApiResult.Failure(result.exception)
-                    }
-                }
-            } catch (e: Exception) {
-                println("DEBUG: [ProductRepository] Exception in isProductFavorite: ${e.message}")
-                ApiResult.Failure(
-                    Exception("Lỗi kiểm tra yêu thích: ${e.message}")
-                )
-            }
-        }
-    }
 
     /**
      * Kiểm tra sản phẩm có trong danh sách yêu thích không (Dùng API check trực tiếp)
@@ -415,6 +276,61 @@ class ProductRepository {
                 val errorMsg = when (e.code()) {
                     401 -> "Vui lòng đăng nhập để kiểm tra trạng thái yêu thích"
                     404 -> "Không tìm thấy sản phẩm"
+                    500 -> "Lỗi server"
+                    else -> "Lỗi ${e.code()}: ${e.message}"
+                }
+                ApiResult.Failure(Exception(errorMsg))
+            } catch (e: Exception) {
+                println("DEBUG: [ProductRepository] Exception: ${e.message}")
+                e.printStackTrace()
+                ApiResult.Failure(
+                    Exception("Lỗi không xác định: ${e.message}")
+                )
+            }
+        }
+    }
+
+
+    suspend fun searchProductsList(
+        searchRequestDto: SearchProductsRequestDto
+    ): ApiResult<SearchProductsApiResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Kiểm tra query hợp lệ
+                if (!searchRequestDto.isValid) {
+                    return@withContext ApiResult.Failure(
+                        Exception("Query phải có ít nhất 2 ký tự")
+                    )
+                }
+
+                val apiResponse = productService.searchProducts(
+                    query = searchRequestDto.q,
+                    shopId = searchRequestDto.shoplid,
+                    categoryId = searchRequestDto.categoryld, 
+                    minPrice = searchRequestDto.minPrice,
+                    maxPrice = searchRequestDto.maxPrice,
+                    limit = searchRequestDto.limit
+                )
+
+                println("DEBUG: [ProductRepository] Search API Response success: ${apiResponse.success}")
+
+                if (apiResponse.isValid) {
+                    val productCount = apiResponse.data?.products?.size ?: 0
+                    ApiResult.Success(apiResponse)
+                } else {
+                    val errorMessage = "Không thể tìm kiếm sản phẩm"
+                    ApiResult.Failure(Exception(errorMessage))
+                }
+            } catch (e: IOException) {
+                println("DEBUG: [ProductRepository] IOException: ${e.message}")
+                e.printStackTrace()
+                ApiResult.Failure(
+                    Exception("Lỗi kết nối mạng: ${e.message}")
+                )
+            } catch (e: HttpException) {
+                println("DEBUG: [ProductRepository] HttpException ${e.code()}: ${e.message}")
+                val errorMsg = when (e.code()) {
+                    400 -> "Query tìm kiếm không hợp lệ"
                     500 -> "Lỗi server"
                     else -> "Lỗi ${e.code()}: ${e.message}"
                 }

@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,8 +20,12 @@ import com.example.foodapp.authentication.intro.IntroScreen
 import com.example.foodapp.authentication.login.LoginScreen
 import com.example.foodapp.authentication.otpverification.OtpVerificationScreen
 import com.example.foodapp.authentication.roleselection.RoleSelectionScreen
+import com.example.foodapp.pages.client.voucherhistory.VoucherHistoryScreen
 import com.example.foodapp.authentication.signup.SignUpScreen
 import com.example.foodapp.data.model.shared.product.Product
+import com.example.foodapp.data.remote.client.response.order.OrderApiModel
+import com.example.foodapp.pages.client.shopdetail.ShopDetailScreen
+import com.example.foodapp.pages.client.shop.ShopListScreen
 import com.example.foodapp.data.repository.firebase.AuthManager
 import com.example.foodapp.data.repository.firebase.UserFirebaseRepository
 import com.example.foodapp.pages.client.cart.CartScreen
@@ -35,6 +37,7 @@ import com.example.foodapp.pages.client.productdetail.UserProductDetailScreen
 import com.example.foodapp.pages.client.userInfo.UserInfoScreen
 import com.example.foodapp.pages.client.profile.UserProfileScreen
 import com.example.foodapp.pages.client.orderdetail.OrderDetailScreen
+import com.example.foodapp.pages.client.ordersuccess.OrderSuccessScreen
 import com.example.foodapp.pages.client.setting.SettingsScreen
 import com.example.foodapp.pages.client.order.OrderScreen
 import com.google.gson.Gson
@@ -65,12 +68,17 @@ sealed class Screen(val route: String) {
     object UserOrder : Screen("user_order")
 
     object UserInfo : Screen("user_info")
+    object ShopList : Screen("shop_list")
+    object VoucherHistory : Screen("voucher_history")
 
     object UserProductDetail : Screen ("product_detail/{productId}") {
         fun createRoute(productId: String) = "product_detail/$productId"
     }
 
-    // SỬA: Screen cho thanh toán nhận danh sách sản phẩm dưới dạng chuỗi JSON
+    object ShopDetail : Screen("shop_detail/{shopId}") {
+        fun createRoute(shopId: String) = "shop_detail/$shopId"
+    }
+
     object UserPayment : Screen("payment/{productsJson}/{quantitiesJson}") {
         fun createRoute(productsJson: String, quantitiesJson: String): String {
             val encodedProductsJson = URLEncoder.encode(productsJson, StandardCharsets.UTF_8.toString())
@@ -78,8 +86,17 @@ sealed class Screen(val route: String) {
             return "payment/$encodedProductsJson/$encodedQuantitiesJson"
         }
     }
+
     object OrderDetail : Screen("order_detail/{orderId}") {
         fun createRoute(orderId: String) = "order_detail/$orderId"
+    }
+
+    // SỬA: OrderSuccess route nhận orderJson
+    object OrderSuccess : Screen("order_success/{orderJson}") {
+        fun createRoute(orderJson: String): String {
+            val encodedOrderJson = URLEncoder.encode(orderJson, StandardCharsets.UTF_8.toString())
+            return "order_success/$encodedOrderJson"
+        }
     }
 }
 
@@ -99,6 +116,7 @@ fun FoodAppNavHost(
         coroutineScope.launch {
             val isLoggedIn = authManager.isUserLoggedIn()
             if (isLoggedIn) {
+                // SỬA: Dùng getValidToken() để tự động refresh nếu cần
                 val token = authManager.getValidToken()
                 if (token != null) {
                     val userId = authManager.getCurrentUserId()
@@ -248,7 +266,10 @@ fun FoodAppNavHost(
                 onProductClick = { productId ->
                     navController.navigate(Screen.UserProductDetail.createRoute(productId))
                 },
-                onProfileClick = { navController.navigate(Screen.UserProfile.route) }
+                onProfileClick = { navController.navigate(Screen.UserProfile.route) },
+                onShopViewClick = {
+                    navController.navigate(Screen.ShopList.route)
+                }
             )
         }
 
@@ -257,11 +278,39 @@ fun FoodAppNavHost(
                 navController = navController,
                 onBackClick = { navController.navigateUp() },
                 onCheckoutShop = { products, quantities, _, _ ->
-                    // Chuyển cả products và quantities thành JSON
                     val productsJson = Gson().toJson(products)
                     val quantitiesJson = Gson().toJson(quantities)
                     navController.navigate(Screen.UserPayment.createRoute(productsJson, quantitiesJson))
+                },
+                onViewUsedVouchers = {
+                    navController.navigate(Screen.VoucherHistory.route)
                 }
+            )
+        }
+
+        composable(Screen.VoucherHistory.route) {
+            VoucherHistoryScreen(
+                onBackClick = { navController.navigateUp() }
+            )
+        }
+
+        composable(Screen.ShopList.route) {
+            ShopListScreen(
+                onBackClick = { navController.navigateUp() },
+                onShopClick = { shopId ->
+                    navController.navigate(Screen.ShopDetail.createRoute(shopId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.ShopDetail.route,
+            arguments = listOf(navArgument("shopId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val shopId = backStackEntry.arguments?.getString("shopId") ?: ""
+            ShopDetailScreen(
+                shopId = shopId,
+                onBackClick = { navController.navigateUp() }
             )
         }
 
@@ -276,7 +325,6 @@ fun FoodAppNavHost(
                     navController.navigateUp()
                 },
                 onNavigateToPayment = { product, quantity ->
-                    // Tạo list products và quantities
                     val productsList = listOf(product)
                     val quantitiesList = listOf(quantity ?: 1)
 
@@ -292,12 +340,11 @@ fun FoodAppNavHost(
             route = Screen.UserPayment.route,
             arguments = listOf(
                 navArgument("productsJson") { type = NavType.StringType },
-                navArgument("quantitiesJson") { type = NavType.StringType } // Thêm argument này
+                navArgument("quantitiesJson") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val gson = Gson()
 
-            // Lấy và decode products JSON
             val encodedProductsJson = backStackEntry.arguments?.getString("productsJson") ?: "[]"
             val productsJson = try {
                 URLDecoder.decode(encodedProductsJson, StandardCharsets.UTF_8.toString())
@@ -305,7 +352,6 @@ fun FoodAppNavHost(
                 "[]"
             }
 
-            // Lấy và decode quantities JSON (THÊM PHẦN NÀY)
             val encodedQuantitiesJson = backStackEntry.arguments?.getString("quantitiesJson") ?: "[]"
             val quantitiesJson = try {
                 URLDecoder.decode(encodedQuantitiesJson, StandardCharsets.UTF_8.toString())
@@ -313,7 +359,6 @@ fun FoodAppNavHost(
                 "[]"
             }
 
-            // Chuyển JSON thành List
             val productListType = object : TypeToken<List<Product>>() {}.type
             val quantityListType = object : TypeToken<List<Int>>() {}.type
 
@@ -326,17 +371,20 @@ fun FoodAppNavHost(
             val quantitiesToPay: List<Int> = try {
                 gson.fromJson(quantitiesJson, quantityListType)
             } catch (e: Exception) {
-                // Nếu không có quantity, tạo mặc định 1 cho mỗi sản phẩm
                 List(productsToPay.size) { 1 }
             }
 
             if (productsToPay.isNotEmpty()) {
+                // SỬA: PaymentScreen nhận callback trả về OrderApiModel
                 PaymentScreen(
                     products = productsToPay,
-                    quantities = quantitiesToPay, // TRUYỀN quantities vào PaymentScreen
+                    quantities = quantitiesToPay,
                     onBackPressed = { navController.navigateUp() },
-                    onOrderPlaced = {
-                        navController.popBackStack(Screen.UserHome.route, false)
+                    onPaymentSuccess = { order ->
+                        val orderJson = gson.toJson(order)
+                        navController.navigate(Screen.OrderSuccess.createRoute(orderJson)) {
+                            popUpTo(Screen.UserPayment.route) { inclusive = true }
+                        }
                     }
                 )
             } else {
@@ -347,6 +395,34 @@ fun FoodAppNavHost(
                     navController.popBackStack()
                 }
             }
+        }
+
+        composable(
+            route = Screen.OrderSuccess.route,
+            arguments = listOf(
+                navArgument("orderJson") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val encodedOrderJson = backStackEntry.arguments?.getString("orderJson") ?: ""
+            val orderJson = try {
+                URLDecoder.decode(encodedOrderJson, StandardCharsets.UTF_8.toString())
+            } catch (e: Exception) {
+                "{}"
+            }
+
+            OrderSuccessScreen(
+                orderJson = orderJson, // Truyền orderJson
+                onBackToHome = {
+                    navController.navigate(Screen.UserHome.route) {
+                        popUpTo(Screen.UserHome.route) { inclusive = true }
+                    }
+                },
+                onViewOrderDetails = { orderId ->
+                    if (orderId.isNotBlank()) {
+                        navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                    }
+                }
+            )
         }
 
         composable(Screen.UserProfile.route) {
@@ -368,7 +444,6 @@ fun FoodAppNavHost(
             )
         }
 
-        // Thêm sau composable UserOrder (khoảng dòng 304 trở đi)
         composable(
             route = Screen.OrderDetail.route,
             arguments = listOf(navArgument("orderId") { type = NavType.StringType })
@@ -421,17 +496,15 @@ fun FoodAppNavHost(
             NotificationsScreen( onBack = { navController.navigateUp() })
         }
 
-        // Composable cho các vai trò khác (Shipper, Owner)
         composable(Screen.ShipperHome.route) {
-            // Thay thế bằng màn hình Shipper Home thực tế của bạn
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Shipper Home Screen")
             }
         }
 
         composable(Screen.OwnerHome.route) {
-            // Thay thế bằng màn hình Owner Home thực tế của bạn
             DashBoardRootScreen(navController = navController)
         }
     }
 }
+
