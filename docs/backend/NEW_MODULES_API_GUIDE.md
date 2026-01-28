@@ -584,6 +584,4 @@ http://localhost:3000/api/docs
 
 ## 7. Liên hệ
 
-Nếu có thắc mắc về API, liên hệ Backend Team qua:
-- **Slack**: #backend-support
-- **Email**: backend-team@ktxdelivery.com
+Nếu có thắc mắc về API, liên hệ Backend Team qua: henry
