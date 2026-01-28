@@ -24,6 +24,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { WalletsModule } from '../wallets/wallets.module';
 import { ConfigModule } from '../../core/config/config.module';
 import { ORDERS_REPOSITORY } from './interfaces';
+import { BuyersModule } from '../buyers/buyers.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ORDERS_REPOSITORY } from './interfaces';
     NotificationsModule,
     WalletsModule,
     forwardRef(() => ShippersModule),
+    forwardRef(() => BuyersModule),
   ],
   controllers: [
     OrdersOwnerController,
