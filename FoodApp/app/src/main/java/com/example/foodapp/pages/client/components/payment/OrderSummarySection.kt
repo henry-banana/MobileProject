@@ -13,11 +13,10 @@ import com.example.foodapp.ui.theme.*
 @Composable
 fun OrderSummarySection(
     productPrice: Double,
-    deliveryFee: Double,
     discount: Double = 0.0,
     modifier: Modifier = Modifier
 ) {
-    val total = productPrice + deliveryFee - discount
+    val total = productPrice - discount
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -57,23 +56,6 @@ fun OrderSummarySection(
             }
 
             Spacer(modifier = Modifier.height(4.dp))
-
-            // Phí vận chuyển
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Phí vận chuyển",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextSecondary
-                )
-                Text(
-                    text = formatCurrency(deliveryFee),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextPrimary
-                )
-            }
 
             // Hiển thị discount nếu có
             if (discount > 0) {

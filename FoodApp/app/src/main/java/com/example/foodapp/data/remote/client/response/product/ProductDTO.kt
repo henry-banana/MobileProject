@@ -552,6 +552,89 @@ data class ProductDetailRequest(
     val productId: String
 )
 
+
+/**
+ * DTO cho query parameters khi tìm kiếm sản phẩm với fuzzy search
+ * Format chính xác theo API spec:
+ * - q * required    Search query (min 2 chars)
+ * - shoplid    shopld (query)
+ * - categoryld    categoryld (query)
+ * - minPrice    minPrice (query)
+ * - maxPrice    maxPrice (query)
+ * - limit    20 (query)
+ */
+data class SearchProductsRequestDto @JvmOverloads constructor(
+    @SerializedName("q")
+    val q: String = "", // *required, min 2 chars - ĐÚNG TÊN "q" như spec
+
+    @SerializedName("shopId")
+    val shoplid: String? = null,
+
+    @SerializedName("categoryId")
+    val categoryld: String? = null, // ĐÚNG TÊN "categoryld" như spec
+
+    @SerializedName("minPrice")
+    val minPrice: Double? = null,
+
+    @SerializedName("maxPrice")
+    val maxPrice: Double? = null,
+
+    @SerializedName("limit")
+    val limit: Int = 20
+) {
+    val isValid: Boolean get() = q.length >= 2
+
+    fun toQueryMap(): Map<String, String> {
+        return buildMap {
+            if (q.isNotBlank()) put("q", q)
+            shoplid?.let { put("shoplid", it) }
+            categoryld?.let { put("categoryld", it) }
+            minPrice?.let { put("minPrice", it.toString()) }
+            maxPrice?.let { put("maxPrice", it.toString()) }
+            put("limit", limit.toString())
+        }
+    }
+}
+
+/**
+ * Wrapper response cho API search products với fuzzy search
+ * Format: {
+ *   "success": true,
+ *   "data": {
+ *     "products": [...],
+ *     "total": 1
+ *   }
+ * }
+ */
+data class SearchProductsApiResponse @JvmOverloads constructor(
+    @SerializedName("success")
+    val success: Boolean = false,
+
+    @SerializedName("data")
+    val data: SearchProductsData? = null
+) {
+    val isValid: Boolean get() = success && data != null
+}
+
+/**
+ * Data chứa danh sách sản phẩm tìm kiếm và tổng số
+ * Format: {
+ *   "products": [ProductApiModel], // ← DÙNG LẠI ProductApiModel đã có
+ *   "total": 1
+ * }
+ */
+data class SearchProductsData @JvmOverloads constructor(
+    @SerializedName("products")
+    val products: List<ProductApiModel> = emptyList(), // ← Dùng ProductApiModel đã có
+
+    @SerializedName("total")
+    val total: Int = 0
+) {
+    val hasData: Boolean get() = products.isNotEmpty()
+    val isEmpty: Boolean get() = products.isEmpty()
+}
+
+
 // ============== EXTENSIONS ==============
 
 // Extension để hỗ trợ FoodCategory

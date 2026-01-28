@@ -35,7 +35,11 @@ data class CreateOrderRequest @JvmOverloads constructor(
     val deliveryAddress: DeliveryAddressRequest? = null,
 
     @SerializedName("paymentMethod")
-    val paymentMethod: String = "COD"
+    val paymentMethod: String = "COD",
+
+    // THÊM voucherCode field
+    @SerializedName("voucherCode")
+    val voucherCode: String? = null
 )
 
 /**
