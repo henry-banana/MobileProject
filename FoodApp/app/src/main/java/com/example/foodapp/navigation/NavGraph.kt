@@ -82,6 +82,10 @@ sealed class Screen(val route: String) {
     object OrderDetail : Screen("order_detail/{orderId}") {
         fun createRoute(orderId: String) = "order_detail/$orderId"
     }
+    object ShipperOrderDetail : Screen("shipper_order_detail/{orderId}") {
+        fun createRoute(orderId: String) = "shipper_order_detail/$orderId"
+    }
+    object ShipperApply : Screen("shipper_apply")
 }
 
 @Composable
@@ -425,6 +429,23 @@ fun FoodAppNavHost(
         // Composable cho các vai trò khác (Shipper, Owner)
         composable(Screen.ShipperHome.route) {
             ShipperDashboardRootScreen(navController = navController)
+        }
+        
+        composable(
+            route = Screen.ShipperOrderDetail.route,
+            arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+            com.example.foodapp.pages.shipper.order.ShipperOrderDetailScreen(
+                orderId = orderId,
+                onBack = { navController.navigateUp() }
+            )
+        }
+        
+        composable(Screen.ShipperApply.route) {
+            com.example.foodapp.pages.shipper.application.ShopSelectionScreen(
+                onApplicationSubmitted = { navController.navigateUp() }
+            )
         }
 
         composable(Screen.OwnerHome.route) {
