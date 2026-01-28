@@ -1,23 +1,23 @@
 package com.example.foodapp.pages.shipper.profile
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.foodapp.pages.shipper.theme.ShipperColors
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 
@@ -34,54 +34,69 @@ fun ChangePasswordScreen(onCancel: () -> Unit = {}) {
     var successMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
-    ) {
-        TopAppBar(
-            title = { Text("Đổi mật khẩu", fontWeight = FontWeight.Bold) },
-            navigationIcon = {
-                IconButton(onClick = onCancel) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Quay lại")
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.White,
-                titleContentColor = Color(0xFF333333)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        "Đổi mật khẩu", 
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp
+                    ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = onCancel) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.ArrowBack, 
+                            contentDescription = "Quay lại",
+                            tint = ShipperColors.TextPrimary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = ShipperColors.Surface,
+                    titleContentColor = ShipperColors.TextPrimary
+                )
             )
-        )
-
+        },
+        containerColor = ShipperColors.Background
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = ShipperColors.InfoLight),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(text = "ℹ️", fontSize = 24.sp)
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = ShipperColors.Info,
+                        modifier = Modifier.size(24.dp)
+                    )
                     Column {
                         Text(
                             text = "Yêu cầu mật khẩu mới:",
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
-                            color = Color(0xFF333333)
+                            color = ShipperColors.TextPrimary
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "• Tối thiểu 8 ký tự\n• Chứa chữ hoa và chữ thường\n• Chứa ít nhất 1 số",
                             fontSize = 13.sp,
-                            color = Color(0xFF666666),
+                            color = ShipperColors.TextSecondary,
                             lineHeight = 20.sp
                         )
                     }
@@ -90,8 +105,8 @@ fun ChangePasswordScreen(onCancel: () -> Unit = {}) {
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
@@ -106,10 +121,10 @@ fun ChangePasswordScreen(onCancel: () -> Unit = {}) {
                         onValueChange = { currentPassword = it },
                         passwordVisible = currentPasswordVisible,
                         onVisibilityChange = { currentPasswordVisible = it },
-                        icon = "🔒"
+                        icon = Icons.Outlined.Lock
                     )
 
-                    Divider(color = Color(0xFFEEEEEE))
+                    HorizontalDivider(color = ShipperColors.Divider)
 
                     PasswordField(
                         label = "Mật khẩu mới",
@@ -117,10 +132,10 @@ fun ChangePasswordScreen(onCancel: () -> Unit = {}) {
                         onValueChange = { newPassword = it },
                         passwordVisible = newPasswordVisible,
                         onVisibilityChange = { newPasswordVisible = it },
-                        icon = "🔑"
+                        icon = Icons.Outlined.Key
                     )
 
-                    Divider(color = Color(0xFFEEEEEE))
+                    HorizontalDivider(color = ShipperColors.Divider)
 
                     PasswordField(
                         label = "Xác nhận mật khẩu mới",
@@ -128,7 +143,7 @@ fun ChangePasswordScreen(onCancel: () -> Unit = {}) {
                         onValueChange = { confirmPassword = it },
                         passwordVisible = confirmPasswordVisible,
                         onVisibilityChange = { confirmPasswordVisible = it },
-                        icon = "✅"
+                        icon = Icons.Outlined.CheckCircle
                     )
                 }
             }
@@ -136,30 +151,52 @@ fun ChangePasswordScreen(onCancel: () -> Unit = {}) {
             if (errorMessage.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = ShipperColors.ErrorLight)
                 ) {
-                    Text(
-                        text = errorMessage,
-                        color = Color(0xFFD32F2F),
+                    Row(
                         modifier = Modifier.padding(16.dp),
-                        fontSize = 14.sp
-                    )
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Error,
+                            contentDescription = null,
+                            tint = ShipperColors.Error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = errorMessage,
+                            color = ShipperColors.Error,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
 
             if (successMessage.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9))
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = ShipperColors.SuccessLight)
                 ) {
-                    Text(
-                        text = successMessage,
-                        color = Color(0xFF388E3C),
+                    Row(
                         modifier = Modifier.padding(16.dp),
-                        fontSize = 14.sp
-                    )
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.CheckCircle,
+                            contentDescription = null,
+                            tint = ShipperColors.Success,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = successMessage,
+                            color = ShipperColors.Success,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
 
@@ -204,18 +241,19 @@ fun ChangePasswordScreen(onCancel: () -> Unit = {}) {
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6B35)),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = ShipperColors.Primary),
                 enabled = !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White
+                        modifier = Modifier.size(22.dp),
+                        color = ShipperColors.Surface,
+                        strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Đổi mật khẩu", modifier = Modifier.padding(vertical = 4.dp))
+                    Text("Đổi mật khẩu", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -229,19 +267,25 @@ fun PasswordField(
     onValueChange: (String) -> Unit,
     passwordVisible: Boolean,
     onVisibilityChange: (Boolean) -> Unit,
-    icon: String
+    icon: ImageVector
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = icon, fontSize = 18.sp)
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = ShipperColors.TextSecondary,
+                modifier = Modifier.size(18.dp)
+            )
             Text(
                 text = label,
                 fontSize = 14.sp,
-                color = Color(0xFF666666),
+                color = ShipperColors.TextSecondary,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -249,19 +293,20 @@ fun PasswordField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(10.dp),
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { onVisibilityChange(!passwordVisible) }) {
                     Icon(
-                        imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                        contentDescription = if (passwordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu"
+                        imageVector = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Ẩn mật khẩu" else "Hiện mật khẩu",
+                        tint = ShipperColors.TextSecondary
                     )
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFFFF6B35),
-                unfocusedBorderColor = Color(0xFFEEEEEE)
+                focusedBorderColor = ShipperColors.Primary,
+                unfocusedBorderColor = ShipperColors.Divider
             ),
             singleLine = true
         )

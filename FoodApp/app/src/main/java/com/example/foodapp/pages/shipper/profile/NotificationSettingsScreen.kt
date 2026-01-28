@@ -1,25 +1,27 @@
 package com.example.foodapp.pages.shipper.profile
 
 import android.util.Log
-import androidx.compose.foundation.background
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
 import com.example.foodapp.data.di.RepositoryProvider
+import com.example.foodapp.pages.shipper.theme.ShipperColors
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationSettingsScreen(
     onSave: () -> Unit = {},
@@ -29,20 +31,15 @@ fun NotificationSettingsScreen(
     val scope = rememberCoroutineScope()
     val repository = remember { RepositoryProvider.getShipperOrderRepository() }
     
-    // Online status state
     var isOnline by remember { mutableStateOf(false) }
     var isTogglingOnline by remember { mutableStateOf(false) }
     
-    // Other notification settings
     var orderNoti by remember { mutableStateOf(true) }
     var promoNoti by remember { mutableStateOf(true) }
     var systemNoti by remember { mutableStateOf(false) }
     var sound by remember { mutableStateOf(true) }
     var vibrate by remember { mutableStateOf(true) }
-
-    val mainColor = Color(0xFFFF6B35)
     
-    // Function to toggle online status
     fun toggleOnlineStatus() {
         scope.launch {
             isTogglingOnline = true
@@ -66,159 +63,249 @@ fun NotificationSettingsScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFFFF5F5))
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        Text(
-            "Cài đặt thông báo",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = mainColor,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        
-        // Online Status Card - NEW
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (isOnline) Color(0xFFE8F5E9) else Color.White
-            ),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = if (isOnline) Icons.Default.Wifi else Icons.Default.WifiOff,
-                        contentDescription = null,
-                        tint = if (isOnline) Color(0xFF4CAF50) else Color.Gray
-                    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
                     Text(
-                        "Trạng thái hoạt động", 
-                        fontWeight = FontWeight.Bold, 
-                        fontSize = 16.sp, 
-                        color = mainColor
-                    )
-                }
-                
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        "Cài đặt thông báo", 
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp
+                    ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = onCancel) {
+                        Icon(
+                            Icons.AutoMirrored.Outlined.ArrowBack, 
+                            contentDescription = "Quay lại",
+                            tint = ShipperColors.TextPrimary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = ShipperColors.Surface,
+                    titleContentColor = ShipperColors.TextPrimary
+                )
+            )
+        },
+        containerColor = ShipperColors.Background
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Online Status Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isOnline) ShipperColors.SuccessLight else ShipperColors.Surface
+                ),
+                elevation = CardDefaults.cardElevation(2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column {
-                        Text(
-                            if (isOnline) "Đang hoạt động" else "Ngoại tuyến",
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 15.sp,
-                            color = if (isOnline) Color(0xFF4CAF50) else Color.Gray
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isOnline) Icons.Outlined.Wifi else Icons.Outlined.WifiOff,
+                            contentDescription = null,
+                            tint = if (isOnline) ShipperColors.Success else ShipperColors.TextSecondary
                         )
                         Text(
-                            if (isOnline) "Bạn sẽ nhận thông báo đơn hàng mới" 
-                            else "Bật để nhận đơn hàng mới",
-                            fontSize = 12.sp,
-                            color = Color.Gray
+                            "Trạng thái hoạt động", 
+                            fontWeight = FontWeight.SemiBold, 
+                            fontSize = 15.sp, 
+                            color = ShipperColors.TextPrimary
                         )
                     }
                     
-                    if (isTogglingOnline) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = mainColor,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Switch(
-                            checked = isOnline, 
-                            onCheckedChange = { toggleOnlineStatus() },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF4CAF50),
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = Color.LightGray
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                if (isOnline) "Đang hoạt động" else "Ngoại tuyến",
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp,
+                                color = if (isOnline) ShipperColors.Success else ShipperColors.TextSecondary
                             )
-                        )
+                            Text(
+                                if (isOnline) "Bạn sẽ nhận thông báo đơn hàng mới" 
+                                else "Bật để nhận đơn hàng mới",
+                                fontSize = 12.sp,
+                                color = ShipperColors.TextSecondary
+                            )
+                        }
+                        
+                        if (isTogglingOnline) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = ShipperColors.Primary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Switch(
+                                checked = isOnline, 
+                                onCheckedChange = { toggleOnlineStatus() },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = ShipperColors.Surface,
+                                    checkedTrackColor = ShipperColors.Success,
+                                    uncheckedThumbColor = ShipperColors.Surface,
+                                    uncheckedTrackColor = ShipperColors.TextTertiary
+                                )
+                            )
+                        }
                     }
                 }
             }
-        }
-        
-        // Notification Types Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            
+            // Notification Types Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
+                elevation = CardDefaults.cardElevation(2.dp)
             ) {
-                Text("Loại thông báo", fontWeight = FontWeight.Medium, fontSize = 16.sp, color = mainColor)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Đơn hàng mới", modifier = Modifier.weight(1f))
-                    Switch(checked = orderNoti, onCheckedChange = { orderNoti = it }, colors = SwitchDefaults.colors(checkedThumbColor = mainColor))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Khuyến mãi & Ưu đãi", modifier = Modifier.weight(1f))
-                    Switch(checked = promoNoti, onCheckedChange = { promoNoti = it }, colors = SwitchDefaults.colors(checkedThumbColor = mainColor))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Thông báo hệ thống", modifier = Modifier.weight(1f))
-                    Switch(checked = systemNoti, onCheckedChange = { systemNoti = it }, colors = SwitchDefaults.colors(checkedThumbColor = mainColor))
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Outlined.Notifications,
+                            contentDescription = null,
+                            tint = ShipperColors.Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            "Loại thông báo", 
+                            fontWeight = FontWeight.SemiBold, 
+                            fontSize = 15.sp, 
+                            color = ShipperColors.TextPrimary
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    NotificationToggleRow("Đơn hàng mới", orderNoti) { orderNoti = it }
+                    HorizontalDivider(color = ShipperColors.Divider)
+                    NotificationToggleRow("Khuyến mãi & Ưu đãi", promoNoti) { promoNoti = it }
+                    HorizontalDivider(color = ShipperColors.Divider)
+                    NotificationToggleRow("Thông báo hệ thống", systemNoti) { systemNoti = it }
                 }
             }
-        }
-        
-        // Sound & Vibration Card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            
+            // Sound & Vibration Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
+                elevation = CardDefaults.cardElevation(2.dp)
             ) {
-                Text("Âm thanh & Rung", fontWeight = FontWeight.Medium, fontSize = 16.sp, color = mainColor)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Âm thanh thông báo", modifier = Modifier.weight(1f))
-                    Switch(checked = sound, onCheckedChange = { sound = it }, colors = SwitchDefaults.colors(checkedThumbColor = mainColor))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Rung khi nhận thông báo", modifier = Modifier.weight(1f))
-                    Switch(checked = vibrate, onCheckedChange = { vibrate = it }, colors = SwitchDefaults.colors(checkedThumbColor = mainColor))
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Outlined.VolumeUp,
+                            contentDescription = null,
+                            tint = ShipperColors.Primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            "Âm thanh & Rung", 
+                            fontWeight = FontWeight.SemiBold, 
+                            fontSize = 15.sp, 
+                            color = ShipperColors.TextPrimary
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    NotificationToggleRow("Âm thanh thông báo", sound) { sound = it }
+                    HorizontalDivider(color = ShipperColors.Divider)
+                    NotificationToggleRow("Rung khi nhận thông báo", vibrate) { vibrate = it }
                 }
             }
-        }
-        
-        Spacer(modifier = Modifier.weight(1f))
-        
-        // Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(
-                onClick = {
-                    Toast.makeText(context, "Lưu thành công!", Toast.LENGTH_SHORT).show()
-                    onSave()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = mainColor)
-            ) { Text("Lưu", color = Color.White) }
-            OutlinedButton(onClick = onCancel, colors = ButtonDefaults.outlinedButtonColors(contentColor = mainColor)) { Text("Hủy") }
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = ShipperColors.TextSecondary
+                    )
+                ) {
+                    Text("Hủy")
+                }
+                Button(
+                    onClick = {
+                        Toast.makeText(context, "Lưu thành công!", Toast.LENGTH_SHORT).show()
+                        onSave()
+                    },
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = ShipperColors.Primary)
+                ) {
+                    Text("Lưu", fontWeight = FontWeight.SemiBold)
+                }
+            }
         }
     }
 }
 
+@Composable
+private fun NotificationToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            label,
+            color = ShipperColors.TextPrimary,
+            fontSize = 14.sp
+        )
+        Switch(
+            checked = checked, 
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = ShipperColors.Surface,
+                checkedTrackColor = ShipperColors.Primary,
+                uncheckedThumbColor = ShipperColors.Surface,
+                uncheckedTrackColor = ShipperColors.TextTertiary
+            )
+        )
+    }
+}

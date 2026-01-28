@@ -5,7 +5,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,7 +13,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -22,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.foodapp.data.model.shipper.order.ShipperOrder
+import com.example.foodapp.pages.shipper.theme.ShipperColors
 import java.util.Locale
 
 @Composable
@@ -31,16 +30,14 @@ fun ShipperOrderCard(
     onClick: () -> Unit = {},
     showAcceptButton: Boolean = true
 ) {
-    val mainColor = Color(0xFFFF6B35)
-    
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        shape = RoundedCornerShape(16.dp)
+        colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -55,14 +52,14 @@ fun ShipperOrderCard(
                     Text(
                         text = order.orderNumber ?: "#${order.id.takeLast(6).uppercase()}",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+                        fontWeight = FontWeight.SemiBold,
+                        color = ShipperColors.TextPrimary
                     )
                     if (order.createdAt != null) {
                         Text(
                             text = formatOrderTime(order.createdAt),
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                            color = ShipperColors.TextSecondary
                         )
                     }
                 }
@@ -71,13 +68,13 @@ fun ShipperOrderCard(
             }
             
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color(0xFFEEEEEE))
+            HorizontalDivider(color = ShipperColors.Divider)
             Spacer(modifier = Modifier.height(12.dp))
             
             // Shop Info
             InfoRow(
-                icon = Icons.Default.Store,
-                iconTint = mainColor,
+                icon = Icons.Outlined.Store,
+                iconTint = ShipperColors.Primary,
                 label = order.shopName ?: "Cửa hàng",
                 value = "${order.displayItemCount} món"
             )
@@ -86,8 +83,8 @@ fun ShipperOrderCard(
             
             // Customer & Delivery Info
             InfoRow(
-                icon = Icons.Default.Person,
-                iconTint = Color(0xFF2196F3),
+                icon = Icons.Outlined.Person,
+                iconTint = ShipperColors.Info,
                 label = order.customerName ?: "Khách hàng",
                 value = order.customerPhone
             )
@@ -100,9 +97,9 @@ fun ShipperOrderCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
-                    imageVector = Icons.Default.LocationOn,
+                    imageVector = Icons.Outlined.LocationOn,
                     contentDescription = null,
-                    tint = Color(0xFF4CAF50),
+                    tint = ShipperColors.Success,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -112,7 +109,7 @@ fun ShipperOrderCard(
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = ShipperColors.TextPrimary
                     )
                     order.deliveryAddress?.let { addr ->
                         if (addr.building != null || addr.room != null) {
@@ -122,7 +119,7 @@ fun ShipperOrderCard(
                                     addr.room?.let { "Phòng $it" }
                                 ).joinToString(" - "),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
+                                color = ShipperColors.TextSecondary
                             )
                         }
                     }
@@ -136,28 +133,28 @@ fun ShipperOrderCard(
                     verticalAlignment = Alignment.Top,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFFFFF8E1), RoundedCornerShape(8.dp))
-                        .padding(8.dp)
+                        .background(ShipperColors.WarningLight, RoundedCornerShape(8.dp))
+                        .padding(10.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Notes,
+                        imageVector = Icons.Outlined.Notes,
                         contentDescription = null,
-                        tint = Color(0xFFFF9800),
+                        tint = ShipperColors.Warning,
                         modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Ghi chú: $note",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF795548),
+                        color = ShipperColors.TextPrimary,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color(0xFFEEEEEE))
+            Spacer(modifier = Modifier.height(14.dp))
+            HorizontalDivider(color = ShipperColors.Divider)
             Spacer(modifier = Modifier.height(12.dp))
             
             // Footer: Payment Info and Total
@@ -167,12 +164,12 @@ fun ShipperOrderCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Payment Info
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        PaymentMethodBadge(paymentMethod = order.paymentMethod)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        PaymentStatusBadge(paymentStatus = order.paymentStatus)
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    PaymentMethodBadge(paymentMethod = order.paymentMethod)
+                    PaymentStatusBadge(paymentStatus = order.paymentStatus)
                 }
                 
                 // Total Amount
@@ -180,33 +177,33 @@ fun ShipperOrderCard(
                     Text(
                         text = "Tổng tiền",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
+                        color = ShipperColors.TextSecondary
                     )
                     Text(
                         text = formatCurrency(order.totalAmount),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = mainColor
+                        color = ShipperColors.Primary
                     )
                 }
             }
             
             // Accept Button for available orders
             if (showAcceptButton && order.isAvailableForPickup) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
                 Button(
                     onClick = onAccept,
-                    modifier = Modifier.fillMaxWidth().height(44.dp),
+                    modifier = Modifier.fillMaxWidth().height(46.dp),
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = mainColor)
+                    colors = ButtonDefaults.buttonColors(containerColor = ShipperColors.Primary)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
+                        imageVector = Icons.Outlined.CheckCircle,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("NHẬN ĐƠN", fontWeight = FontWeight.Bold)
+                    Text("NHẬN ĐƠN", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -230,11 +227,12 @@ private fun InfoRow(
             tint = iconTint,
             modifier = Modifier.size(20.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(10.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
+            color = ShipperColors.TextPrimary,
             modifier = Modifier.weight(1f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -243,7 +241,7 @@ private fun InfoRow(
             Text(
                 text = it,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = ShipperColors.TextSecondary
             )
         }
     }
@@ -252,24 +250,23 @@ private fun InfoRow(
 @Composable
 fun StatusBadge(status: String) {
     val (color, text, icon) = when (status) {
-        "PENDING" -> Triple(Color(0xFF9E9E9E), "Chờ xác nhận", Icons.Default.Schedule)
-        "CONFIRMED" -> Triple(Color(0xFF03A9F4), "Đã xác nhận", Icons.Default.CheckCircle)
-        "PREPARING" -> Triple(Color(0xFF9C27B0), "Đang chuẩn bị", Icons.Default.Restaurant)
-        "READY" -> Triple(Color(0xFF2196F3), "Sẵn sàng", Icons.Default.Inventory)
-        "SHIPPING" -> Triple(Color(0xFFFF9800), "Đang giao", Icons.Default.LocalShipping)
-        "DELIVERED" -> Triple(Color(0xFF4CAF50), "Hoàn thành", Icons.Default.DoneAll)
-        "CANCELLED" -> Triple(Color(0xFFF44336), "Đã hủy", Icons.Default.Cancel)
-        else -> Triple(Color.Gray, status, Icons.Default.Info)
+        "PENDING" -> Triple(ShipperColors.StatusPending, "Chờ xác nhận", Icons.Outlined.Schedule)
+        "CONFIRMED" -> Triple(ShipperColors.StatusConfirmed, "Đã xác nhận", Icons.Outlined.CheckCircle)
+        "PREPARING" -> Triple(ShipperColors.StatusPreparing, "Đang chuẩn bị", Icons.Outlined.Restaurant)
+        "READY" -> Triple(ShipperColors.StatusReady, "Sẵn sàng", Icons.Outlined.Inventory)
+        "SHIPPING" -> Triple(ShipperColors.StatusShipping, "Đang giao", Icons.Outlined.LocalShipping)
+        "DELIVERED" -> Triple(ShipperColors.StatusDelivered, "Hoàn thành", Icons.Outlined.DoneAll)
+        "CANCELLED" -> Triple(ShipperColors.StatusCancelled, "Đã hủy", Icons.Outlined.Cancel)
+        else -> Triple(ShipperColors.TextSecondary, status, Icons.Outlined.Info)
     }
     
     Surface(
         color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
+        shape = RoundedCornerShape(6.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Icon(
                 imageVector = icon,
@@ -282,7 +279,7 @@ fun StatusBadge(status: String) {
                 text = text,
                 style = MaterialTheme.typography.labelSmall,
                 color = color,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -291,7 +288,7 @@ fun StatusBadge(status: String) {
 @Composable
 fun PaymentMethodBadge(paymentMethod: String?) {
     val (text, color) = when(paymentMethod) {
-        "COD" -> "COD" to Color(0xFF795548)
+        "COD" -> "COD" to Color(0xFF6B7280)
         "ZALOPAY" -> "ZaloPay" to Color(0xFF0068FF)
         "MOMO" -> "MoMo" to Color(0xFFAE2070)
         "SEPAY" -> "SePay" to Color(0xFF00BFA5)
@@ -299,7 +296,7 @@ fun PaymentMethodBadge(paymentMethod: String?) {
     }
     
     Surface(
-        color = color.copy(alpha = 0.1f),
+        color = color.copy(alpha = 0.08f),
         shape = RoundedCornerShape(4.dp)
     ) {
         Text(
@@ -307,7 +304,7 @@ fun PaymentMethodBadge(paymentMethod: String?) {
             style = MaterialTheme.typography.labelSmall,
             color = color,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
         )
     }
 }
@@ -315,16 +312,16 @@ fun PaymentMethodBadge(paymentMethod: String?) {
 @Composable
 fun PaymentStatusBadge(paymentStatus: String?) {
     val (text, color) = when(paymentStatus) {
-        "PAID" -> "Đã TT" to Color(0xFF4CAF50)
-        "UNPAID" -> "Chưa TT" to Color(0xFFF44336)
-        "PROCESSING" -> "Đang xử lý" to Color(0xFFFF9800)
-        "REFUNDED" -> "Đã hoàn" to Color(0xFF9C27B0)
+        "PAID" -> "Đã TT" to ShipperColors.Success
+        "UNPAID" -> "Chưa TT" to ShipperColors.Error
+        "PROCESSING" -> "Đang xử lý" to ShipperColors.Warning
+        "REFUNDED" -> "Đã hoàn" to Color(0xFF8B5CF6)
         else -> (paymentStatus ?: "") to Color.Gray
     }
     
     if (text.isNotEmpty()) {
         Surface(
-            color = color.copy(alpha = 0.1f),
+            color = color.copy(alpha = 0.08f),
             shape = RoundedCornerShape(4.dp)
         ) {
             Text(
@@ -332,7 +329,7 @@ fun PaymentStatusBadge(paymentStatus: String?) {
                 style = MaterialTheme.typography.labelSmall,
                 color = color,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
             )
         }
     }
@@ -350,7 +347,6 @@ fun formatCurrency(amount: Double): String {
 fun formatOrderTime(timestamp: String?): String {
     if (timestamp == null) return ""
     return try {
-        // Backend returns ISO-8601 format: 2026-01-18T15:12:20.059Z
         val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
         val outputFormat = java.text.SimpleDateFormat("HH:mm dd/MM", Locale.getDefault())
         val date = inputFormat.parse(timestamp.substringBefore(".").substringBefore("Z"))

@@ -9,13 +9,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.foodapp.pages.shipper.theme.ShipperColors
 
 @Composable
 fun ShipperSettingsScreen(
@@ -33,9 +32,6 @@ fun ShipperSettingsScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     
-    val mainColor = Color(0xFFFF6B35)
-    
-    // Show toast for messages
     LaunchedEffect(uiState.message) {
         uiState.message?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
@@ -43,7 +39,6 @@ fun ShipperSettingsScreen(
         }
     }
     
-    // Show toast for errors  
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             Toast.makeText(context, "Lỗi: $it", Toast.LENGTH_SHORT).show()
@@ -51,11 +46,10 @@ fun ShipperSettingsScreen(
         }
     }
 
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(ShipperColors.Background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -63,32 +57,22 @@ fun ShipperSettingsScreen(
         // Online Status Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (uiState.isOnline) Color(0xFFE8F5E9) else Color.White
+                containerColor = if (uiState.isOnline) ShipperColors.SuccessLight else ShipperColors.Surface
             ),
             elevation = CardDefaults.cardElevation(2.dp)
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        imageVector = if (uiState.isOnline) Icons.Default.Wifi else Icons.Default.WifiOff,
-                        contentDescription = null,
-                        tint = if (uiState.isOnline) Color(0xFF4CAF50) else Color.Gray
-                    )
-                    Text(
-                        "TRẠNG THÁI HOẠT ĐỘNG", 
-                        fontWeight = FontWeight.Bold, 
-                        fontSize = 14.sp, 
-                        color = mainColor
-                    )
-                }
+                Text(
+                    "Trạng thái hoạt động", 
+                    fontWeight = FontWeight.SemiBold, 
+                    fontSize = 14.sp, 
+                    color = ShipperColors.TextSecondary
+                )
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -100,20 +84,20 @@ fun ShipperSettingsScreen(
                             if (uiState.isOnline) "Đang hoạt động" else "Ngoại tuyến",
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp,
-                            color = if (uiState.isOnline) Color(0xFF4CAF50) else Color.Gray
+                            color = if (uiState.isOnline) ShipperColors.Success else ShipperColors.TextSecondary
                         )
                         Text(
                             if (uiState.isOnline) "Bạn sẽ nhận thông báo đơn hàng mới" 
                             else "Bật để nhận đơn hàng mới",
-                            fontSize = 12.sp,
-                            color = Color.Gray
+                            fontSize = 13.sp,
+                            color = ShipperColors.TextSecondary
                         )
                     }
                     
                     if (uiState.isTogglingOnline) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            color = mainColor,
+                            color = ShipperColors.Primary,
                             strokeWidth = 2.dp
                         )
                     } else {
@@ -121,10 +105,10 @@ fun ShipperSettingsScreen(
                             checked = uiState.isOnline, 
                             onCheckedChange = { viewModel.toggleOnlineStatus() },
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF4CAF50),
-                                uncheckedThumbColor = Color.White,
-                                uncheckedTrackColor = Color.LightGray
+                                checkedThumbColor = ShipperColors.Surface,
+                                checkedTrackColor = ShipperColors.Success,
+                                uncheckedThumbColor = ShipperColors.Surface,
+                                uncheckedTrackColor = ShipperColors.ToggleOff
                             )
                         )
                     }
@@ -134,7 +118,7 @@ fun ShipperSettingsScreen(
         
         // Account Section
         SettingSection(
-            title = "TÀI KHOẢN",
+            title = "Tài khoản",
             items = listOf(
                 SettingItemData(
                     title = "Thông tin cá nhân",
@@ -148,13 +132,12 @@ fun ShipperSettingsScreen(
                     icon = Icons.Outlined.Lock,
                     onClick = { onNavigate("change_password") }
                 )
-            ),
-            mainColor = mainColor
+            )
         )
         
         // Shipper Info Section
         SettingSection(
-            title = "THÔNG TIN SHIPPER",
+            title = "Thông tin shipper",
             items = listOf(
                 SettingItemData(
                     title = "Phương tiện",
@@ -165,16 +148,15 @@ fun ShipperSettingsScreen(
                 SettingItemData(
                     title = "Phương thức thanh toán",
                     subtitle = "Tài khoản nhận tiền",
-                    icon = Icons.Outlined.CreditCard,
+                    icon = Icons.Outlined.AccountBalanceWallet,
                     onClick = { onNavigate("payment_method") }
                 )
-            ),
-            mainColor = mainColor
+            )
         )
         
         // Notification Section
         SettingSection(
-            title = "THÔNG BÁO",
+            title = "Thông báo",
             items = listOf(
                 SettingItemData(
                     title = "Cài đặt thông báo",
@@ -182,18 +164,17 @@ fun ShipperSettingsScreen(
                     icon = Icons.Outlined.Notifications,
                     onClick = { onNavigate("notification_settings") }
                 )
-            ),
-            mainColor = mainColor
+            )
         )
         
         // About Section
         SettingSection(
-            title = "VỀ ỨNG DỤNG",
+            title = "Về ứng dụng",
             items = listOf(
                 SettingItemData(
                     title = "Điều khoản sử dụng",
                     subtitle = "Quy định và chính sách",
-                    icon = Icons.Default.List,
+                    icon = Icons.Outlined.Description,
                     onClick = { onNavigate("terms") }
                 ),
                 SettingItemData(
@@ -205,11 +186,10 @@ fun ShipperSettingsScreen(
                 SettingItemData(
                     title = "Trợ giúp & Hỗ trợ",
                     subtitle = "Liên hệ với chúng tôi",
-                    icon = Icons.Outlined.SupportAgent,
+                    icon = Icons.Outlined.HelpOutline,
                     onClick = { onNavigate("help_screen") }
                 )
-            ),
-            mainColor = mainColor
+            )
         )
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -222,17 +202,17 @@ fun ShipperSettingsScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(50.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFFEBEE)
+                containerColor = ShipperColors.ErrorLight
             ),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(10.dp)
         ) {
             Text(
                 "Đăng xuất", 
-                color = Color(0xFFF44336), 
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                color = ShipperColors.Error, 
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp
             )
         }
         
@@ -240,7 +220,7 @@ fun ShipperSettingsScreen(
         Text(
             text = "FoodApp Shipper v1.0.0",
             fontSize = 12.sp,
-            color = Color.Gray,
+            color = ShipperColors.TextTertiary,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
@@ -252,22 +232,21 @@ fun ShipperSettingsScreen(
 @Composable
 private fun SettingSection(
     title: String,
-    items: List<SettingItemData>,
-    mainColor: Color
+    items: List<SettingItemData>
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = title,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = mainColor,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = ShipperColors.TextSecondary,
             modifier = Modifier.padding(horizontal = 4.dp)
         )
         
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
             elevation = CardDefaults.cardElevation(2.dp)
         ) {
             Column {
@@ -276,7 +255,7 @@ private fun SettingSection(
                     if (index < items.size - 1) {
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
-                            color = Color(0xFFEEEEEE)
+                            color = ShipperColors.Divider
                         )
                     }
                 }
@@ -293,12 +272,12 @@ private fun SettingItemRow(item: SettingItemData) {
             .clickable(onClick = item.onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Icon
         Surface(
-            shape = CircleShape,
-            color = Color(0xFFFFF3E0),
+            shape = RoundedCornerShape(10.dp),
+            color = ShipperColors.PrimaryLight,
             modifier = Modifier.size(40.dp)
         ) {
             Box(
@@ -308,7 +287,7 @@ private fun SettingItemRow(item: SettingItemData) {
                 Icon(
                     imageVector = item.icon,
                     contentDescription = null,
-                    tint = Color(0xFFFF6B35),
+                    tint = ShipperColors.Primary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -320,23 +299,23 @@ private fun SettingItemRow(item: SettingItemData) {
                 text = item.title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xFF1A1A1A)
+                color = ShipperColors.TextPrimary
             )
             item.subtitle?.let {
                 Text(
                     text = it,
-                    fontSize = 12.sp,
-                    color = Color.Gray
+                    fontSize = 13.sp,
+                    color = ShipperColors.TextSecondary
                 )
             }
         }
         
         // Arrow
         Icon(
-            imageVector = Icons.Default.ChevronRight,
+            imageVector = Icons.Outlined.ChevronRight,
             contentDescription = null,
-            tint = Color.LightGray,
-            modifier = Modifier.size(24.dp)
+            tint = ShipperColors.TextTertiary,
+            modifier = Modifier.size(20.dp)
         )
     }
 }

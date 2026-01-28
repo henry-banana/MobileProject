@@ -9,13 +9,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +29,7 @@ import com.example.foodapp.pages.shipper.home.formatOrderTime
 import com.example.foodapp.pages.shipper.home.StatusBadge
 import com.example.foodapp.pages.shipper.home.PaymentMethodBadge
 import com.example.foodapp.pages.shipper.home.PaymentStatusBadge
+import com.example.foodapp.pages.shipper.theme.ShipperColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +40,6 @@ fun ShipperOrderDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val mainColor = Color(0xFFFF6B35)
     
     LaunchedEffect(orderId) {
         viewModel.loadOrder(orderId)
@@ -65,35 +64,47 @@ fun ShipperOrderDetailScreen(
             TopAppBar(
                 title = { 
                     Column {
-                        Text("Chi tiết đơn hàng", fontWeight = FontWeight.Bold)
+                        Text(
+                            "Chi tiết đơn hàng", 
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp
+                        )
                         uiState.order?.orderNumber?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
+                            Text(
+                                it, 
+                                style = MaterialTheme.typography.bodySmall, 
+                                color = ShipperColors.TextSecondary
+                            )
                         }
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.Default.ArrowBack, 
+                            contentDescription = "Back",
+                            tint = ShipperColors.TextPrimary
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = mainColor,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    containerColor = ShipperColors.Surface,
+                    titleContentColor = ShipperColors.TextPrimary,
+                    navigationIconContentColor = ShipperColors.TextPrimary
                 )
             )
-        }
+        },
+        containerColor = ShipperColors.Background
     ) { padding ->
         Box(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(Color(0xFFF5F5F5))
         ) {
             if (uiState.isLoading && uiState.order == null) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
-                    color = mainColor
+                    color = ShipperColors.Primary
                 )
             }
             
@@ -101,18 +112,17 @@ fun ShipperOrderDetailScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Status Card
                     item {
-                        OrderStatusCard(order = order, mainColor = mainColor)
+                        OrderStatusCard(order = order)
                     }
                     
                     // Customer & Delivery Card
                     item {
                         CustomerDeliveryCard(
                             order = order,
-                            mainColor = mainColor,
                             onCallCustomer = {
                                 order.customerPhone?.let { phone ->
                                     val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -126,24 +136,23 @@ fun ShipperOrderDetailScreen(
                     
                     // Shop Info Card
                     item {
-                        ShopInfoCard(order = order, mainColor = mainColor)
+                        ShopInfoCard(order = order)
                     }
                     
                     // Order Items Card
                     item {
-                        OrderItemsCard(order = order, mainColor = mainColor)
+                        OrderItemsCard(order = order)
                     }
                     
                     // Payment Summary Card
                     item {
-                        PaymentSummaryCard(order = order, mainColor = mainColor)
+                        PaymentSummaryCard(order = order)
                     }
                     
                     // Action Buttons
                     item {
                         ActionButtonsCard(
                             order = order,
-                            mainColor = mainColor,
                             isLoading = uiState.isLoading,
                             onAccept = { viewModel.acceptOrder(order.id) },
                             onShipping = { viewModel.markShipping(order.id) },
@@ -151,8 +160,7 @@ fun ShipperOrderDetailScreen(
                         )
                     }
                     
-                    // Spacing at bottom
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                    item { Spacer(modifier = Modifier.height(60.dp)) }
                 }
             }
         }
@@ -160,15 +168,15 @@ fun ShipperOrderDetailScreen(
 }
 
 @Composable
-private fun OrderStatusCard(order: ShipperOrder, mainColor: Color) {
+private fun OrderStatusCard(order: ShipperOrder) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             StatusBadge(status = order.status)
@@ -217,16 +225,16 @@ private fun TimelineItem(
     ) {
         Surface(
             shape = CircleShape,
-            color = if (isCompleted) Color(0xFF4CAF50) else Color(0xFFE0E0E0),
-            modifier = Modifier.size(24.dp)
+            color = if (isCompleted) ShipperColors.Success else ShipperColors.Divider,
+            modifier = Modifier.size(20.dp)
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                if (isCompleted) {
+            if (isCompleted) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Icon(
-                        Icons.Default.Check,
+                        Icons.Outlined.Check,
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(14.dp)
+                        tint = ShipperColors.Surface,
+                        modifier = Modifier.size(12.dp)
                     )
                 }
             }
@@ -235,14 +243,14 @@ private fun TimelineItem(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = if (isCompleted) Color(0xFF4CAF50) else Color.Gray,
+            color = if (isCompleted) ShipperColors.Success else ShipperColors.TextSecondary,
             textAlign = TextAlign.Center
         )
         if (!time.isNullOrEmpty()) {
             Text(
                 text = time,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray,
+                color = ShipperColors.TextTertiary,
                 fontSize = 10.sp,
                 textAlign = TextAlign.Center
             )
@@ -253,19 +261,18 @@ private fun TimelineItem(
 @Composable
 private fun CustomerDeliveryCard(
     order: ShipperOrder,
-    mainColor: Color,
     onCallCustomer: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            SectionTitle(icon = Icons.Default.Person, title = "Thông tin giao hàng", color = mainColor)
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionTitle(title = "Thông tin giao hàng")
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Customer Name & Phone
             Row(
@@ -277,13 +284,14 @@ private fun CustomerDeliveryCard(
                     Text(
                         text = order.customerName ?: "Khách hàng",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Medium,
+                        color = ShipperColors.TextPrimary
                     )
                     order.customerPhone?.let { phone ->
                         Text(
                             text = phone,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
+                            color = ShipperColors.TextSecondary
                         )
                     }
                 }
@@ -292,36 +300,39 @@ private fun CustomerDeliveryCard(
                 if (order.customerPhone != null) {
                     FilledIconButton(
                         onClick = onCallCustomer,
+                        modifier = Modifier.size(40.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = Color(0xFF4CAF50)
+                            containerColor = ShipperColors.Success
                         )
                     ) {
                         Icon(
-                            Icons.Default.Phone,
+                            Icons.Outlined.Phone,
                             contentDescription = "Gọi khách",
-                            tint = Color.White
+                            tint = ShipperColors.Surface,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color(0xFFEEEEEE))
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = ShipperColors.Divider)
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Delivery Address
             Row(verticalAlignment = Alignment.Top) {
                 Icon(
-                    Icons.Default.LocationOn,
+                    Icons.Outlined.LocationOn,
                     contentDescription = null,
-                    tint = Color(0xFF4CAF50),
-                    modifier = Modifier.size(24.dp)
+                    tint = ShipperColors.Primary,
+                    modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
                         text = order.shippingAddress ?: "Chưa có địa chỉ",
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ShipperColors.TextPrimary
                     )
                     order.deliveryAddress?.let { addr ->
                         val details = listOfNotNull(
@@ -332,8 +343,8 @@ private fun CustomerDeliveryCard(
                         if (details.isNotEmpty()) {
                             Text(
                                 text = details.joinToString(" • "),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = mainColor,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = ShipperColors.Primary,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -345,7 +356,7 @@ private fun CustomerDeliveryCard(
             order.deliveryNote?.takeIf { it.isNotBlank() }?.let { note ->
                 Spacer(modifier = Modifier.height(12.dp))
                 Surface(
-                    color = Color(0xFFFFF8E1),
+                    color = ShipperColors.WarningLight,
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -354,10 +365,10 @@ private fun CustomerDeliveryCard(
                         verticalAlignment = Alignment.Top
                     ) {
                         Icon(
-                            Icons.Default.Notes,
+                            Icons.Outlined.Notes,
                             contentDescription = null,
-                            tint = Color(0xFFFF9800),
-                            modifier = Modifier.size(20.dp)
+                            tint = ShipperColors.Warning,
+                            modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
@@ -365,12 +376,12 @@ private fun CustomerDeliveryCard(
                                 text = "Ghi chú giao hàng",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Medium,
-                                color = Color(0xFFE65100)
+                                color = ShipperColors.Warning
                             )
                             Text(
                                 text = note,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF795548)
+                                style = MaterialTheme.typography.bodySmall,
+                                color = ShipperColors.TextPrimary
                             )
                         }
                     }
@@ -381,52 +392,48 @@ private fun CustomerDeliveryCard(
 }
 
 @Composable
-private fun ShopInfoCard(order: ShipperOrder, mainColor: Color) {
+private fun ShopInfoCard(order: ShipperOrder) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            SectionTitle(icon = Icons.Default.Store, title = "Cửa hàng", color = mainColor)
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionTitle(title = "Cửa hàng")
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             Text(
                 text = order.shopName ?: "Cửa hàng",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = ShipperColors.TextPrimary
             )
         }
     }
 }
 
 @Composable
-private fun OrderItemsCard(order: ShipperOrder, mainColor: Color) {
+private fun OrderItemsCard(order: ShipperOrder) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            SectionTitle(
-                icon = Icons.Default.Restaurant,
-                title = "Đơn hàng (${order.displayItemCount} món)",
-                color = mainColor
-            )
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionTitle(title = "Đơn hàng (${order.displayItemCount} món)")
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
-            // Use items or itemsPreview
             val displayItems = order.items.ifEmpty { order.itemsPreview ?: emptyList() }
             
             displayItems.forEachIndexed { index, item ->
                 OrderItemRow(item = item)
                 if (index < displayItems.size - 1) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    HorizontalDivider(color = Color(0xFFF5F5F5))
+                    HorizontalDivider(color = ShipperColors.BorderLight)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
@@ -447,21 +454,22 @@ private fun OrderItemRow(item: ShipperOrderItem) {
         ) {
             // Quantity Badge
             Surface(
-                color = Color(0xFFFFF3E0),
-                shape = RoundedCornerShape(6.dp)
+                color = ShipperColors.PrimaryLight,
+                shape = RoundedCornerShape(4.dp)
             ) {
                 Text(
                     text = "${item.quantity}x",
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFFFF6B35),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    fontWeight = FontWeight.SemiBold,
+                    color = ShipperColors.Primary,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                 )
             }
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = item.name,
                 style = MaterialTheme.typography.bodyMedium,
+                color = ShipperColors.TextPrimary,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -470,38 +478,38 @@ private fun OrderItemRow(item: ShipperOrderItem) {
             text = formatCurrency(item.subtotal),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
-            color = Color(0xFF424242)
+            color = ShipperColors.TextPrimary
         )
     }
 }
 
 @Composable
-private fun PaymentSummaryCard(order: ShipperOrder, mainColor: Color) {
+private fun PaymentSummaryCard(order: ShipperOrder) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            SectionTitle(icon = Icons.Default.Payment, title = "Thanh toán", color = mainColor)
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionTitle(title = "Thanh toán")
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Payment Method & Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Phương thức", color = Color.Gray)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Phương thức", color = ShipperColors.TextSecondary)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     PaymentMethodBadge(paymentMethod = order.paymentMethod)
                     PaymentStatusBadge(paymentStatus = order.paymentStatus)
                 }
             }
             
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color(0xFFF5F5F5))
+            HorizontalDivider(color = ShipperColors.BorderLight)
             Spacer(modifier = Modifier.height(12.dp))
             
             // Subtotal
@@ -517,12 +525,12 @@ private fun PaymentSummaryCard(order: ShipperOrder, mainColor: Color) {
                 SummaryRow(
                     label = "Giảm giá" + (order.voucherCode?.let { " ($it)" } ?: ""),
                     value = "-${formatCurrency(order.discount)}",
-                    valueColor = Color(0xFF4CAF50)
+                    valueColor = ShipperColors.Success
                 )
             }
             
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 2.dp)
+            HorizontalDivider(color = ShipperColors.Divider, thickness = 1.5.dp)
             Spacer(modifier = Modifier.height(12.dp))
             
             // Total
@@ -533,13 +541,14 @@ private fun PaymentSummaryCard(order: ShipperOrder, mainColor: Color) {
                 Text(
                     text = "TỔNG CỘNG",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold,
+                    color = ShipperColors.TextPrimary
                 )
                 Text(
                     text = formatCurrency(order.totalAmount),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = mainColor
+                    color = ShipperColors.Primary
                 )
             }
             
@@ -547,7 +556,7 @@ private fun PaymentSummaryCard(order: ShipperOrder, mainColor: Color) {
             if (order.paymentMethod == "COD" && order.paymentStatus == "UNPAID") {
                 Spacer(modifier = Modifier.height(12.dp))
                 Surface(
-                    color = Color(0xFFFFF3E0),
+                    color = ShipperColors.WarningLight,
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -556,16 +565,16 @@ private fun PaymentSummaryCard(order: ShipperOrder, mainColor: Color) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            Icons.Default.Info,
+                            Icons.Outlined.Info,
                             contentDescription = null,
-                            tint = Color(0xFFFF9800),
-                            modifier = Modifier.size(20.dp)
+                            tint = ShipperColors.Warning,
+                            modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Thu tiền mặt khi giao hàng",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFFE65100)
+                            color = ShipperColors.Warning
                         )
                     }
                 }
@@ -578,15 +587,15 @@ private fun PaymentSummaryCard(order: ShipperOrder, mainColor: Color) {
 private fun SummaryRow(
     label: String,
     value: String,
-    valueColor: Color = Color(0xFF424242)
+    valueColor: androidx.compose.ui.graphics.Color = ShipperColors.TextPrimary
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+        Text(text = label, style = MaterialTheme.typography.bodyMedium, color = ShipperColors.TextSecondary)
         Text(text = value, style = MaterialTheme.typography.bodyMedium, color = valueColor)
     }
 }
@@ -594,7 +603,6 @@ private fun SummaryRow(
 @Composable
 private fun ActionButtonsCard(
     order: ShipperOrder,
-    mainColor: Color,
     isLoading: Boolean,
     onAccept: () -> Unit,
     onShipping: () -> Unit,
@@ -602,28 +610,24 @@ private fun ActionButtonsCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             when (order.status) {
                 "READY" -> {
                     if (order.isAvailableForPickup) {
-                        // Available order - can accept
                         ActionButton(
                             text = "NHẬN ĐƠN HÀNG",
-                            icon = Icons.Default.CheckCircle,
-                            color = mainColor,
+                            color = ShipperColors.Primary,
                             isLoading = isLoading,
                             onClick = onAccept
                         )
                     } else {
-                        // Already assigned, can start shipping
                         ActionButton(
                             text = "BẮT ĐẦU GIAO HÀNG",
-                            icon = Icons.Default.LocalShipping,
-                            color = Color(0xFF2196F3),
+                            color = ShipperColors.Info,
                             isLoading = isLoading,
                             onClick = onShipping
                         )
@@ -632,16 +636,15 @@ private fun ActionButtonsCard(
                 "SHIPPING" -> {
                     ActionButton(
                         text = "XÁC NHẬN ĐÃ GIAO",
-                        icon = Icons.Default.DoneAll,
-                        color = Color(0xFF4CAF50),
+                        color = ShipperColors.Success,
                         isLoading = isLoading,
                         onClick = onDelivered
                     )
                 }
                 "DELIVERED" -> {
                     Surface(
-                        color = Color(0xFFE8F5E9),
-                        shape = RoundedCornerShape(12.dp),
+                        color = ShipperColors.SuccessLight,
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -650,23 +653,23 @@ private fun ActionButtonsCard(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                Icons.Default.CheckCircle,
+                                Icons.Outlined.CheckCircle,
                                 contentDescription = null,
-                                tint = Color(0xFF4CAF50)
+                                tint = ShipperColors.Success
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 "Đơn hàng đã hoàn thành",
                                 fontWeight = FontWeight.Medium,
-                                color = Color(0xFF2E7D32)
+                                color = ShipperColors.Success
                             )
                         }
                     }
                 }
                 "CANCELLED" -> {
                     Surface(
-                        color = Color(0xFFFFEBEE),
-                        shape = RoundedCornerShape(12.dp),
+                        color = ShipperColors.ErrorLight,
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(
@@ -675,34 +678,33 @@ private fun ActionButtonsCard(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    Icons.Default.Cancel,
+                                    Icons.Outlined.Cancel,
                                     contentDescription = null,
-                                    tint = Color(0xFFF44336)
+                                    tint = ShipperColors.Error
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     "Đơn hàng đã hủy",
                                     fontWeight = FontWeight.Medium,
-                                    color = Color(0xFFC62828)
+                                    color = ShipperColors.Error
                                 )
                             }
                             order.cancelReason?.let { reason ->
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = "Lý do: $reason",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFD32F2F)
+                                    color = ShipperColors.Error
                                 )
                             }
                         }
                     }
                 }
                 else -> {
-                    // Other statuses - no action available
                     Text(
                         text = "Đơn hàng đang được xử lý",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = ShipperColors.TextSecondary,
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center
                     )
@@ -715,8 +717,7 @@ private fun ActionButtonsCard(
 @Composable
 private fun ActionButton(
     text: String,
-    icon: ImageVector,
-    color: Color,
+    color: androidx.compose.ui.graphics.Color,
     isLoading: Boolean,
     onClick: () -> Unit
 ) {
@@ -725,34 +726,28 @@ private fun ActionButton(
         enabled = !isLoading,
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(12.dp),
+            .height(50.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(containerColor = color)
     ) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                color = Color.White,
+                modifier = Modifier.size(22.dp),
+                color = ShipperColors.Surface,
                 strokeWidth = 2.dp
             )
         } else {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
         }
     }
 }
 
 @Composable
-private fun SectionTitle(icon: ImageVector, title: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-    }
+private fun SectionTitle(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = ShipperColors.TextPrimary
+    )
 }

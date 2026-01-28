@@ -5,28 +5,27 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.example.foodapp.data.di.RepositoryProvider
 import com.example.foodapp.data.model.shipper.application.ApplicationStatus
 import com.example.foodapp.data.model.shipper.application.ShipperApplication
 import com.example.foodapp.data.model.shipper.application.VehicleType
+import com.example.foodapp.pages.shipper.theme.ShipperColors
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -127,7 +126,6 @@ fun MyApplicationsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     
-    // Error handling
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
@@ -135,7 +133,6 @@ fun MyApplicationsScreen(
         }
     }
     
-    // Success handling
     LaunchedEffect(uiState.cancelSuccess) {
         if (uiState.cancelSuccess) {
             Toast.makeText(context, "Đã hủy đơn ứng tuyển", Toast.LENGTH_SHORT).show()
@@ -148,12 +145,13 @@ fun MyApplicationsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF5F5F5))
+                .background(ShipperColors.Background)
         ) {
             when {
                 uiState.isLoading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        color = ShipperColors.Primary
                     )
                 }
                 uiState.applications.isEmpty() -> {
@@ -180,26 +178,32 @@ fun MyApplicationsScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Đơn ứng tuyển của tôi") },
+                    title = { 
+                        Text(
+                            "Đơn ứng tuyển của tôi",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp
+                        ) 
+                    },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(
-                                Icons.Default.ArrowBack,
+                                Icons.AutoMirrored.Outlined.ArrowBack,
                                 contentDescription = "Quay lại",
-                                tint = Color.White
+                                tint = ShipperColors.TextPrimary
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = Color.White
+                        containerColor = ShipperColors.Surface,
+                        titleContentColor = ShipperColors.TextPrimary
                     ),
                     actions = {
                         IconButton(onClick = { viewModel.loadApplications() }) {
                             Icon(
-                                Icons.Default.Refresh,
+                                Icons.Outlined.Refresh,
                                 contentDescription = "Làm mới",
-                                tint = Color.White
+                                tint = ShipperColors.TextPrimary
                             )
                         }
                     }
@@ -209,7 +213,6 @@ fun MyApplicationsScreen(
             content(padding)
         }
     } else {
-        // No TopAppBar version for use inside dashboard
         content(PaddingValues(0.dp))
     }
     
@@ -217,7 +220,7 @@ fun MyApplicationsScreen(
     if (uiState.showCancelDialog && uiState.selectedApplication != null) {
         AlertDialog(
             onDismissRequest = { if (!uiState.isCancelling) viewModel.dismissCancelDialog() },
-            title = { Text("Hủy đơn ứng tuyển") },
+            title = { Text("Hủy đơn ứng tuyển", fontWeight = FontWeight.SemiBold) },
             text = { 
                 Text("Bạn có chắc muốn hủy đơn ứng tuyển tại ${uiState.selectedApplication?.shopName ?: "cửa hàng này"}?") 
             },
@@ -225,12 +228,13 @@ fun MyApplicationsScreen(
                 Button(
                     onClick = { viewModel.cancelApplication() },
                     enabled = !uiState.isCancelling,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
+                    colors = ButtonDefaults.buttonColors(containerColor = ShipperColors.Error),
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     if (uiState.isCancelling) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
-                            color = Color.White,
+                            color = ShipperColors.Surface,
                             strokeWidth = 2.dp
                         )
                     } else {
@@ -243,7 +247,7 @@ fun MyApplicationsScreen(
                     onClick = { viewModel.dismissCancelDialog() },
                     enabled = !uiState.isCancelling
                 ) {
-                    Text("Đóng")
+                    Text("Đóng", color = ShipperColors.TextSecondary)
                 }
             }
         )
@@ -261,20 +265,20 @@ private fun EmptyApplicationsView() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Icon(
-                Icons.Default.Assignment,
+                Icons.Outlined.Description,
                 contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = Color.LightGray
+                modifier = Modifier.size(64.dp),
+                tint = ShipperColors.TextTertiary
             )
             Text(
                 "Chưa có đơn ứng tuyển nào",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color.Gray
+                color = ShipperColors.TextSecondary
             )
             Text(
                 "Hãy chọn một cửa hàng để gửi đơn",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = ShipperColors.TextTertiary
             )
         }
     }
@@ -300,7 +304,7 @@ private fun ApplicationCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = ShipperColors.Surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -310,27 +314,26 @@ private fun ApplicationCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Shop name
                 Text(
                     text = application.shopName ?: "Cửa hàng",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ShipperColors.TextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
                 
-                // Status chip
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color(status.color).copy(alpha = 0.15f)
+                    shape = RoundedCornerShape(6.dp),
+                    color = status.getColor().copy(alpha = 0.1f)
                 ) {
                     Text(
                         text = status.displayName,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(status.color),
-                        fontWeight = FontWeight.SemiBold
+                        color = status.getColor(),
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
@@ -339,21 +342,24 @@ private fun ApplicationCard(
             
             // Vehicle info
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = vehicleInfo.icon,
-                    style = MaterialTheme.typography.titleLarge
+                Icon(
+                    imageVector = Icons.Outlined.DirectionsBike,
+                    contentDescription = null,
+                    tint = ShipperColors.Primary,
+                    modifier = Modifier.size(20.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
                         text = vehicleInfo.displayName,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = ShipperColors.TextPrimary
                     )
                     Text(
                         text = application.vehicleNumber ?: "",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = ShipperColors.TextSecondary
                     )
                 }
             }
@@ -363,16 +369,16 @@ private fun ApplicationCard(
             // ID Card info
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    Icons.Default.Badge,
+                    Icons.Outlined.Badge,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
-                    tint = Color.Gray
+                    tint = ShipperColors.TextSecondary
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = "CCCD: ${maskIdNumber(application.idCardNumber)}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = ShipperColors.TextSecondary
                 )
             }
             
@@ -382,7 +388,7 @@ private fun ApplicationCard(
                 Text(
                     text = "\"${application.message}\"",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = ShipperColors.TextSecondary,
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -394,28 +400,30 @@ private fun ApplicationCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFFFEBEE)
+                    color = ShipperColors.ErrorLight
                 ) {
                     Row(
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.padding(10.dp),
                         verticalAlignment = Alignment.Top
                     ) {
                         Icon(
-                            Icons.Default.Info,
+                            Icons.Outlined.Info,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = Color(0xFFF44336)
+                            tint = ShipperColors.Error
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Lý do: ${application.rejectReason}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFC62828)
+                            color = ShipperColors.Error
                         )
                     }
                 }
             }
             
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = ShipperColors.Divider)
             Spacer(modifier = Modifier.height(12.dp))
             
             // Footer: Date and actions
@@ -424,23 +432,21 @@ private fun ApplicationCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Created date
                 Text(
                     text = formatDate(application.createdAt),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = ShipperColors.TextTertiary
                 )
                 
-                // Cancel button (only for pending)
                 if (status == ApplicationStatus.PENDING) {
                     TextButton(
                         onClick = onCancel,
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = Color(0xFFF44336)
+                            contentColor = ShipperColors.Error
                         )
                     ) {
                         Icon(
-                            Icons.Default.Cancel,
+                            Icons.Outlined.Cancel,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp)
                         )
@@ -451,6 +457,13 @@ private fun ApplicationCard(
             }
         }
     }
+}
+
+// Extension for ApplicationStatus
+private fun ApplicationStatus.getColor() = when (this) {
+    ApplicationStatus.PENDING -> ShipperColors.Warning
+    ApplicationStatus.APPROVED -> ShipperColors.Success
+    ApplicationStatus.REJECTED -> ShipperColors.Error
 }
 
 // Helper functions
