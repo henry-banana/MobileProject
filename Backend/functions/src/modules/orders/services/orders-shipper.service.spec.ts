@@ -16,6 +16,7 @@ import { ConfigService } from '../../../core/config/config.service';
 import { FirebaseService } from '../../../core/firebase/firebase.service';
 import { USERS_REPOSITORY } from '../../users/interfaces';
 import { NotificationsService } from '../../notifications/services/notifications.service';
+import { BuyersStatsService } from '../../buyers/services/buyers-stats.service';
 import { OrderStatus, PaymentStatus, OrderEntity } from '../entities';
 import { Timestamp } from 'firebase-admin/firestore';
 
@@ -152,6 +153,14 @@ describe('OrdersService - Shipper Flow (Phase 2)', () => {
           useValue: {
             processOrderPayout: jest.fn().mockResolvedValue(undefined),
             updateBalance: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: BuyersStatsService,
+          useValue: {
+            incrementOrderCount: jest.fn().mockResolvedValue(undefined),
+            updateTotalSpent: jest.fn().mockResolvedValue(undefined),
+            updateBuyerStatsOnDelivery: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

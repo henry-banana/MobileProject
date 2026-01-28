@@ -19,6 +19,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "seed:categories": "ts-node scripts/seed-categories.ts",
+    "seed:delivery-points": "ts-node src/scripts/seed-delivery-points.ts",
+    "seed:delivery-points:pinpoint": "ts-node src/scripts/seed-delivery-points-pinpoint.ts",
     "admin:create": "ts-node scripts/create-admin.ts",
     "admin:set-role": "ts-node scripts/set-admin-role.ts"
   },
