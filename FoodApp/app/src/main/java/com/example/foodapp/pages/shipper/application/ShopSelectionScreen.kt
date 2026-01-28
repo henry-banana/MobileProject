@@ -210,15 +210,38 @@ fun ShopCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Shop logo
-            AsyncImage(
-                model = shop.logoUrl ?: shop.coverImageUrl,
-                contentDescription = shop.name,
+            Box(
                 modifier = Modifier
                     .size(60.dp)
                     .clip(CircleShape)
                     .background(Color(0xFFE0E0E0)),
-                contentScale = ContentScale.Crop
-            )
+                contentAlignment = Alignment.Center
+            ) {
+                val imageUrl = shop.logoUrl ?: shop.coverImageUrl
+                if (!imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = coil.request.ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = shop.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        onError = { 
+                            // Log error for debugging
+                            android.util.Log.e("ShopCard", "Failed to load image: $imageUrl")
+                        }
+                    )
+                } else {
+                    // Fallback icon when no image
+                    Icon(
+                        Icons.Default.Store,
+                        contentDescription = null,
+                        tint = Color(0xFF757575),
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.width(16.dp))
             
