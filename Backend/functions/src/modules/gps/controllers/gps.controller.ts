@@ -201,4 +201,61 @@ export class GpsController {
       data: result,
     };
   }
+
+  /**
+   * Get all active KTX delivery points
+   *
+   * @deprecated Use GET /api/delivery-points instead
+   * Endpoint này sẽ bị xóa trong phiên bản tương lai.
+   * Vui lòng sử dụng /api/delivery-points cho endpoint chính thức.
+   *
+   * Callable: GET /api/gps/delivery-points
+   * Auth: CUSTOMER, SHIPPER, OWNER, ADMIN
+   */
+  @Get('delivery-points')
+  @Roles(UserRole.CUSTOMER, UserRole.SHIPPER, UserRole.OWNER, UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '[DEPRECATED] List active KTX delivery points',
+    description:
+      '⚠️ DEPRECATED: Sử dụng GET /api/delivery-points thay thế. ' +
+      'Endpoint này chỉ giữ lại để backward compatibility và sẽ bị xóa sau. ' +
+      'Returns all active delivery points (KTX buildings) sorted by block (A-E) and number. ' +
+      'Only returns buildings where active=true.',
+    deprecated: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Delivery points retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: [
+          {
+            id: 'A1',
+            buildingCode: 'A1',
+            name: 'Tòa A1',
+            location: {
+              lat: 10.881765,
+              lng: 106.781719,
+            },
+            note: 'Khu A - Tòa A1',
+            active: true,
+            createdAt: { _seconds: 1706428800, _nanoseconds: 0 },
+            updatedAt: { _seconds: 1706428800, _nanoseconds: 0 },
+          },
+        ],
+        timestamp: '2026-01-28T12:00:00.000Z',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Not authenticated',
+  })
+  async getDeliveryPoints() {
+    // Proxy to shared DeliveryPointsService via GpsService
+    // TODO: Remove this endpoint after frontend migration to /api/delivery-points
+    return this.gpsService.listActiveDeliveryPoints();
+  }
 }

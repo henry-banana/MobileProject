@@ -14,9 +14,10 @@ import { GpsController } from './controllers/gps.controller';
 import { CoreModule } from '../../core/core.module';
 import { OrdersModule } from '../orders/orders.module';
 import { ShippersModule } from '../shippers/shippers.module';
+import { DeliveryPointsModule } from '../delivery-points/delivery-points.module';
 
 @Module({
-  imports: [CoreModule, OrdersModule, ShippersModule],
+  imports: [CoreModule, OrdersModule, ShippersModule, DeliveryPointsModule],
   controllers: [GpsController],
   providers: [
     GpsService,

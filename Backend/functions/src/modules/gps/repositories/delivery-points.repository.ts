@@ -100,4 +100,17 @@ export class DeliveryPointsRepository {
     const snapshot = await this.firestore.collection(this.collectionName).get();
     return snapshot.docs.map((doc) => doc.data() as DeliveryPoint);
   }
+
+  /**
+   * List all active delivery points
+   * Returns only delivery points where active === true
+   */
+  async listActiveDeliveryPoints(): Promise<DeliveryPoint[]> {
+    const snapshot = await this.firestore
+      .collection(this.collectionName)
+      .where('active', '==', true)
+      .get();
+
+    return snapshot.docs.map((doc) => doc.data() as DeliveryPoint);
+  }
 }

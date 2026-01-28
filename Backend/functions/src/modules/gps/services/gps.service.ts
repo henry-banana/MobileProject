@@ -3,6 +3,7 @@ import { GoogleRoutesService } from './google-routes.service';
 import { DeliveryPointsRepository } from '../repositories/delivery-points.repository';
 import { ShipperTripsRepository } from '../repositories/shipper-trips.repository';
 import { OrdersService } from '../../orders/services/orders.service';
+import { DeliveryPointsService } from '../../delivery-points/services/delivery-points.service';
 import {
   ShipperTrip,
   TripStatus,
@@ -27,6 +28,7 @@ export class GpsService {
     private readonly deliveryPointsRepository: DeliveryPointsRepository,
     private readonly shipperTripsRepository: ShipperTripsRepository,
     private readonly ordersService: OrdersService,
+    private readonly deliveryPointsService: DeliveryPointsService,
   ) {}
 
   /**
@@ -329,5 +331,13 @@ export class GpsService {
       trip: updatedTrip,
       ordersDelivered,
     };
+  }
+
+  /**
+   * @deprecated Proxy to shared DeliveryPointsService
+   * Use DeliveryPointsService directly instead
+   */
+  async listActiveDeliveryPoints() {
+    return this.deliveryPointsService.listActiveDeliveryPoints();
   }
 }
