@@ -24,6 +24,8 @@ import {
   UpdateAddressDto,
   UserSettingsDto,
   UpdateFcmTokenDto,
+  UpdateVehicleDto,
+  VehicleInfoDto,
 } from '../dto';
 
 /**
@@ -311,5 +313,126 @@ export class MeController {
   async deleteAccount(@CurrentUser() user: any) {
     await this.usersService.deleteAccount(user.uid);
     return { message: 'Account deleted successfully' };
+  }
+
+  // ==================== Vehicle Management (Shipper Only) ====================
+
+  /**
+   * GET /me/vehicle
+   * Get current vehicle information
+   *
+   * Only for SHIPPER role
+   */
+  @Get('vehicle')
+  @ApiOperation({
+    summary: 'Get my vehicle info',
+    description: 'Returns vehicle information (type, number, driver license). SHIPPER only.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Vehicle information',
+    type: VehicleInfoDto,
+    schema: {
+      example: {
+        vehicleType: 'MOTORBIKE',
+        vehicleNumber: '59X1-12345',
+        driverLicenseUrl: 'https://storage.googleapis.com/.../license.jpg',
+      },
+    },
+  })
+  @ApiResponse({ status: 403, description: 'Only shippers can access vehicle info' })
+  async getVehicle(@CurrentUser() user: any): Promise<VehicleInfoDto> {
+    return this.usersService.getVehicleInfo(user.uid);
+  }
+
+  /**
+   * PUT /me/vehicle
+   * Update vehicle type and number
+   *
+   * Only for SHIPPER role
+   */
+  @Put('vehicle')
+  @ApiOperation({
+    summary: 'Update my vehicle info',
+    description: 'Update vehicle type and license plate number. SHIPPER only.',
+  })
+  @ApiResponse({ status: 200, description: 'Vehicle updated successfully', type: VehicleInfoDto })
+  @ApiResponse({ status: 400, description: 'Invalid vehicle data' })
+  @ApiResponse({ status: 403, description: 'Only shippers can update vehicle info' })
+  async updateVehicle(
+    @CurrentUser() user: any,
+    @Body() dto: UpdateVehicleDto,
+  ): Promise<VehicleInfoDto> {
+    return this.usersService.updateVehicleInfo(user.uid, dto);
+  }
+
+  /**
+   * POST /me/vehicle/driver-license
+   * Upload or update driver license photo
+   *
+   * Only for SHIPPER role
+   */
+  @Post('vehicle/driver-license')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(FileInterceptor('driverLicense'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Upload driver license photo',
+    description: 'Upload or update driver license image. Accepts JPEG/PNG. Max 5MB. SHIPPER only.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Driver license uploaded successfully',
+    schema: {
+      example: {
+        driverLicenseUrl: 'https://storage.googleapis.com/.../license.jpg',
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid file' })
+  @ApiResponse({ status: 403, description: 'Only shippers can upload driver license' })
+  async uploadDriverLicense(@CurrentUser() user: any, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Validate file type
+    const validMimeTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('Only JPEG/PNG images are allowed');
+    }
+
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      throw new BadRequestException('File size must not exceed 5MB');
+    }
+
+    const driverLicenseUrl = await this.usersService.uploadDriverLicense(
+      user.uid,
+      file.buffer,
+      file.mimetype,
+    );
+
+    return { driverLicenseUrl };
+  }
+
+  /**
+   * DELETE /me/vehicle/driver-license
+   * Delete driver license photo
+   *
+   * Only for SHIPPER role
+   */
+  @Delete('vehicle/driver-license')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Delete driver license photo',
+    description: 'Delete current driver license image. SHIPPER only.',
+  })
+  @ApiResponse({ status: 200, description: 'Driver license deleted successfully' })
+  @ApiResponse({ status: 403, description: 'Only shippers can delete driver license' })
+  async deleteDriverLicense(@CurrentUser() user: any) {
+    await this.usersService.deleteDriverLicense(user.uid);
+    return { message: 'Driver license deleted successfully' };
   }
 }

@@ -193,6 +193,20 @@
       ]
     },
     {
+      "collectionGroup": "walletLedger",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "walletId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "wallets",
       "queryScope": "COLLECTION",
       "fields": [

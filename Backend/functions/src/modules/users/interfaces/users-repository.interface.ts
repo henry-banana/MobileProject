@@ -55,6 +55,21 @@ export interface IUsersRepository {
    * Soft delete user
    */
   softDelete(userId: string): Promise<void>;
+
+  /**
+   * Update shipper vehicle info (type and number)
+   */
+  updateShipperVehicle(userId: string, vehicleType: string, vehicleNumber: string): Promise<void>;
+
+  /**
+   * Update driver license URL
+   */
+  updateDriverLicense(userId: string, driverLicenseUrl: string): Promise<void>;
+
+  /**
+   * Clear driver license URL
+   */
+  clearDriverLicense(userId: string): Promise<void>;
 }
 
 export const USERS_REPOSITORY = 'IUsersRepository';

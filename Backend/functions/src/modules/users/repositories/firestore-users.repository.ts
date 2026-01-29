@@ -135,6 +135,41 @@ export class FirestoreUsersRepository implements IUsersRepository {
     });
   }
 
+  async updateShipperVehicle(
+    userId: string,
+    vehicleType: string,
+    vehicleNumber: string,
+  ): Promise<void> {
+    await this.firestore
+      .collection(this.collection)
+      .doc(userId)
+      .update({
+        'shipperInfo.vehicleType': vehicleType,
+        'shipperInfo.vehicleNumber': vehicleNumber,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+  }
+
+  async updateDriverLicense(userId: string, driverLicenseUrl: string): Promise<void> {
+    await this.firestore
+      .collection(this.collection)
+      .doc(userId)
+      .update({
+        'shipperInfo.driverLicenseUrl': driverLicenseUrl,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+  }
+
+  async clearDriverLicense(userId: string): Promise<void> {
+    await this.firestore
+      .collection(this.collection)
+      .doc(userId)
+      .update({
+        'shipperInfo.driverLicenseUrl': FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+  }
+
   private mapToEntity(id: string, data: any): UserEntity {
     return new UserEntity({
       id,

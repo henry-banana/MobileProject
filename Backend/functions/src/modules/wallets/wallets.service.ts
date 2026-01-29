@@ -2,7 +2,7 @@ import { Injectable, Inject, NotFoundException, BadRequestException, Logger } fr
 import { Timestamp, Firestore } from '@google-cloud/firestore';
 import { IWalletsRepository, WALLETS_REPOSITORY_TOKEN } from './interfaces';
 import { WalletEntity, WalletLedgerEntity, WalletType, LedgerType } from './entities';
-import { RequestPayoutDto } from './dto';
+import { RequestPayoutDto, RevenuePeriod, RevenueStatsDto, DailyRevenueDto } from './dto';
 
 @Injectable()
 export class WalletsService {
@@ -397,5 +397,180 @@ export class WalletsService {
       this.logger.error('Failed to fetch wallets for admin stats:', error);
       return [];
     }
+  }
+
+  /**
+   * Get revenue statistics for user (SHIPPER or OWNER)
+   * Calculates revenue from ledger entries with amount > 0 (income)
+   * Groups by day/week/month/year based on period parameter
+   */
+  async getRevenueStats(
+    userId: string,
+    type: WalletType,
+    period: RevenuePeriod = RevenuePeriod.MONTH,
+  ): Promise<RevenueStatsDto> {
+    const wallet = await this.getWalletByUserIdAndType(userId, type);
+
+    // Fetch ALL ledger entries (for accurate calculation)
+    // Note: In production, consider caching or pagination for large datasets
+    const allEntries = await this.getAllLedgerEntries(wallet.id);
+
+    // Filter only income entries (amount > 0)
+    const revenueEntries = allEntries.filter((entry) => entry.amount > 0);
+
+    // Calculate time boundaries
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = this.getStartOfWeek(now);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    // Calculate revenue by period
+    const today = this.sumEntriesInRange(revenueEntries, startOfToday, now);
+    const week = this.sumEntriesInRange(revenueEntries, startOfWeek, now);
+    const month = this.sumEntriesInRange(revenueEntries, startOfMonth, now);
+    const year = this.sumEntriesInRange(revenueEntries, startOfYear, now);
+    const all = revenueEntries.reduce((sum, entry) => sum + entry.amount, 0);
+
+    // Generate daily breakdown based on period
+    let dailyBreakdown: DailyRevenueDto[] = [];
+    if (period === RevenuePeriod.WEEK || period === RevenuePeriod.TODAY) {
+      dailyBreakdown = this.generateDailyBreakdown(revenueEntries, 7);
+    } else if (period === RevenuePeriod.MONTH) {
+      dailyBreakdown = this.generateDailyBreakdown(revenueEntries, 30);
+    } else if (period === RevenuePeriod.YEAR) {
+      // For year, show monthly breakdown instead
+      dailyBreakdown = this.generateMonthlyBreakdown(revenueEntries, 12);
+    } else {
+      // ALL - show last 30 days
+      dailyBreakdown = this.generateDailyBreakdown(revenueEntries, 30);
+    }
+
+    return {
+      today,
+      week,
+      month,
+      year,
+      all,
+      dailyBreakdown,
+      calculatedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Fetch all ledger entries for a wallet
+   * Used for revenue calculation (needs all entries for accurate stats)
+   */
+  private async getAllLedgerEntries(walletId: string): Promise<WalletLedgerEntity[]> {
+    const allEntries: WalletLedgerEntity[] = [];
+    let hasMore = true;
+    let offset = 0;
+    const limit = 100;
+
+    while (hasMore) {
+      const { entries, total } = await this.walletsRepo.findLedgerByWalletId(
+        walletId,
+        limit,
+        offset,
+      );
+      allEntries.push(...entries);
+      offset += limit;
+      hasMore = offset < total;
+    }
+
+    return allEntries;
+  }
+
+  /**
+   * Get start of week (Monday)
+   */
+  private getStartOfWeek(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Sunday
+    return new Date(d.getFullYear(), d.getMonth(), diff, 0, 0, 0, 0);
+  }
+
+  /**
+   * Sum entries within date range
+   */
+  private sumEntriesInRange(
+    entries: WalletLedgerEntity[],
+    startDate: Date,
+    endDate: Date,
+  ): number {
+    return entries
+      .filter((entry) => {
+        const entryDate = (entry.createdAt as Timestamp).toDate();
+        return entryDate >= startDate && entryDate <= endDate;
+      })
+      .reduce((sum, entry) => sum + entry.amount, 0);
+  }
+
+  /**
+   * Generate daily breakdown for last N days
+   */
+  private generateDailyBreakdown(
+    entries: WalletLedgerEntity[],
+    days: number,
+  ): DailyRevenueDto[] {
+    const result: DailyRevenueDto[] = [];
+    const now = new Date();
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(now.getDate() - i);
+      const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+
+      const dayEntries = entries.filter((entry) => {
+        const entryDate = (entry.createdAt as Timestamp).toDate();
+        return entryDate >= startOfDay && entryDate <= endOfDay;
+      });
+
+      const amount = dayEntries.reduce((sum, entry) => sum + entry.amount, 0);
+      const orderCount = dayEntries.filter((entry) => entry.orderId).length;
+
+      result.push({
+        date: startOfDay.toISOString().split('T')[0], // YYYY-MM-DD
+        amount,
+        orderCount,
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Generate monthly breakdown for last N months
+   */
+  private generateMonthlyBreakdown(
+    entries: WalletLedgerEntity[],
+    months: number,
+  ): DailyRevenueDto[] {
+    const result: DailyRevenueDto[] = [];
+    const now = new Date();
+
+    for (let i = months - 1; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+
+      const monthEntries = entries.filter((entry) => {
+        const entryDate = (entry.createdAt as Timestamp).toDate();
+        return entryDate >= startOfMonth && entryDate <= endOfMonth;
+      });
+
+      const amount = monthEntries.reduce((sum, entry) => sum + entry.amount, 0);
+      const orderCount = monthEntries.filter((entry) => entry.orderId).length;
+
+      result.push({
+        date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`, // YYYY-MM
+        amount,
+        orderCount,
+      });
+    }
+
+    return result;
   }
 }

@@ -20,6 +20,9 @@ export enum UserStatus {
 export interface ShipperInfo {
   shopId: string;
   shopName: string;
+  vehicleType: string;
+  vehicleNumber: string;
+  driverLicenseUrl?: string;
   status: 'ACTIVE' | 'INACTIVE';
   isOnline: boolean;
 }

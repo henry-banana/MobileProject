@@ -232,4 +232,45 @@ export class StorageService {
       console.warn('Failed to delete avatar:', error);
     }
   }
+
+  /**
+   * Delete shipper document from Firebase Storage
+   *
+   * @param documentUrl - Full URL of document to delete
+   */
+  async deleteShipperDocument(documentUrl: string): Promise<void> {
+    try {
+      if (!documentUrl) return;
+
+      const bucketName = 'foodappproject-7c136.firebasestorage.app';
+      const bucket = this.firebase.storage.bucket(bucketName);
+
+      // Extract filename from URL
+      let filename = '';
+
+      if (documentUrl.includes('firebasestorage.googleapis.com')) {
+        const match = documentUrl.match(/\/o\/([^?]+)/);
+        if (match) {
+          filename = decodeURIComponent(match[1]);
+        }
+      } else {
+        const urlParts = documentUrl.split('/');
+        const bucketIndex = urlParts.findIndex((part) => part.includes('.appspot.com'));
+        if (bucketIndex !== -1) {
+          filename = urlParts.slice(bucketIndex + 1).join('/');
+        }
+      }
+
+      if (!filename) return;
+
+      const file = bucket.file(filename);
+      const [exists] = await file.exists();
+
+      if (exists) {
+        await file.delete();
+      }
+    } catch (error) {
+      console.warn('Failed to delete shipper document:', error);
+    }
+  }
 }

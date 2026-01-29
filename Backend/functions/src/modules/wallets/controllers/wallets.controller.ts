@@ -16,7 +16,7 @@ import { CurrentUser } from '../../../core/decorators/current-user.decorator';
 import { UserRole } from '../../users/entities/user.entity';
 import { WalletsService } from '../wallets.service';
 import { WalletType } from '../entities';
-import { GetLedgerDto, RequestPayoutDto } from '../dto';
+import { GetLedgerDto, RequestPayoutDto, GetRevenueDto, RevenuePeriod } from '../dto';
 
 @Controller('wallets')
 @UseGuards(AuthGuard, RolesGuard)
@@ -116,5 +116,33 @@ export class WalletsController {
       message: 'Payout request submitted successfully',
       payoutRequest,
     };
+  }
+
+  /**
+   * Get revenue statistics
+   * GET /api/wallets/revenue?period=month
+   *
+   * Calculates revenue from ledger entries (amount > 0)
+   * Returns aggregated data by day/week/month/year
+   */
+  @Get('revenue')
+  @Roles(UserRole.OWNER, UserRole.SHIPPER)
+  @HttpCode(HttpStatus.OK)
+  async getRevenue(
+    @CurrentUser('uid') userId: string,
+    @Req() req: any,
+    @Query() dto: GetRevenueDto,
+  ) {
+    // Get wallet type from user's role
+    const userRole = req.user?.role as string;
+    const walletType = userRole === 'OWNER' ? WalletType.OWNER : WalletType.SHIPPER;
+
+    const stats = await this.walletsService.getRevenueStats(
+      userId,
+      walletType,
+      dto.period || RevenuePeriod.MONTH,
+    );
+
+    return stats;
   }
 }

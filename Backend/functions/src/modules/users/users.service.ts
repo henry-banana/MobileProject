@@ -12,7 +12,7 @@ import {
   ADDRESSES_REPOSITORY,
 } from './interfaces/addresses-repository.interface';
 import { UserEntity, UserSettings, AddressEntity } from './entities';
-import { UpdateProfileDto, CreateAddressDto, UpdateAddressDto, UserSettingsDto } from './dto';
+import { UpdateProfileDto, CreateAddressDto, UpdateAddressDto, UserSettingsDto, UpdateVehicleDto, VehicleInfoDto } from './dto';
 import { StorageService } from '../../shared/services';
 import { FirebaseService } from '../../core/firebase/firebase.service';
 
@@ -290,5 +290,102 @@ export class UsersService {
       // Even recording failure should not block account deletion
       console.error(`Failed to record orphan file for user ${userId}:`, recordError);
     }
+  }
+
+  // ==================== Vehicle Management (Shipper) ====================
+
+  /**
+   * Get vehicle information
+   * Only for users with SHIPPER role
+   */
+  async getVehicleInfo(userId: string): Promise<VehicleInfoDto> {
+    const user = await this.getProfile(userId);
+
+    if (user.role !== 'SHIPPER' || !user.shipperInfo) {
+      throw new ForbiddenException('Only shippers can access vehicle information');
+    }
+
+    return {
+      vehicleType: user.shipperInfo.vehicleType as any,
+      vehicleNumber: user.shipperInfo.vehicleNumber as any,
+      driverLicenseUrl: (user.shipperInfo as any).driverLicenseUrl,
+    };
+  }
+
+  /**
+   * Update vehicle information (type and number)
+   * Only for users with SHIPPER role
+   */
+  async updateVehicleInfo(userId: string, dto: UpdateVehicleDto): Promise<VehicleInfoDto> {
+    const user = await this.getProfile(userId);
+
+    if (user.role !== 'SHIPPER' || !user.shipperInfo) {
+      throw new ForbiddenException('Only shippers can update vehicle information');
+    }
+
+    // Update shipperInfo.vehicleType and vehicleNumber
+    await this.usersRepository.updateShipperVehicle(userId, dto.vehicleType, dto.vehicleNumber);
+
+    // Return updated info
+    return this.getVehicleInfo(userId);
+  }
+
+  /**
+   * Upload or update driver license photo
+   * Only for users with SHIPPER role
+   */
+  async uploadDriverLicense(userId: string, buffer: Buffer, mimetype: string): Promise<string> {
+    const user = await this.getProfile(userId);
+
+    if (user.role !== 'SHIPPER' || !user.shipperInfo) {
+      throw new ForbiddenException('Only shippers can upload driver license');
+    }
+
+    // Delete old driver license if exists
+    const existingUrl = (user.shipperInfo as any).driverLicenseUrl;
+    if (existingUrl) {
+      try {
+        await this.storageService.deleteShipperDocument(existingUrl);
+      } catch (error) {
+        console.warn(`Failed to delete old driver license for user ${userId}:`, error);
+      }
+    }
+
+    // Upload new driver license
+    const driverLicenseUrl = await this.storageService.uploadShipperDocument(
+      userId,
+      'driverLicense',
+      buffer,
+      mimetype,
+    );
+
+    // Update shipperInfo.driverLicenseUrl
+    await this.usersRepository.updateDriverLicense(userId, driverLicenseUrl);
+
+    return driverLicenseUrl;
+  }
+
+  /**
+   * Delete driver license photo
+   * Only for users with SHIPPER role
+   */
+  async deleteDriverLicense(userId: string): Promise<void> {
+    const user = await this.getProfile(userId);
+
+    if (user.role !== 'SHIPPER' || !user.shipperInfo) {
+      throw new ForbiddenException('Only shippers can delete driver license');
+    }
+
+    const existingUrl = (user.shipperInfo as any).driverLicenseUrl;
+    if (existingUrl) {
+      try {
+        await this.storageService.deleteShipperDocument(existingUrl);
+      } catch (error) {
+        console.warn(`Failed to delete driver license from storage for user ${userId}:`, error);
+      }
+    }
+
+    // Clear driverLicenseUrl in database
+    await this.usersRepository.clearDriverLicense(userId);
   }
 }
