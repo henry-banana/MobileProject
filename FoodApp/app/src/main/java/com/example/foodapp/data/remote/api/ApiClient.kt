@@ -31,7 +31,7 @@ object ApiClient {
 
     fun init(context: Context) {
         appContext = context.applicationContext
-        Log.d("ApiClient", "✅ Đã khởi tạo với context")
+        Log.d("ApiClient", " Đã khởi tạo với context")
     }
 
     private fun getToken(): String? {
