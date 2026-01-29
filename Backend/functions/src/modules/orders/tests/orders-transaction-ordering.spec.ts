@@ -19,6 +19,7 @@ import { CreateOrderDto } from '../dto';
 import { OrderEntity, OrderStatus, PaymentStatus } from '../entities';
 import { WalletsService } from '../../wallets/wallets.service';
 import { BuyersStatsService } from '../../buyers/services/buyers-stats.service';
+import { ShopsService } from '../../shops/services/shops.service';
 
 describe('Orders - Firestore Transaction Ordering', () => {
   let service: OrdersService;
@@ -98,14 +99,23 @@ describe('Orders - Firestore Transaction Ordering', () => {
           provide: OrderStateMachineService,
           useValue: { validateTransition: jest.fn() },
         },
-        { provide: FirebaseService, useValue: mockFirebaseService },        {
+        { provide: FirebaseService, useValue: mockFirebaseService },
+        {
           provide: BuyersStatsService,
           useValue: {
             incrementOrderCount: jest.fn().mockResolvedValue(undefined),
             updateTotalSpent: jest.fn().mockResolvedValue(undefined),
             updateBuyerStatsOnDelivery: jest.fn().mockResolvedValue(undefined),
           },
-        },      ],
+        },
+        {
+          provide: ShopsService,
+          useValue: {
+            updateShopStats: jest.fn().mockResolvedValue(undefined),
+            getMyShop: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<OrdersService>(OrdersService);
