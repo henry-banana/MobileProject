@@ -59,20 +59,28 @@ fun DashboardScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    // 1. Overview Cards (Grid 2x2)
-                    Text("Tổng quan hôm nay", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold), color = OwnerColors.TextPrimary)
+                    // 1. Overview Cards (Grid 2x2) - Hiển thị dữ liệu tháng này
+                    Text("Tổng quan tháng này", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold), color = OwnerColors.TextPrimary)
+                    
+                    // Tính tổng đơn từ ordersByStatus
+                    val totalOrders = data.ordersByStatus.values.sum()
+                    val pendingOrders = (data.ordersByStatus["PENDING"] ?: 0) + 
+                                       (data.ordersByStatus["CONFIRMED"] ?: 0) + 
+                                       (data.ordersByStatus["PREPARING"] ?: 0)
+                    val completedOrders = data.ordersByStatus["COMPLETED"] ?: 0
+                    
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             ModernStatCard(
-                                title = "Doanh thu",
-                                value = formatCurrency(data.today.revenue ?: 0.0),
+                                title = "Doanh thu tháng",
+                                value = formatCurrency(data.thisMonth.revenue),
                                 icon = Icons.Default.AttachMoney,
                                 color = OwnerColors.Success,
                                 modifier = Modifier.weight(1f)
                             )
                             ModernStatCard(
-                                title = "Đơn hàng",
-                                value = "${data.today.orderCount ?: 0}",
+                                title = "Tổng đơn hàng",
+                                value = "$totalOrders",
                                 icon = Icons.Default.Receipt,
                                 color = OwnerColors.Info,
                                 modifier = Modifier.weight(1f)
@@ -80,17 +88,17 @@ fun DashboardScreen(
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             ModernStatCard(
-                                title = "Đang chờ",
-                                value = "${data.today.pendingOrders ?: 0}",
+                                title = "Đang xử lý",
+                                value = "$pendingOrders",
                                 icon = Icons.Default.HourglassEmpty,
                                 color = OwnerColors.Warning,
                                 modifier = Modifier.weight(1f)
                             )
                             ModernStatCard(
-                                title = "Trung bình",
-                                value = formatCurrency(data.today.avgOrderValue ?: 0.0),
-                                icon = Icons.Default.ShowChart,
-                                color = OwnerColors.StatusPreparing,
+                                title = "Hoàn thành",
+                                value = "$completedOrders",
+                                icon = Icons.Default.CheckCircle,
+                                color = OwnerColors.StatusDelivered,
                                 modifier = Modifier.weight(1f)
                             )
                         }
