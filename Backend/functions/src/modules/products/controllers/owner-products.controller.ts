@@ -21,7 +21,7 @@ import {
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudFunctionFileInterceptor } from '../../../core/interceptors';
 import { ProductsService } from '../services';
 import {
   CreateProductDto,
@@ -60,7 +60,7 @@ export class OwnerProductsController {
    * PROD-001
    */
   @Post()
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(CloudFunctionFileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Create product',
@@ -224,7 +224,7 @@ export class OwnerProductsController {
    * PROD-006 - Price Lock Rule applies
    */
   @Put(':id')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(CloudFunctionFileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Update product',
@@ -299,7 +299,7 @@ export class OwnerProductsController {
    * PROD-005
    */
   @Post(':id/image')
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(CloudFunctionFileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Upload product image',

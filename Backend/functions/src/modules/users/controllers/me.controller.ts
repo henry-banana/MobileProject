@@ -14,7 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudFunctionFileInterceptor } from '../../../core/interceptors';
 import { AuthGuard } from '../../../core/guards/auth.guard';
 import { CurrentUser } from '../../../core/decorators/current-user.decorator';
 import { UsersService } from '../users.service';
@@ -120,7 +120,7 @@ export class MeController {
    */
   @Post('avatar')
   @HttpCode(HttpStatus.OK)
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(CloudFunctionFileInterceptor('avatar'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Upload avatar',
@@ -374,7 +374,7 @@ export class MeController {
    */
   @Post('vehicle/driver-license')
   @HttpCode(HttpStatus.OK)
-  @UseInterceptors(FileInterceptor('driverLicense'))
+  @UseInterceptors(CloudFunctionFileInterceptor('driverLicense'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Upload driver license photo',

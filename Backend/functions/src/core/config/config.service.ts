@@ -18,10 +18,11 @@ export class ConfigService {
   private readonly envConfig: Record<string, string>;
 
   constructor() {
-    // Chỉ load .env khi chạy local (không phải Firebase Functions environment)
-    if (!process.env.FIREBASE_CONFIG) {
-      this.loadEnvFile();
-    } else {
+    // Always try to load .env file first
+    // Firebase Functions will load .env during deployment
+    this.loadEnvFile();
+    
+    if (process.env.FIREBASE_CONFIG) {
       this.logger.log('Running in Firebase Functions environment');
     }
 
@@ -41,12 +42,17 @@ export class ConfigService {
     ];
 
     for (const envPath of possiblePaths) {
-      if (fs.existsSync(envPath)) {
-        const result = dotenv.config({ path: envPath });
-        if (!result.error) {
-          this.logger.log(`Loaded .env from: ${envPath}`);
-          return;
+      try {
+        if (fs.existsSync(envPath)) {
+          const result = dotenv.config({ path: envPath });
+          if (!result.error) {
+            this.logger.log(`Loaded .env from: ${envPath}`);
+            return;
+          }
         }
+      } catch (error: any) {
+        // Ignore file access errors (e.g., in Cloud Functions readonly filesystem)
+        this.logger.debug(`Cannot access ${envPath}: ${error?.message || error}`);
       }
     }
 
@@ -102,11 +108,11 @@ export class ConfigService {
   // ============================================
 
   get firebaseProjectId(): string {
-    return this.get('FIREBASE_PROJECT_ID', '');
+    return this.get('MY_PROJECT_ID', '');
   }
 
   get firebaseRegion(): string {
-    return this.get('FIREBASE_REGION', 'asia-southeast1');
+    return this.get('MY_REGION', 'asia-southeast1');
   }
 
   // ============================================

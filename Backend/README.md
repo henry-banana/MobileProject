@@ -80,9 +80,9 @@ Tạo file `Backend/.env` với nội dung sau:
 
 ```bash
 # Firebase (Bắt buộc)
-FIREBASE_PROJECT_ID=foodappproject-7c136
-FIREBASE_REGION=asia-southeast1
-FIREBASE_API_KEY=your-firebase-api-key
+MY_PROJECT_ID=foodappproject-7c136
+MY_REGION=asia-southeast1
+MY_FIREBASE_API_KEY=your-firebase-api-key
 
 # Google Routes API (GPS Module - Server-side)
 # Enable at: https://console.cloud.google.com/marketplace/product/google/routes.googleapis.com

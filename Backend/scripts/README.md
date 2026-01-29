@@ -88,7 +88,7 @@ SEPAY_ENABLED=true ./smoke-test.sh
 export BASE_URL="http://127.0.0.1:5001/foodappproject-7c136/asia-southeast1/api"
 
 # Firebase config (required)
-export FIREBASE_API_KEY="AIzaSyDbh9zQqMUuPEvELoWOP6Uukl04qIuTWeA"
+export MY_FIREBASE_API_KEY="AIzaSyDbh9zQqMUuPEvELoWOP6Uukl04qIuTWeA"
 
 # Test accounts (auto-created if not exist)
 export EMAIL_CUSTOMER="customer.test@ktx.com"
@@ -227,11 +227,11 @@ lsof -i :5001
 
 ```bash
 # Verify API key
-echo $FIREBASE_API_KEY
+echo $MY_FIREBASE_API_KEY
 
 # Test Firebase Auth directly
 curl -X POST \
-  "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$FIREBASE_API_KEY" \
+  "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$MY_FIREBASE_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"email":"test@test.com","password":"Test123!@#","returnSecureToken":true}'
 ```
@@ -270,7 +270,7 @@ jobs:
       - name: Run Tests
         env:
           BASE_URL: ${{ secrets.TEST_URL }}
-          FIREBASE_API_KEY: ${{ secrets.FIREBASE_KEY }}
+          MY_FIREBASE_API_KEY: ${{ secrets.FIREBASE_KEY }}
         run: |
           cd Backend/scripts
           ./full-integration-test.sh

@@ -6,7 +6,6 @@
  */
 
 import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter } from '@nestjs/platform-express';
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
@@ -16,15 +15,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { runOrphanFilesCleanup } from './jobs/orphanFilesCleanup.job';
 
-// Express instance (reused across invocations)
-const expressServer = express();
-
 /**
  * Bootstrap NestJS application
  */
-const createNestServer = async (expressInstance: express.Express) => {
-  const adapter = new ExpressAdapter(expressInstance);
-  const app = await NestFactory.create(AppModule, adapter, {
+const createNestServer = async () => {
+  // Let NestJS create and manage the Express instance internally
+  const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
 
@@ -49,14 +45,16 @@ const createNestServer = async (expressInstance: express.Express) => {
     }),
   );
 
-  // API prefix
-  app.setGlobalPrefix('api');
+  // No global prefix needed - function name is already 'api'
+  // Routes: /api/health, /api/categories, etc.
 
   // Swagger setup
   const config = new DocumentBuilder()
     .setTitle('KTX Delivery API')
     .setDescription('REST API cho ứng dụng giao hàng KTX')
     .setVersion('2.0')
+    .addServer('/api', 'Production (Cloud Functions)')
+    .addServer('http://localhost:3000/api', 'Local Development')
     .addBearerAuth(
       {
         type: 'http',
@@ -76,7 +74,7 @@ const createNestServer = async (expressInstance: express.Express) => {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
+  SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true, // Remember token in browser
       tagsSorter: 'alpha',
@@ -85,11 +83,15 @@ const createNestServer = async (expressInstance: express.Express) => {
   });
 
   await app.init();
-  return app;
+  
+  // Get the underlying Express instance
+  const expressInstance = app.getHttpAdapter().getInstance();
+  return { app, expressInstance };
 };
 
-// Lazy initialization
-let server: INestApplication | null = null;
+// Lazy initialization - cache to avoid cold starts
+let cachedServer: INestApplication | null = null;
+let cachedExpressInstance: express.Express | null = null;
 
 /**
  * Main API endpoint
@@ -106,10 +108,12 @@ export const api = onRequest(
     maxInstances: 100,
   },
   async (req, res) => {
-    if (!server) {
-      server = await createNestServer(expressServer);
+    if (!cachedServer) {
+      const { app, expressInstance } = await createNestServer();
+      cachedServer = app;
+      cachedExpressInstance = expressInstance;
     }
-    expressServer(req, res);
+    cachedExpressInstance!(req, res);
   },
 );
 
