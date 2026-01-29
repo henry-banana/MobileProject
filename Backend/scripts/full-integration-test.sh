@@ -44,7 +44,7 @@ NC='\033[0m' # No Color
 # Configuration
 # ==============================================================================
 BASE_URL="${BASE_URL:-http://127.0.0.1:5001/foodappproject-7c136/asia-southeast1/api}"
-FIREBASE_API_KEY="${FIREBASE_API_KEY:-AIzaSyDbh9zQqMUuPEvELoWOP6Uukl04qIuTWeA}"
+MY_FIREBASE_API_KEY="${MY_FIREBASE_API_KEY:-AIzaSyDbh9zQqMUuPEvELoWOP6Uukl04qIuTWeA}"
 
 # Test mode
 DETAILED="${DETAILED:-false}"  # Set to true for full response output
@@ -158,7 +158,7 @@ login() {
     log "Logging in as $role: $email"
     
     local response=$(curl -s -X POST \
-        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$FIREBASE_API_KEY" \
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$MY_FIREBASE_API_KEY" \
         -H "Content-Type: application/json" \
         -d "{\"email\":\"$email\",\"password\":\"$password\",\"returnSecureToken\":true}")
     
@@ -184,7 +184,7 @@ register() {
     
     # First register in Firebase Auth
     local auth_response=$(curl -s -X POST \
-        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$FIREBASE_API_KEY" \
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$MY_FIREBASE_API_KEY" \
         -H "Content-Type: application/json" \
         -d "{\"email\":\"$email\",\"password\":\"$password\",\"returnSecureToken\":true}")
     

@@ -1,7 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { CoreModule } from './core/core.module';
 import { SharedModule } from './shared/shared.module';
 import { EmailModule } from './modules/email';
+import { RawBodyMiddleware } from './core/middleware';
+
+// Utility modules
+import { HealthModule } from './modules/health';
 
 // Feature modules - EPIC 01
 import { CategoriesModule } from './modules/categories/categories.module';
@@ -38,6 +42,9 @@ import { ShipperRemovalRequestsModule } from './modules/shipper-removal-requests
     CoreModule,
     SharedModule,
     EmailModule, // Global module for sending emails
+
+    // Utilities
+    HealthModule, // Health check endpoint
 
     // EPIC 02: Auth ✅
     AuthModule,
@@ -85,4 +92,21 @@ import { ShipperRemovalRequestsModule } from './modules/shipper-removal-requests
     ShipperRemovalRequestsModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // Apply RawBodyMiddleware for multipart/form-data in Cloud Functions
+    // This middleware parses rawBody for file uploads since Cloud Run pre-consumes the stream
+    consumer.apply(RawBodyMiddleware).forRoutes(
+      // Owner product image upload
+      { path: 'owner/products/:id/image', method: RequestMethod.POST },
+      // Owner product create (with optional image)
+      { path: 'owner/products', method: RequestMethod.POST },
+      // Owner product update (with optional image)
+      { path: 'owner/products/:id', method: RequestMethod.PUT },
+      // User avatar upload
+      { path: 'me/avatar', method: RequestMethod.POST },
+      // Shipper driver license upload
+      { path: 'me/vehicle/driver-license', method: RequestMethod.POST },
+    );
+  }
+}

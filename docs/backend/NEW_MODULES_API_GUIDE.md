@@ -55,8 +55,8 @@ GEMINI_API_KEY=AIzaSy...your_key_here
 
 | Biến | Bắt buộc | Mô tả |
 |------|----------|-------|
-| `FIREBASE_PROJECT_ID` | ✅ | ID dự án Firebase |
-| `FIREBASE_API_KEY` | ✅ | Web API Key từ Firebase Console |
+| `MY_PROJECT_ID` | ✅ | ID dự án Firebase |
+| `MY_FIREBASE_API_KEY` | ✅ | Web API Key từ Firebase Console |
 | `GOOGLE_APPLICATION_CREDENTIALS` | ✅ | Đường dẫn tới service account JSON |
 | `GEMINI_API_KEY` | ✅ | API key cho AI Chatbot |
 | `SENDGRID_API_KEY` | ⚠️ | Cho gửi OTP email |

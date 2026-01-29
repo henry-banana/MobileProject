@@ -1,6 +1,6 @@
 # Quick PowerShell test script for Windows
 $BASE_URL = "http://127.0.0.1:5001/foodappproject-7c136/asia-southeast1/api"
-$FIREBASE_API_KEY = "AIzaSyDbh9zQqMUuPEvELoWOP6Uukl04qIuTWeA"
+$MY_FIREBASE_API_KEY = "AIzaSyDbh9zQqMUuPEvELoWOP6Uukl04qIuTWeA"
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "KTX Delivery - Quick Test (PowerShell)" -ForegroundColor Cyan
@@ -28,7 +28,7 @@ $loginBody = @{
 } | ConvertTo-Json
 
 try {
-    $authResponse = Invoke-RestMethod -Uri "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$FIREBASE_API_KEY" -Method Post -Body $loginBody -ContentType "application/json"
+    $authResponse = Invoke-RestMethod -Uri "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$MY_FIREBASE_API_KEY" -Method Post -Body $loginBody -ContentType "application/json"
     $TOKEN = $authResponse.idToken
     Write-Host "✓ Login successful" -ForegroundColor Green
 } catch {
@@ -43,7 +43,7 @@ try {
     } | ConvertTo-Json
     
     try {
-        $authResponse = Invoke-RestMethod -Uri "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$FIREBASE_API_KEY" -Method Post -Body $registerBody -ContentType "application/json"
+        $authResponse = Invoke-RestMethod -Uri "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$MY_FIREBASE_API_KEY" -Method Post -Body $registerBody -ContentType "application/json"
         $TOKEN = $authResponse.idToken
         Write-Host "✓ Registration successful" -ForegroundColor Green
     } catch {
