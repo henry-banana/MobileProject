@@ -52,6 +52,8 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import com.example.foodapp.pages.owner.dashboard.DashBoardRootScreen
 import com.example.foodapp.pages.shipper.dashboard.ShipperDashboardRootScreen
+import com.example.foodapp.pages.owner.shopsetup.OwnerHomeWrapper
+import com.example.foodapp.pages.owner.shopsetup.ShopSetupScreen
 
 sealed class Screen(val route: String) {
     object Intro : Screen("intro")
@@ -66,6 +68,7 @@ sealed class Screen(val route: String) {
     object UserNotifications : Screen("user_notifications")
     object ShipperHome : Screen("shipper_home")
     object OwnerHome : Screen("owner_home")
+    object ShopSetup : Screen("shop_setup")
     object InputEmail : Screen("input_email")
     object OtpResetPassword : Screen("otp_resetpassword")
     object ResetPassword : Screen("resetpassword")
@@ -588,7 +591,22 @@ fun FoodAppNavHost(
         }
 
         composable(Screen.OwnerHome.route) {
-            DashBoardRootScreen(navController = navController)
+            OwnerHomeWrapper(
+                navController = navController,
+                shopSetupRoute = Screen.ShopSetup.route
+            ) {
+                DashBoardRootScreen(navController = navController)
+            }
+        }
+        
+        composable(Screen.ShopSetup.route) {
+            ShopSetupScreen(
+                onSetupComplete = {
+                    navController.navigate(Screen.OwnerHome.route) {
+                        popUpTo(Screen.ShopSetup.route) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
