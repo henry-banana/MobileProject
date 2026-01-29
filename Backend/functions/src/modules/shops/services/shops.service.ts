@@ -298,6 +298,8 @@ export class ShopsService {
       shipFeePerOrder: shop.shipFeePerOrder,
       minOrderAmount: shop.minOrderAmount,
       totalOrders: shop.totalOrders,
+      ownerId: shop.ownerId,
+      ownerName: shop.ownerName,
     };
   }
 
