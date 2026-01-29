@@ -5,13 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="06c3b686-a663-4097-a1a0-6ce6cee04ec9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Backend/functions/src/modules/products/dto/create-product-with-file.dto.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Backend/functions/src/modules/products/dto/update-product-with-file.dto.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/functions/src/modules/products/controllers/owner-products.controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/functions/src/modules/products/controllers/owner-products.controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/functions/src/modules/products/dto/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/functions/src/modules/products/dto/index.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/functions/src/modules/products/services/products.service.ts" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/functions/src/modules/products/services/products.service.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

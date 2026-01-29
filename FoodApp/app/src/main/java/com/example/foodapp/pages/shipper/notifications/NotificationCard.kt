@@ -21,12 +21,15 @@ import com.example.foodapp.pages.shipper.theme.ShipperColors
 @Composable
 fun NotificationCard(
     notification: Notification,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    timeText: String,
+    titleText: String = notification.title,
+    bodyText: String = notification.body
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.isRead) ShipperColors.Surface else ShipperColors.PrimaryLight
+            containerColor = if (notification.read) ShipperColors.Surface else ShipperColors.PrimaryLight
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
@@ -42,21 +45,15 @@ fun NotificationCard(
                 modifier = Modifier
                     .size(44.dp)
                     .background(
-                        notification.type.color.copy(alpha = 0.1f),
+                        getTypeColor(notification.type).copy(alpha = 0.1f),
                         RoundedCornerShape(12.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = when (notification.type) {
-                        NotificationType.NEW_ORDER -> Icons.Outlined.ShoppingBag
-                        NotificationType.ORDER_UPDATE -> Icons.Outlined.LocalShipping
-                        NotificationType.PAYMENT -> Icons.Outlined.AccountBalanceWallet
-                        NotificationType.PROMOTION -> Icons.Outlined.LocalOffer
-                        NotificationType.SYSTEM -> Icons.Outlined.Info
-                    },
+                    imageVector = getTypeIcon(notification.type),
                     contentDescription = null,
-                    tint = notification.type.color,
+                    tint = getTypeColor(notification.type),
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -71,14 +68,14 @@ fun NotificationCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.Top
                 ) {
-                    Text(
-                        text = notification.title,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = ShipperColors.TextPrimary,
-                        modifier = Modifier.weight(1f)
-                    )
-                    if (!notification.isRead) {
+                Text(
+                    text = titleText,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ShipperColors.TextPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                    if (!notification.read) {
                         Box(
                             modifier = Modifier
                                 .size(8.dp)
@@ -88,7 +85,7 @@ fun NotificationCard(
                 }
 
                 Text(
-                    text = notification.message,
+                    text = bodyText,
                     fontSize = 14.sp,
                     color = ShipperColors.TextSecondary,
                     modifier = Modifier.padding(top = 4.dp),
@@ -96,7 +93,7 @@ fun NotificationCard(
                 )
 
                 Text(
-                    text = notification.time,
+                    text = timeText,
                     fontSize = 12.sp,
                     color = ShipperColors.TextTertiary,
                     modifier = Modifier.padding(top = 8.dp)
@@ -104,4 +101,60 @@ fun NotificationCard(
             }
         }
     }
+}
+
+private fun getTypeIcon(type: NotificationType) = when (type) {
+    NotificationType.NEW_ORDER,
+    NotificationType.ORDER_CONFIRMED,
+    NotificationType.ORDER_PREPARING,
+    NotificationType.ORDER_READY,
+    NotificationType.ORDER_SHIPPING,
+    NotificationType.ORDER_DELIVERED -> Icons.Outlined.ShoppingBag
+
+    NotificationType.ORDER_CANCELLED -> Icons.Outlined.Cancel
+
+    NotificationType.PAYMENT_SUCCESS,
+    NotificationType.PAYMENT_FAILED,
+    NotificationType.PAYMENT_REFOUNDED -> Icons.Outlined.AccountBalanceWallet
+
+    NotificationType.SHIPPER_ASSIGNED,
+    NotificationType.SHIPPER_APPLIED,
+    NotificationType.SHIPPER_APPLICATION_APPROVED,
+    NotificationType.SHIPPER_APPLICATION_REJECTED -> Icons.Outlined.LocalShipping
+
+    NotificationType.DAILY_SUMMARY,
+    NotificationType.SUBSCRIPTION_EXPIRING -> Icons.Outlined.Info
+
+    NotificationType.PROMOTION,
+    NotificationType.VOUCHER_AVAILABLE -> Icons.Outlined.LocalOffer
+
+    NotificationType.UNKNOWN -> Icons.Outlined.Notifications
+}
+
+private fun getTypeColor(type: NotificationType) = when (type) {
+    NotificationType.NEW_ORDER,
+    NotificationType.ORDER_CONFIRMED,
+    NotificationType.ORDER_PREPARING,
+    NotificationType.ORDER_READY,
+    NotificationType.ORDER_SHIPPING,
+    NotificationType.ORDER_DELIVERED,
+    NotificationType.PAYMENT_SUCCESS,
+    NotificationType.SHIPPER_APPLICATION_APPROVED -> ShipperColors.Success
+
+    NotificationType.ORDER_CANCELLED,
+    NotificationType.PAYMENT_FAILED,
+    NotificationType.SHIPPER_APPLICATION_REJECTED -> ShipperColors.Error
+
+    NotificationType.PAYMENT_REFOUNDED,
+    NotificationType.SUBSCRIPTION_EXPIRING -> ShipperColors.Warning
+
+    NotificationType.SHIPPER_ASSIGNED,
+    NotificationType.SHIPPER_APPLIED -> ShipperColors.Primary
+
+    NotificationType.DAILY_SUMMARY -> ShipperColors.Info
+
+    NotificationType.PROMOTION,
+    NotificationType.VOUCHER_AVAILABLE -> ShipperColors.Info
+
+    NotificationType.UNKNOWN -> ShipperColors.TextSecondary
 }
