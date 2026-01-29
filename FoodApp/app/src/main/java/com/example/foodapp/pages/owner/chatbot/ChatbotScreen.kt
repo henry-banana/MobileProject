@@ -228,22 +228,22 @@ private fun ChatMessageItem(message: ChatMessage) {
                 shadowElevation = if (isUser) 0.dp else 1.dp
             ) {
                 if (message.isLoading) {
-                    // Loading animation
+                    // Simple loading indicator
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        repeat(3) { index ->
-                            val alpha by animateFloatAsState(
-                                targetValue = if ((System.currentTimeMillis() / 300) % 3 == index.toLong()) 1f else 0.3f,
-                                label = "dot$index"
-                            )
-                            Surface(
-                                shape = CircleShape,
-                                color = OwnerColors.TextSecondary.copy(alpha = alpha),
-                                modifier = Modifier.size(8.dp)
-                            ) {}
-                        }
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = OwnerColors.Primary,
+                            strokeWidth = 2.dp
+                        )
+                        Text(
+                            "Đang suy nghĩ...",
+                            color = OwnerColors.TextSecondary,
+                            fontSize = 14.sp
+                        )
                     }
                 } else {
                     Text(
