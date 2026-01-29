@@ -12,6 +12,7 @@ import { IOrdersRepository, ORDERS_REPOSITORY } from '../interfaces';
 import { CartService } from '../../cart/services';
 import { IProductsRepository } from '../../products/interfaces';
 import { IShopsRepository } from '../../shops/interfaces';
+import { ShopsService } from '../../shops/services/shops.service';
 import { IShippersRepository } from '../../shippers/repositories/shippers-repository.interface';
 import { ShipperStatus } from '../../shippers/entities/shipper.entity';
 import { IAddressesRepository, ADDRESSES_REPOSITORY } from '../../users/interfaces';
@@ -49,6 +50,7 @@ export class OrdersService {
     private readonly productsRepo: IProductsRepository,
     @Inject('SHOPS_REPOSITORY')
     private readonly shopsRepo: IShopsRepository,
+    private readonly shopsService: ShopsService,
     @Inject('IShippersRepository')
     private readonly shippersRepo: IShippersRepository,
     @Inject(ADDRESSES_REPOSITORY)
