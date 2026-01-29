@@ -315,5 +315,15 @@ object RepositoryProvider {
             )
         )
     }
+    
+    // ==================== OWNER REMOVAL REQUEST REPOSITORY ====================
+    
+    fun getOwnerRemovalRequestRepository(): com.example.foodapp.data.repository.owner.base.OwnerRemovalRequestRepository {
+        return com.example.foodapp.data.repository.owner.removal.RealOwnerRemovalRequestRepository(
+            com.example.foodapp.data.remote.api.ApiClient.createService(
+                com.example.foodapp.data.remote.owner.RemovalRequestApiService::class.java
+            )
+        )
+    }
 }
 
