@@ -21,8 +21,8 @@ export interface ChatResponse {
 
 // Rate limit config: 3 requests per 60 seconds = 20 seconds between requests
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 3;
-const MIN_INTERVAL_MS = RATE_LIMIT_WINDOW_MS / MAX_REQUESTS_PER_WINDOW; // 20 seconds
+const MAX_REQUESTS_PER_WINDOW = 10; // 10 requests
+const MIN_INTERVAL_MS = RATE_LIMIT_WINDOW_MS / MAX_REQUESTS_PER_WINDOW; // 6000 ms
 
 /**
  * Chatbot Service
