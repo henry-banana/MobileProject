@@ -717,8 +717,9 @@ private fun RemovalRequestCard(
                         colors = ButtonDefaults.outlinedButtonColors(
                             contentColor = OwnerColors.Error
                         ),
-                        border = ButtonDefaults.outlinedButtonBorder(enabled = !isProcessing).copy(
-                            brush = null
+                        border = androidx.compose.foundation.BorderStroke(
+                            width = 1.dp,
+                            color = if (!isProcessing) OwnerColors.Error else OwnerColors.Error.copy(alpha = 0.5f)
                         )
                     ) {
                         Icon(
