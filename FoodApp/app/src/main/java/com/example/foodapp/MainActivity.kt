@@ -1,5 +1,6 @@
 package com.example.foodapp
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,7 +13,15 @@ import androidx.navigation.compose.rememberNavController
 import com.example.foodapp.navigation.FoodAppNavHost
 import com.example.foodapp.ui.theme.FoodAppTheme
 import com.example.foodapp.data.remote.api.ApiClient
+import com.example.foodapp.utils.LanguageManager
+
 class MainActivity : ComponentActivity() {
+    
+    override fun attachBaseContext(newBase: Context) {
+        // Áp dụng ngôn ngữ đã lưu trước khi attach context
+        super.attachBaseContext(LanguageManager.wrapContext(newBase))
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

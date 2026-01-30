@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ==================== COMMON/SHARED ==================== -->
+    <string name="owner_app_name">KTX Food Owner</string>
+    <string name="owner_loading">Đang tải...</string>
+    <string name="owner_error">Lỗi</string>
+    <string name="owner_retry">Thử lại</string>
+    <string name="owner_cancel">Hủy</string>
+    <string name="owner_save">Lưu</string>
+    <string name="owner_delete">Xóa</string>
+    <string name="owner_edit">Sửa</string>
+    <string name="owner_add">Thêm</string>
+    <string name="owner_search">Tìm kiếm</string>
+    <string name="owner_filter">Lọc</string>
+    <string name="owner_all">Tất cả</string>
+    <string name="owner_active">Đang hoạt động</string>
+    <string name="owner_inactive">Không hoạt động</string>
+    <string name="owner_close">Đóng</string>
+    <string name="owner_confirm">Xác nhận</string>
+    <string name="owner_success">Thành công</string>
+    <string name="owner_version">Phiên bản 1.0.0</string>
+    <string name="owner_shop_owner">Chủ cửa hàng</string>
+    <string name="owner_currency_suffix">đ</string>
+    <string name="owner_orders_unit">đơn hàng</string>
+    
+    <!-- ==================== SIDEBAR/NAVIGATION ==================== -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_orders">Quản lý đơn hàng</string>
+    <string name="nav_foods">Quản lý món ăn</string>
+    <string name="nav_shippers">Quản lý Shipper</string>
+    <string name="nav_vouchers">Quản lý Voucher</string>
+    <string name="nav_customers">Khách hàng</string>
+    <string name="nav_wallet">Ví tiền</string>
+    <string name="nav_revenue">Báo cáo doanh thu</string>
+    <string name="nav_reviews">Đánh giá</string>
+    <string name="nav_chatbot">Trợ lý AI</string>
+    <string name="nav_chat">Tin nhắn</string>
+    <string name="nav_settings">Cài đặt</string>
+    
+    <!-- ==================== DASHBOARD ==================== -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_total_revenue">Tổng doanh thu</string>
+    <string name="dashboard_total_orders">Tổng đơn hàng</string>
+    <string name="dashboard_average_order">Giá trị TB/đơn</string>
+    <string name="dashboard_pending_orders">Đơn chờ xử lý</string>
+    <string name="dashboard_recent_orders">Đơn hàng gần đây</string>
+    <string name="dashboard_view_all">Xem tất cả</string>
+    <string name="dashboard_today">Hôm nay</string>
+    <string name="dashboard_this_week">Tuần này</string>
+    <string name="dashboard_this_month">Tổng quan tháng này</string>
+    <string name="dashboard_this_year">Năm nay</string>
+    <string name="dashboard_no_orders">Chưa có đơn hàng nào</string>
+    <string name="dashboard_order_status_dist">Phân bố trạng thái đơn</string>
+    <string name="dashboard_sold_count">%1$d đã bán</string>
+    
+    <!-- ==================== ORDERS ==================== -->
+    <string name="orders_title">Quản lý đơn hàng</string>
+    <string name="orders_all">Tất cả</string>
+    <string name="orders_pending">Chờ xử lý</string>
+    <string name="orders_confirmed">Đã xác nhận</string>
+    <string name="orders_preparing">Đang chuẩn bị</string>
+    <string name="orders_ready">Sẵn sàng</string>
+    <string name="orders_delivering">Đang giao</string>
+    <string name="orders_delivered">Đã giao</string>
+    <string name="orders_cancelled">Đã hủy</string>
+    <string name="orders_no_orders">Không có đơn hàng nào</string>
+    <string name="orders_new_orders_appear">Đơn hàng mới sẽ xuất hiện ở đây</string>
+    <string name="orders_search_hint">Tìm mã đơn, tên khách...</string>
+    <string name="orders_order_number">Đơn hàng #%1$s</string>
+    <string name="orders_order_details">Chi tiết đơn hàng</string>
+    <string name="orders_customer">Khách hàng</string>
+    <string name="orders_phone">Số điện thoại</string>
+    <string name="orders_address">Địa chỉ</string>
+    <string name="orders_total">Tổng tiền</string>
+    <string name="orders_status">Trạng thái</string>
+    <string name="orders_items">Sản phẩm</string>
+    <string name="orders_update_status">Cập nhật trạng thái</string>
+    <string name="orders_accept">Chấp nhận</string>
+    <string name="orders_reject">Từ chối</string>
+    <string name="orders_cancel_order">Hủy đơn hàng</string>
+    <string name="orders_cancel_confirm">Bạn có chắc chắn muốn hủy đơn hàng này?</string>
+    <string name="orders_cancel_reason">Lý do hủy (không bắt buộc)</string>
+    
+    <!-- ==================== FOODS ==================== -->
+    <string name="foods_title">Quản lý món ăn</string>
+    <string name="foods_add_food">Thêm món</string>
+    <string name="foods_edit_food">Sửa món</string>
+    <string name="foods_delete_food">Xóa món</string>
+    <string name="foods_no_foods">Chưa có món ăn nào</string>
+    <string name="foods_not_found">Không tìm thấy sản phẩm</string>
+    <string name="foods_add_hint">Nhấn + để thêm sản phẩm mới</string>
+    <string name="foods_search_hint">Tìm sản phẩm...</string>
+    <string name="foods_loading">Đang tải sản phẩm...</string>
+    <string name="foods_total">Tổng sản phẩm</string>
+    <string name="foods_food_name">Tên món</string>
+    <string name="foods_description">Mô tả</string>
+    <string name="foods_price">Giá</string>
+    <string name="foods_category">Danh mục</string>
+    <string name="foods_available">Còn hàng</string>
+    <string name="foods_unavailable">Hết hàng</string>
+    <string name="foods_confirm_delete">Xác nhận xóa</string>
+    <string name="foods_delete_message">Bạn có chắc muốn xóa món ăn này?</string>
+    
+    <!-- ==================== SHIPPERS ==================== -->
+    <string name="shippers_title">Quản lý Shipper</string>
+    <string name="shippers_pending">Chờ duyệt</string>
+    <string name="shippers_approved">Đã duyệt</string>
+    <string name="shippers_rejected">Đã từ chối</string>
+    <string name="shippers_no_shippers">Chưa có shipper nào</string>
+    <string name="shippers_approve">Duyệt</string>
+    <string name="shippers_reject">Từ chối</string>
+    <string name="shippers_online">Trực tuyến</string>
+    <string name="shippers_offline">Ngoại tuyến</string>
+    <string name="shippers_total_deliveries">Tổng đơn giao</string>
+    <string name="shippers_rating">Đánh giá</string>
+    <string name="shippers_removal_requests">Yêu cầu xóa</string>
+    
+    <!-- ==================== VOUCHERS ==================== -->
+    <string name="vouchers_title">Quản lý Voucher</string>
+    <string name="vouchers_add">Tạo voucher</string>
+    <string name="vouchers_edit">Sửa voucher</string>
+    <string name="vouchers_delete">Xóa voucher</string>
+    <string name="vouchers_no_vouchers">Chưa có voucher nào</string>
+    <string name="vouchers_code">Mã voucher</string>
+    <string name="vouchers_type">Loại</string>
+    <string name="vouchers_type_percentage">Giảm %</string>
+    <string name="vouchers_type_fixed">Giảm tiền</string>
+    <string name="vouchers_type_freeship">Miễn phí ship</string>
+    <string name="vouchers_value">Giá trị</string>
+    <string name="vouchers_min_order">Đơn tối thiểu</string>
+    <string name="vouchers_max_discount">Giảm tối đa</string>
+    <string name="vouchers_usage_limit">Giới hạn sử dụng</string>
+    <string name="vouchers_valid_from">Từ ngày</string>
+    <string name="vouchers_valid_to">Đến ngày</string>
+    <string name="vouchers_active">Đang hoạt động</string>
+    <string name="vouchers_inactive">Không hoạt động</string>
+    <string name="vouchers_expired">Đã hết hạn</string>
+    <string name="vouchers_confirm_delete">Xác nhận xóa</string>
+    <string name="vouchers_delete_message">Bạn có chắc muốn xóa voucher này?</string>
+    <string name="vouchers_create_success">Tạo voucher thành công</string>
+    <string name="vouchers_update_success">Cập nhật voucher thành công</string>
+    <string name="vouchers_delete_success">Đã xóa voucher</string>
+    <string name="vouchers_status_on">Đã kích hoạt voucher</string>
+    <string name="vouchers_status_off">Đã tắt voucher</string>
+    
+    <!-- ==================== CUSTOMERS/BUYERS ==================== -->
+    <string name="customers_title">Khách hàng</string>
+    <string name="customers_no_customers">Chưa có khách hàng nào</string>
+    <string name="customers_total_orders">Tổng đơn hàng</string>
+    <string name="customers_total_spent">Tổng chi tiêu</string>
+    <string name="customers_last_order">Đơn cuối</string>
+    <string name="customers_details">Chi tiết khách hàng</string>
+    
+    <!-- ==================== WALLET ==================== -->
+    <string name="wallet_title">Ví tiền</string>
+    <string name="wallet_tab_overview">Tổng quan</string>
+    <string name="wallet_tab_transactions">Lịch sử</string>
+    <string name="wallet_tab_revenue">Doanh thu</string>
+    <string name="wallet_balance">Số dư khả dụng</string>
+    <string name="wallet_total_earned">Tổng thu nhập</string>
+    <string name="wallet_total_withdrawn">Đã rút</string>
+    <string name="wallet_withdraw">Rút tiền</string>
+    <string name="wallet_withdraw_request">Yêu cầu rút tiền</string>
+    <string name="wallet_info_title">💡 Thông tin ví</string>
+    <string name="wallet_info_balance">Số dư khả dụng</string>
+    <string name="wallet_info_balance_desc">Số tiền bạn có thể rút về tài khoản ngân hàng</string>
+    <string name="wallet_info_earned">Tổng thu nhập</string>
+    <string name="wallet_info_earned_desc">Tổng số tiền bạn đã kiếm được từ các đơn hàng</string>
+    <string name="wallet_info_withdrawn">Đã rút</string>
+    <string name="wallet_info_withdrawn_desc">Tổng số tiền bạn đã rút về tài khoản ngân hàng</string>
+    <string name="wallet_info_note">⚠️ Lưu ý: Số tiền rút tối thiểu là 100,000đ. Yêu cầu rút tiền sẽ được xử lý trong 1-3 ngày làm việc.</string>
+    <string name="wallet_transactions_title">Lịch sử giao dịch</string>
+    <string name="wallet_transactions_count">%1$d giao dịch</string>
+    <string name="wallet_no_transactions">Chưa có giao dịch nào</string>
+    <string name="wallet_transaction_order_payout">Thanh toán đơn hàng</string>
+    <string name="wallet_transaction_withdrawal">Rút tiền</string>
+    <string name="wallet_transaction_adjustment">Điều chỉnh</string>
+    <string name="wallet_transaction_order">Đơn hàng #%1$s</string>
+    <string name="wallet_balance_after">SĐ: %1$s</string>
+    <string name="wallet_revenue_chart">Biểu đồ doanh thu</string>
+    <string name="wallet_revenue_daily">Chi tiết theo ngày</string>
+    <string name="wallet_no_revenue_data">Chưa có dữ liệu doanh thu</string>
+    <string name="wallet_payout_amount">Số tiền rút (VNĐ) *</string>
+    <string name="wallet_payout_amount_hint">Nhập số tiền muốn rút</string>
+    <string name="wallet_payout_bank_code">Mã ngân hàng *</string>
+    <string name="wallet_payout_bank_code_hint">VD: VCB, TCB, MB...</string>
+    <string name="wallet_payout_account_number">Số tài khoản *</string>
+    <string name="wallet_payout_account_number_hint">Nhập số tài khoản ngân hàng</string>
+    <string name="wallet_payout_account_name">Tên chủ tài khoản *</string>
+    <string name="wallet_payout_account_name_hint">VD: NGUYEN VAN A</string>
+    <string name="wallet_payout_note">Ghi chú (tùy chọn)</string>
+    <string name="wallet_payout_note_hint">Nhập ghi chú nếu cần</string>
+    <string name="wallet_payout_info">Yêu cầu rút tiền sẽ được xử lý trong 1-3 ngày làm việc. Số tiền tối thiểu: 100,000đ (Owner).</string>
+    <string name="wallet_payout_submit">Gửi yêu cầu</string>
+    <string name="wallet_payout_success">Yêu cầu rút tiền đã được gửi thành công</string>
+    <string name="wallet_payout_error">Không thể gửi yêu cầu rút tiền</string>
+    <string name="wallet_payout_error_min_amount">Số tiền rút tối thiểu 100,000đ</string>
+    <string name="wallet_payout_error_insufficient">Số dư không đủ</string>
+    <string name="wallet_payout_error_bank_code">Vui lòng nhập mã ngân hàng</string>
+    <string name="wallet_payout_error_account_number">Vui lòng nhập số tài khoản</string>
+    <string name="wallet_payout_error_account_name">Vui lòng nhập tên chủ tài khoản</string>
+    
+    <!-- ==================== REVENUE ==================== -->
+    <string name="revenue_title">Báo cáo doanh thu</string>
+    <string name="revenue_period_today">Hôm nay</string>
+    <string name="revenue_period_week">Tuần này</string>
+    <string name="revenue_period_month">Tháng này</string>
+    <string name="revenue_period_year">Năm nay</string>
+    <string name="revenue_period_all">Tất cả</string>
+    <string name="revenue_total">Tổng doanh thu</string>
+    <string name="revenue_orders">Số đơn hàng</string>
+    <string name="revenue_average">Trung bình/đơn</string>
+    <string name="revenue_chart">Biểu đồ</string>
+    <string name="revenue_time_slots">Khung giờ</string>
+    <string name="revenue_top_products">Sản phẩm bán chạy</string>
+    <string name="revenue_no_data">Chưa có dữ liệu</string>
+    
+    <!-- ==================== REVIEWS ==================== -->
+    <string name="reviews_title">Đánh giá</string>
+    <string name="reviews_no_reviews">Chưa có đánh giá nào</string>
+    <string name="reviews_average_rating">Đánh giá trung bình</string>
+    <string name="reviews_total_reviews">Tổng đánh giá</string>
+    <string name="reviews_reply">Phản hồi</string>
+    <string name="reviews_reply_hint">Nhập phản hồi...</string>
+    <string name="reviews_send_reply">Gửi phản hồi</string>
+    
+    <!-- ==================== CHAT ==================== -->
+    <string name="chat_title">Tin nhắn</string>
+    <string name="chat_no_conversations">Chưa có cuộc trò chuyện nào</string>
+    <string name="chat_type_message">Nhập tin nhắn...</string>
+    <string name="chat_send">Gửi</string>
+    
+    <!-- ==================== CHATBOT ==================== -->
+    <string name="chatbot_title">Trợ lý AI</string>
+    <string name="chatbot_welcome">Xin chào! Tôi là trợ lý AI, sẵn sàng hỗ trợ bạn.</string>
+    <string name="chatbot_type_message">Nhập câu hỏi...</string>
+    
+    <!-- ==================== SETTINGS ==================== -->
+    <string name="settings_title">Cài đặt</string>
+    <string name="settings_shop_info">Thông tin cửa hàng</string>
+    <string name="settings_shop_name">Tên cửa hàng</string>
+    <string name="settings_shop_address">Địa chỉ</string>
+    <string name="settings_shop_phone">Số điện thoại</string>
+    <string name="settings_shop_email">Email</string>
+    <string name="settings_shop_description">Mô tả</string>
+    <string name="settings_shop_logo">Logo</string>
+    <string name="settings_shop_banner">Ảnh bìa</string>
+    <string name="settings_business_hours">Giờ mở cửa</string>
+    <string name="settings_account">Tài khoản</string>
+    <string name="settings_notifications">Thông báo</string>
+    <string name="settings_language">Ngôn ngữ</string>
+    <string name="settings_help">Trợ giúp</string>
+    <string name="settings_about">Về ứng dụng</string>
+    <string name="settings_logout">Đăng xuất</string>
+    <string name="settings_logout_confirm">Xác nhận đăng xuất</string>
+    <string name="settings_logout_message">Bạn có chắc muốn đăng xuất?</string>
+    
+    <!-- ==================== NOTIFICATIONS ==================== -->
+    <string name="notifications_title">Thông báo</string>
+    <string name="notifications_no_notifications">Không có thông báo mới</string>
+    <string name="notifications_mark_read">Đánh dấu đã đọc</string>
+    <string name="notifications_mark_all_read">Đánh dấu tất cả đã đọc</string>
+    
+    <!-- ==================== ERROR MESSAGES ==================== -->
+    <string name="error_network">Lỗi kết nối mạng</string>
+    <string name="error_server">Lỗi máy chủ</string>
+    <string name="error_unknown">Đã xảy ra lỗi</string>
+    <string name="error_load_data">Không thể tải dữ liệu</string>
+    <string name="error_save_data">Không thể lưu dữ liệu</string>
+    
+    <!-- ==================== SUCCESS MESSAGES ==================== -->
+    <string name="success_saved">Đã lưu thành công</string>
+    <string name="success_deleted">Đã xóa thành công</string>
+    <string name="success_updated">Đã cập nhật thành công</string>
+</resources>

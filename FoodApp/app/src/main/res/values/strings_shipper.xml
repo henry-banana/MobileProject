@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ==================== COMMON/SHARED ==================== -->
+    <string name="shipper_app_name">KTX Food Shipper</string>
+    <string name="shipper_loading">Đang tải...</string>
+    <string name="shipper_error">Lỗi</string>
+    <string name="shipper_retry">Thử lại</string>
+    <string name="shipper_cancel">Hủy</string>
+    <string name="shipper_save">Lưu</string>
+    <string name="shipper_delete">Xóa</string>
+    <string name="shipper_edit">Sửa</string>
+    <string name="shipper_confirm">Xác nhận</string>
+    <string name="shipper_close">Đóng</string>
+    <string name="shipper_success">Thành công</string>
+    <string name="shipper_version">FoodApp Shipper v1.0.0</string>
+    
+    <!-- ==================== NAVIGATION ==================== -->
+    <string name="shipper_nav_home">Trang chủ</string>
+    <string name="shipper_nav_orders">Đơn hàng</string>
+    <string name="shipper_nav_history">Lịch sử</string>
+    <string name="shipper_nav_earnings">Thu nhập</string>
+    <string name="shipper_nav_profile">Hồ sơ</string>
+    <string name="shipper_nav_settings">Cài đặt</string>
+    <string name="shipper_nav_chat">Tin nhắn</string>
+    <string name="shipper_nav_notifications">Thông báo</string>
+    <string name="shipper_nav_help">Trợ giúp</string>
+    <string name="shipper_applications">Đơn ứng tuyển</string>
+    <string name="shipper_removal_requests">Yêu cầu rời shop</string>
+    <string name="shipper_ai_assistant">Trợ lý AI</string>
+    <string name="shipper_chat_detail">Chi tiết tin nhắn</string>
+    
+    <!-- ==================== HOME ==================== -->
+    <string name="shipper_home_welcome">Xin chào</string>
+    <string name="shipper_home_available_orders">Đơn hàng có sẵn</string>
+    <string name="shipper_home_no_orders">Chưa có đơn hàng nào</string>
+    <string name="shipper_home_online">Trực tuyến</string>
+    <string name="shipper_home_offline">Ngoại tuyến</string>
+    <string name="shipper_home_toggle_status">Bật/Tắt trạng thái</string>
+    <string name="shipper_home_earnings_today">Thu nhập hôm nay</string>
+    <string name="shipper_home_orders_completed">Đơn đã giao</string>
+    
+    <!-- ==================== ORDERS ==================== -->
+    <string name="shipper_orders_title">Đơn hàng</string>
+    <string name="shipper_orders_pending">Chờ nhận</string>
+    <string name="shipper_orders_active">Đang giao</string>
+    <string name="shipper_orders_completed">Đã giao</string>
+    <string name="shipper_orders_cancelled">Đã hủy</string>
+    <string name="shipper_orders_no_orders">Không có đơn hàng nào</string>
+    <string name="shipper_orders_accept">Nhận đơn</string>
+    <string name="shipper_orders_pickup">Lấy hàng</string>
+    <string name="shipper_orders_deliver">Giao hàng</string>
+    <string name="shipper_orders_complete">Hoàn thành</string>
+    <string name="shipper_orders_details">Chi tiết đơn hàng</string>
+    <string name="shipper_orders_customer">Khách hàng</string>
+    <string name="shipper_orders_address">Địa chỉ</string>
+    <string name="shipper_orders_phone">Số điện thoại</string>
+    <string name="shipper_orders_total">Tổng tiền</string>
+    <string name="shipper_orders_distance">Khoảng cách</string>
+    <string name="shipper_orders_earning">Thu nhập</string>
+    
+    <!-- ==================== HISTORY ==================== -->
+    <string name="shipper_history_title">Lịch sử giao hàng</string>
+    <string name="shipper_history_no_orders">Chưa có lịch sử giao hàng</string>
+    <string name="shipper_history_filter_all">Tất cả</string>
+    <string name="shipper_history_filter_today">Hôm nay</string>
+    <string name="shipper_history_filter_week">Tuần này</string>
+    <string name="shipper_history_filter_month">Tháng này</string>
+    
+    <!-- ==================== EARNINGS ==================== -->
+    <string name="shipper_earnings_title">Thu nhập</string>
+    <string name="shipper_earnings_total">Tổng thu nhập</string>
+    <string name="shipper_earnings_available">Có thể rút</string>
+    <string name="shipper_earnings_withdrawn">Đã rút</string>
+    <string name="shipper_earnings_pending">Đang xử lý</string>
+    <string name="shipper_earnings_withdraw">Rút tiền</string>
+    <string name="shipper_earnings_history">Lịch sử thu nhập</string>
+    <string name="shipper_earnings_no_data">Chưa có dữ liệu thu nhập</string>
+    <string name="shipper_earnings_today">Hôm nay</string>
+    <string name="shipper_earnings_this_week">Tuần này</string>
+    <string name="shipper_earnings_this_month">Tháng này</string>
+    
+    <!-- ==================== PROFILE ==================== -->
+    <string name="shipper_profile_title">Hồ sơ</string>
+    <string name="shipper_profile_edit">Chỉnh sửa hồ sơ</string>
+    <string name="shipper_profile_name">Họ tên</string>
+    <string name="shipper_profile_phone">Số điện thoại</string>
+    <string name="shipper_profile_email">Email</string>
+    <string name="shipper_profile_rating">Đánh giá</string>
+    <string name="shipper_profile_total_deliveries">Tổng đơn đã giao</string>
+    
+    <!-- ==================== SETTINGS ==================== -->
+    <string name="shipper_settings_title">Cài đặt</string>
+    <string name="shipper_settings_account">Tài khoản</string>
+    <string name="shipper_settings_personal_info">Thông tin cá nhân</string>
+    <string name="shipper_settings_personal_info_desc">Chỉnh sửa thông tin tài khoản</string>
+    <string name="shipper_settings_change_password">Đổi mật khẩu</string>
+    <string name="shipper_settings_change_password_desc">Thay đổi mật khẩu đăng nhập</string>
+    <string name="shipper_settings_shipper_info">Thông tin shipper</string>
+    <string name="shipper_settings_vehicle">Phương tiện</string>
+    <string name="shipper_settings_vehicle_desc">Thông tin xe và biển số</string>
+    <string name="shipper_settings_payment">Phương thức thanh toán</string>
+    <string name="shipper_settings_payment_desc">Tài khoản nhận tiền</string>
+    <string name="shipper_settings_notifications">Thông báo</string>
+    <string name="shipper_settings_notifications_title">Cài đặt thông báo</string>
+    <string name="shipper_settings_notifications_desc">Quản lý thông báo đẩy</string>
+    <string name="shipper_settings_language">Ngôn ngữ</string>
+    <string name="shipper_settings_language_title">Ngôn ngữ / Language</string>
+    <string name="shipper_settings_language_desc">Chọn ngôn ngữ hiển thị</string>
+    <string name="shipper_settings_about">Về ứng dụng</string>
+    <string name="shipper_settings_terms">Điều khoản sử dụng</string>
+    <string name="shipper_settings_terms_desc">Quy định và chính sách</string>
+    <string name="shipper_settings_privacy">Chính sách bảo mật</string>
+    <string name="shipper_settings_privacy_desc">Cách chúng tôi bảo vệ dữ liệu</string>
+    <string name="shipper_settings_help">Trợ giúp &amp; Hỗ trợ</string>
+    <string name="shipper_settings_help_desc">Liên hệ với chúng tôi</string>
+    <string name="shipper_settings_logout">Đăng xuất</string>
+    <string name="shipper_settings_logout_confirm">Xác nhận đăng xuất</string>
+    <string name="shipper_settings_logout_message">Bạn có chắc chắn muốn đăng xuất?</string>
+    
+    <!-- ==================== LANGUAGE DIALOG ==================== -->
+    <string name="shipper_language_select">Chọn ngôn ngữ / Select Language</string>
+    <string name="shipper_language_vietnamese">Tiếng Việt</string>
+    <string name="shipper_language_english">English</string>
+    
+    <!-- ==================== NOTIFICATIONS ==================== -->
+    <string name="shipper_notifications_title">Thông báo</string>
+    <string name="shipper_notifications_empty">Không có thông báo mới</string>
+    <string name="shipper_notifications_mark_read">Đánh dấu đã đọc</string>
+    <string name="shipper_notifications_mark_all_read">Đánh dấu tất cả đã đọc</string>
+    
+    <!-- ==================== CHAT ==================== -->
+    <string name="shipper_chat_title">Tin nhắn</string>
+    <string name="shipper_chat_no_conversations">Chưa có cuộc hội thoại nào</string>
+    <string name="shipper_chat_type_message">Nhập tin nhắn...</string>
+    <string name="shipper_chat_send">Gửi</string>
+    
+    <!-- ==================== HELP ==================== -->
+    <string name="shipper_help_title">Trợ giúp &amp; Hỗ trợ</string>
+    <string name="shipper_help_faq">Câu hỏi thường gặp</string>
+    <string name="shipper_help_contact">Liên hệ hỗ trợ</string>
+    <string name="shipper_help_call">Gọi điện</string>
+    <string name="shipper_help_email">Gửi email</string>
+    
+    <!-- ==================== GPS/DELIVERY ==================== -->
+    <string name="shipper_gps_title">Bản đồ giao hàng</string>
+    <string name="shipper_gps_navigate">Điều hướng</string>
+    <string name="shipper_gps_arrived">Đã đến nơi</string>
+    <string name="shipper_gps_start_trip">Bắt đầu chuyến</string>
+    <string name="shipper_gps_end_trip">Kết thúc chuyến</string>
+    
+    <!-- ==================== TRIP ==================== -->
+    <string name="shipper_trip_title">Chi tiết chuyến</string>
+    <string name="shipper_trip_history">Lịch sử chuyến</string>
+    <string name="shipper_trip_no_trips">Chưa có chuyến nào</string>
+    <string name="shipper_trip_start">Bắt đầu</string>
+    <string name="shipper_trip_end">Kết thúc</string>
+    <string name="shipper_trip_duration">Thời gian</string>
+    <string name="shipper_trip_distance">Khoảng cách</string>
+    
+    <!-- ==================== ERROR MESSAGES ==================== -->
+    <string name="shipper_error_network">Lỗi kết nối mạng</string>
+    <string name="shipper_error_server">Lỗi máy chủ</string>
+    <string name="shipper_error_unknown">Đã xảy ra lỗi</string>
+    <string name="shipper_error_load_data">Không thể tải dữ liệu</string>
+    
+    <!-- ==================== SUCCESS MESSAGES ==================== -->
+    <string name="shipper_success_saved">Đã lưu thành công</string>
+    <string name="shipper_success_deleted">Đã xóa thành công</string>
+    <string name="shipper_success_updated">Đã cập nhật thành công</string>
+</resources>
