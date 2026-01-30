@@ -12,10 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.foodapp.R
 import com.example.foodapp.data.model.owner.wallet.RequestPayoutRequest
 
 /**
@@ -40,7 +42,15 @@ fun PayoutDialog(
     var accountNumberError by remember { mutableStateOf<String?>(null) }
     var accountNameError by remember { mutableStateOf<String?>(null) }
     
-    val formattedBalance = String.format("%,.0f", currentBalance) + "đ"
+    val currencySuffix = stringResource(R.string.owner_currency_suffix)
+    val formattedBalance = String.format("%,.0f", currentBalance) + currencySuffix
+    
+    // Error messages
+    val errorMinAmount = stringResource(R.string.wallet_payout_error_min_amount)
+    val errorInsufficient = stringResource(R.string.wallet_payout_error_insufficient)
+    val errorBankCode = stringResource(R.string.wallet_payout_error_bank_code)
+    val errorAccountNumber = stringResource(R.string.wallet_payout_error_account_number)
+    val errorAccountName = stringResource(R.string.wallet_payout_error_account_name)
     
     // Validation
     fun validate(): Boolean {
@@ -48,31 +58,31 @@ fun PayoutDialog(
         
         val amountValue = amount.replace(",", "").replace(".", "").toDoubleOrNull() ?: 0.0
         if (amountValue < 100000) {
-            amountError = "Số tiền rút tối thiểu 100,000đ"
+            amountError = errorMinAmount
             isValid = false
         } else if (amountValue > currentBalance) {
-            amountError = "Số dư không đủ"
+            amountError = errorInsufficient
             isValid = false
         } else {
             amountError = null
         }
         
         if (bankCode.isBlank()) {
-            bankCodeError = "Vui lòng nhập mã ngân hàng"
+            bankCodeError = errorBankCode
             isValid = false
         } else {
             bankCodeError = null
         }
         
         if (accountNumber.isBlank()) {
-            accountNumberError = "Vui lòng nhập số tài khoản"
+            accountNumberError = errorAccountNumber
             isValid = false
         } else {
             accountNumberError = null
         }
         
         if (accountName.isBlank()) {
-            accountNameError = "Vui lòng nhập tên chủ tài khoản"
+            accountNameError = errorAccountName
             isValid = false
         } else {
             accountNameError = null
@@ -104,7 +114,7 @@ fun PayoutDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Yêu cầu rút tiền",
+                        text = stringResource(R.string.wallet_withdraw_request),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -113,7 +123,7 @@ fun PayoutDialog(
                         onClick = { if (!isLoading) onDismiss() },
                         enabled = !isLoading
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Đóng")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.owner_close))
                     }
                 }
                 
@@ -139,7 +149,7 @@ fun PayoutDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = "Số dư khả dụng",
+                                text = stringResource(R.string.wallet_balance),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -163,8 +173,8 @@ fun PayoutDialog(
                         amount = it.filter { char -> char.isDigit() }
                         amountError = null
                     },
-                    label = { Text("Số tiền rút (VNĐ) *") },
-                    placeholder = { Text("Nhập số tiền muốn rút") },
+                    label = { Text(stringResource(R.string.wallet_payout_amount)) },
+                    placeholder = { Text(stringResource(R.string.wallet_payout_amount_hint)) },
                     leadingIcon = { Icon(Icons.Default.AttachMoney, null) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -183,8 +193,8 @@ fun PayoutDialog(
                         bankCode = it.uppercase()
                         bankCodeError = null
                     },
-                    label = { Text("Mã ngân hàng *") },
-                    placeholder = { Text("VD: VCB, TCB, MB...") },
+                    label = { Text(stringResource(R.string.wallet_payout_bank_code)) },
+                    placeholder = { Text(stringResource(R.string.wallet_payout_bank_code_hint)) },
                     leadingIcon = { Icon(Icons.Default.AccountBalance, null) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = bankCodeError != null,
@@ -202,8 +212,8 @@ fun PayoutDialog(
                         accountNumber = it.filter { char -> char.isDigit() }
                         accountNumberError = null
                     },
-                    label = { Text("Số tài khoản *") },
-                    placeholder = { Text("Nhập số tài khoản ngân hàng") },
+                    label = { Text(stringResource(R.string.wallet_payout_account_number)) },
+                    placeholder = { Text(stringResource(R.string.wallet_payout_account_number_hint)) },
                     leadingIcon = { Icon(Icons.Default.CreditCard, null) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -222,8 +232,8 @@ fun PayoutDialog(
                         accountName = it.uppercase()
                         accountNameError = null
                     },
-                    label = { Text("Tên chủ tài khoản *") },
-                    placeholder = { Text("VD: NGUYEN VAN A") },
+                    label = { Text(stringResource(R.string.wallet_payout_account_name)) },
+                    placeholder = { Text(stringResource(R.string.wallet_payout_account_name_hint)) },
                     leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = accountNameError != null,
@@ -238,8 +248,8 @@ fun PayoutDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("Ghi chú (tùy chọn)") },
-                    placeholder = { Text("Nhập ghi chú nếu cần") },
+                    label = { Text(stringResource(R.string.wallet_payout_note)) },
+                    placeholder = { Text(stringResource(R.string.wallet_payout_note_hint)) },
                     leadingIcon = { Icon(Icons.Default.Note, null) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading,
@@ -268,7 +278,7 @@ fun PayoutDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Yêu cầu rút tiền sẽ được xử lý trong 1-3 ngày làm việc. Số tiền tối thiểu: 100,000đ (Owner).",
+                            text = stringResource(R.string.wallet_payout_info),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFF795548)
                         )
@@ -287,7 +297,7 @@ fun PayoutDialog(
                         modifier = Modifier.weight(1f),
                         enabled = !isLoading
                     ) {
-                        Text("Hủy")
+                        Text(stringResource(R.string.owner_cancel))
                     }
                     
                     Button(
@@ -315,7 +325,7 @@ fun PayoutDialog(
                         } else {
                             Icon(Icons.Default.Send, null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Gửi yêu cầu")
+                            Text(stringResource(R.string.wallet_payout_submit))
                         }
                     }
                 }

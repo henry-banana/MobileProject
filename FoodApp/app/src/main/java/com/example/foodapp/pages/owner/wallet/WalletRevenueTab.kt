@@ -18,8 +18,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.foodapp.R
 import com.example.foodapp.data.model.owner.wallet.DailyRevenue
 import com.example.foodapp.data.model.owner.wallet.RevenuePeriod
 import com.example.foodapp.data.model.owner.wallet.RevenueStats
@@ -97,7 +99,7 @@ fun WalletRevenueTab(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Chưa có dữ liệu doanh thu",
+                        text = stringResource(R.string.wallet_no_revenue_data),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -123,10 +125,17 @@ fun PeriodFilterRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         RevenuePeriod.values().forEach { period ->
+            val periodLabel = when (period) {
+                RevenuePeriod.TODAY -> stringResource(R.string.revenue_period_today)
+                RevenuePeriod.WEEK -> stringResource(R.string.revenue_period_week)
+                RevenuePeriod.MONTH -> stringResource(R.string.revenue_period_month)
+                RevenuePeriod.YEAR -> stringResource(R.string.revenue_period_year)
+                RevenuePeriod.ALL -> stringResource(R.string.revenue_period_all)
+            }
             FilterChip(
                 selected = period == selectedPeriod,
                 onClick = { onPeriodSelected(period) },
-                label = { Text(period.displayName()) },
+                label = { Text(periodLabel) },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = MaterialTheme.colorScheme.primary,
                     selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -153,14 +162,14 @@ fun RevenueSummarySection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             RevenueSummaryCard(
-                title = "Hôm nay",
+                title = stringResource(R.string.revenue_period_today),
                 value = formatCurrency(revenueStats.today),
                 icon = Icons.Default.Today,
                 iconTint = Color(0xFF2196F3),
                 modifier = Modifier.weight(1f)
             )
             RevenueSummaryCard(
-                title = "Tuần này",
+                title = stringResource(R.string.revenue_period_week),
                 value = formatCurrency(revenueStats.week),
                 icon = Icons.Default.DateRange,
                 iconTint = Color(0xFF9C27B0),
@@ -173,14 +182,14 @@ fun RevenueSummarySection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             RevenueSummaryCard(
-                title = "Tháng này",
+                title = stringResource(R.string.revenue_period_month),
                 value = formatCurrency(revenueStats.month),
                 icon = Icons.Default.CalendarMonth,
                 iconTint = Color(0xFF4CAF50),
                 modifier = Modifier.weight(1f)
             )
             RevenueSummaryCard(
-                title = "Tổng cộng",
+                title = stringResource(R.string.revenue_period_all),
                 value = formatCurrency(revenueStats.all),
                 icon = Icons.Default.AttachMoney,
                 iconTint = Color(0xFFFF9800),
@@ -255,7 +264,7 @@ fun RevenueChartSection(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Biểu đồ doanh thu",
+                text = stringResource(R.string.wallet_revenue_chart),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 )
@@ -351,6 +360,8 @@ fun DailyBreakdownSection(
     dailyRevenue: List<DailyRevenue>,
     modifier: Modifier = Modifier
 ) {
+    val ordersUnit = stringResource(R.string.owner_orders_unit)
+    
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -363,7 +374,7 @@ fun DailyBreakdownSection(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Chi tiết theo ngày",
+                text = stringResource(R.string.wallet_revenue_daily),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 )
@@ -389,7 +400,7 @@ fun DailyBreakdownSection(
                             )
                         )
                         Text(
-                            text = "${day.orderCount} đơn hàng",
+                            text = "${day.orderCount} $ordersUnit",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -425,7 +436,7 @@ private fun formatDate(date: String): String {
             "${parts[2]}/${parts[1]}/${parts[0]}"
         } else if (parts.size == 2) {
             // Month format: YYYY-MM
-            "Tháng ${parts[1]}/${parts[0]}"
+            "${parts[1]}/${parts[0]}"
         } else {
             date
         }

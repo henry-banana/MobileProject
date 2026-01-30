@@ -19,8 +19,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.foodapp.R
 import com.example.foodapp.data.model.owner.wallet.Wallet
 
 /**
@@ -55,7 +57,7 @@ fun WalletOverviewTab(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             WalletStatCard(
-                title = "Tổng thu nhập",
+                title = stringResource(R.string.wallet_total_earned),
                 value = formattedTotalEarned,
                 icon = Icons.Default.TrendingUp,
                 iconTint = Color(0xFF4CAF50),
@@ -64,7 +66,7 @@ fun WalletOverviewTab(
             )
             
             WalletStatCard(
-                title = "Đã rút",
+                title = stringResource(R.string.wallet_total_withdrawn),
                 value = formattedTotalWithdrawn,
                 icon = Icons.Default.ArrowDownward,
                 iconTint = Color(0xFFFF9800),
@@ -117,7 +119,7 @@ fun WalletBalanceCard(
                 ) {
                     Column {
                         Text(
-                            text = "Số dư khả dụng",
+                            text = stringResource(R.string.wallet_balance),
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.White.copy(alpha = 0.8f)
                         )
@@ -165,7 +167,7 @@ fun WalletBalanceCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Rút tiền",
+                        text = stringResource(R.string.wallet_withdraw),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -250,7 +252,7 @@ fun WalletInfoSection(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "💡 Thông tin ví",
+                text = stringResource(R.string.wallet_info_title),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 )
@@ -258,11 +260,20 @@ fun WalletInfoSection(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            InfoRow("Số dư khả dụng", "Số tiền bạn có thể rút về tài khoản ngân hàng")
+            InfoRow(
+                stringResource(R.string.wallet_info_balance), 
+                stringResource(R.string.wallet_info_balance_desc)
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            InfoRow("Tổng thu nhập", "Tổng số tiền bạn đã kiếm được từ các đơn hàng")
+            InfoRow(
+                stringResource(R.string.wallet_info_earned), 
+                stringResource(R.string.wallet_info_earned_desc)
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            InfoRow("Đã rút", "Tổng số tiền bạn đã rút về tài khoản ngân hàng")
+            InfoRow(
+                stringResource(R.string.wallet_info_withdrawn), 
+                stringResource(R.string.wallet_info_withdrawn_desc)
+            )
             
             Spacer(modifier = Modifier.height(12.dp))
             
@@ -271,7 +282,7 @@ fun WalletInfoSection(
             Spacer(modifier = Modifier.height(12.dp))
             
             Text(
-                text = "⚠️ Lưu ý: Số tiền rút tối thiểu là 100,000đ. Yêu cầu rút tiền sẽ được xử lý trong 1-3 ngày làm việc.",
+                text = stringResource(R.string.wallet_info_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

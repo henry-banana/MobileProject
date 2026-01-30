@@ -14,9 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.foodapp.R
 import com.example.foodapp.data.model.owner.wallet.LedgerEntry
 import com.example.foodapp.data.model.owner.wallet.LedgerType
 import java.text.SimpleDateFormat
@@ -61,13 +63,13 @@ fun WalletTransactionsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Lịch sử giao dịch",
+                text = stringResource(R.string.wallet_transactions_title),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 )
             )
             Text(
-                text = "$total giao dịch",
+                text = stringResource(R.string.wallet_transactions_count, total),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -100,7 +102,7 @@ fun WalletTransactionsTab(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Chưa có giao dịch nào",
+                        text = stringResource(R.string.wallet_no_transactions),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -153,6 +155,15 @@ fun TransactionItem(
         LedgerType.ADJUSTMENT -> Icons.Default.Settings
     }
     
+    // Get localized type name
+    val typeName = when (entry.type) {
+        LedgerType.ORDER_PAYOUT -> stringResource(R.string.wallet_transaction_order_payout)
+        LedgerType.WITHDRAWAL, LedgerType.PAYOUT -> stringResource(R.string.wallet_transaction_withdrawal)
+        LedgerType.ADJUSTMENT -> stringResource(R.string.wallet_transaction_adjustment)
+    }
+    
+    val currencySuffix = stringResource(R.string.owner_currency_suffix)
+    
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -190,7 +201,7 @@ fun TransactionItem(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = entry.type.displayName(),
+                    text = typeName,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -200,7 +211,7 @@ fun TransactionItem(
                 
                 if (!entry.orderNumber.isNullOrEmpty()) {
                     Text(
-                        text = "Đơn hàng #${entry.orderNumber}",
+                        text = stringResource(R.string.wallet_transaction_order, entry.orderNumber),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -230,7 +241,7 @@ fun TransactionItem(
                 )
                 
                 Text(
-                    text = "SĐ: ${String.format("%,.0f", entry.balanceAfter)}đ",
+                    text = stringResource(R.string.wallet_balance_after, String.format("%,.0f", entry.balanceAfter) + currencySuffix),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -12,9 +12,11 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.foodapp.R
 import kotlinx.coroutines.launch
 
 /**
@@ -55,11 +57,12 @@ fun WalletScreen(
     }
     
     // Error snackbar
+    val retryLabel = stringResource(R.string.owner_retry)
     LaunchedEffect(uiState.error) {
         uiState.error?.let { error ->
             snackbarHostState.showSnackbar(
                 message = error,
-                actionLabel = "Thử lại"
+                actionLabel = retryLabel
             )
             viewModel.clearError()
         }
@@ -70,7 +73,7 @@ fun WalletScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Ví tiền",
+                        stringResource(R.string.wallet_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -78,7 +81,7 @@ fun WalletScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onMenuClick) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.nav_dashboard))
                     }
                 },
                 actions = {
@@ -86,7 +89,7 @@ fun WalletScreen(
                         onClick = { viewModel.refresh() },
                         enabled = !uiState.isLoading && !uiState.isRefreshing
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Làm mới")
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.owner_retry))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -117,7 +120,11 @@ fun WalletScreen(
                         },
                         text = {
                             Text(
-                                text = tab.displayName(),
+                                text = when (tab) {
+                                    WalletTab.OVERVIEW -> stringResource(R.string.wallet_tab_overview)
+                                    WalletTab.TRANSACTIONS -> stringResource(R.string.wallet_tab_transactions)
+                                    WalletTab.REVENUE -> stringResource(R.string.wallet_tab_revenue)
+                                },
                                 fontWeight = if (pagerState.currentPage == index) 
                                     FontWeight.Bold else FontWeight.Normal
                             )
@@ -185,3 +192,4 @@ fun WalletScreen(
         }
     }
 }
+
