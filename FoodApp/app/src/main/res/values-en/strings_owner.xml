@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ==================== COMMON/SHARED ==================== -->
+    <string name="owner_app_name">KTX Food Owner</string>
+    <string name="owner_loading">Loading...</string>
+    <string name="owner_error">Error</string>
+    <string name="owner_retry">Retry</string>
+    <string name="owner_cancel">Cancel</string>
+    <string name="owner_save">Save</string>
+    <string name="owner_delete">Delete</string>
+    <string name="owner_edit">Edit</string>
+    <string name="owner_add">Add</string>
+    <string name="owner_search">Search</string>
+    <string name="owner_filter">Filter</string>
+    <string name="owner_all">All</string>
+    <string name="owner_active">Active</string>
+    <string name="owner_inactive">Inactive</string>
+    <string name="owner_close">Close</string>
+    <string name="owner_confirm">Confirm</string>
+    <string name="owner_success">Success</string>
+    <string name="owner_version">Version 1.0.0</string>
+    <string name="owner_shop_owner">Shop Owner</string>
+    <string name="owner_currency_suffix">₫</string>
+    <string name="owner_orders_unit">orders</string>
+    
+    <!-- ==================== SIDEBAR/NAVIGATION ==================== -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_orders">Order Management</string>
+    <string name="nav_foods">Food Management</string>
+    <string name="nav_shippers">Shipper Management</string>
+    <string name="nav_vouchers">Voucher Management</string>
+    <string name="nav_customers">Customers</string>
+    <string name="nav_wallet">Wallet</string>
+    <string name="nav_revenue">Revenue Report</string>
+    <string name="nav_reviews">Reviews</string>
+    <string name="nav_chatbot">AI Assistant</string>
+    <string name="nav_chat">Messages</string>
+    <string name="nav_settings">Settings</string>
+    
+    <!-- ==================== DASHBOARD ==================== -->
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_total_revenue">Total Revenue</string>
+    <string name="dashboard_total_orders">Total Orders</string>
+    <string name="dashboard_average_order">Avg Order Value</string>
+    <string name="dashboard_pending_orders">Pending Orders</string>
+    <string name="dashboard_recent_orders">Recent Orders</string>
+    <string name="dashboard_view_all">View All</string>
+    <string name="dashboard_today">Today</string>
+    <string name="dashboard_this_week">This Week</string>
+    <string name="dashboard_this_month">This Month Overview</string>
+    <string name="dashboard_this_year">This Year</string>
+    <string name="dashboard_no_orders">No orders yet</string>
+    <string name="dashboard_order_status_dist">Order Status Distribution</string>
+    <string name="dashboard_sold_count">%1$d sold</string>
+    
+    <!-- ==================== ORDERS ==================== -->
+    <string name="orders_title">Order Management</string>
+    <string name="orders_all">All</string>
+    <string name="orders_pending">Pending</string>
+    <string name="orders_confirmed">Confirmed</string>
+    <string name="orders_preparing">Preparing</string>
+    <string name="orders_ready">Ready</string>
+    <string name="orders_delivering">Delivering</string>
+    <string name="orders_delivered">Delivered</string>
+    <string name="orders_cancelled">Cancelled</string>
+    <string name="orders_no_orders">No orders found</string>
+    <string name="orders_new_orders_appear">New orders will appear here</string>
+    <string name="orders_search_hint">Search order code, customer...</string>
+    <string name="orders_order_number">Order #%1$s</string>
+    <string name="orders_order_details">Order Details</string>
+    <string name="orders_customer">Customer</string>
+    <string name="orders_phone">Phone</string>
+    <string name="orders_address">Address</string>
+    <string name="orders_total">Total</string>
+    <string name="orders_status">Status</string>
+    <string name="orders_items">Items</string>
+    <string name="orders_update_status">Update Status</string>
+    <string name="orders_accept">Accept</string>
+    <string name="orders_reject">Reject</string>
+    <string name="orders_cancel_order">Cancel Order</string>
+    <string name="orders_cancel_confirm">Are you sure you want to cancel this order?</string>
+    <string name="orders_cancel_reason">Cancel reason (optional)</string>
+    
+    <!-- ==================== FOODS ==================== -->
+    <string name="foods_title">Food Management</string>
+    <string name="foods_add_food">Add Food</string>
+    <string name="foods_edit_food">Edit Food</string>
+    <string name="foods_delete_food">Delete Food</string>
+    <string name="foods_no_foods">No foods yet</string>
+    <string name="foods_not_found">Product not found</string>
+    <string name="foods_add_hint">Tap + to add new product</string>
+    <string name="foods_search_hint">Search products...</string>
+    <string name="foods_loading">Loading products...</string>
+    <string name="foods_total">Total Products</string>
+    <string name="foods_food_name">Food Name</string>
+    <string name="foods_description">Description</string>
+    <string name="foods_price">Price</string>
+    <string name="foods_category">Category</string>
+    <string name="foods_available">Available</string>
+    <string name="foods_unavailable">Unavailable</string>
+    <string name="foods_confirm_delete">Confirm Delete</string>
+    <string name="foods_delete_message">Are you sure you want to delete this food?</string>
+    
+    <!-- ==================== SHIPPERS ==================== -->
+    <string name="shippers_title">Shipper Management</string>
+    <string name="shippers_pending">Pending</string>
+    <string name="shippers_approved">Approved</string>
+    <string name="shippers_rejected">Rejected</string>
+    <string name="shippers_no_shippers">No shippers yet</string>
+    <string name="shippers_approve">Approve</string>
+    <string name="shippers_reject">Reject</string>
+    <string name="shippers_online">Online</string>
+    <string name="shippers_offline">Offline</string>
+    <string name="shippers_total_deliveries">Total Deliveries</string>
+    <string name="shippers_rating">Rating</string>
+    <string name="shippers_removal_requests">Removal Requests</string>
+    
+    <!-- ==================== VOUCHERS ==================== -->
+    <string name="vouchers_title">Voucher Management</string>
+    <string name="vouchers_add">Create Voucher</string>
+    <string name="vouchers_edit">Edit Voucher</string>
+    <string name="vouchers_delete">Delete Voucher</string>
+    <string name="vouchers_no_vouchers">No vouchers yet</string>
+    <string name="vouchers_code">Voucher Code</string>
+    <string name="vouchers_type">Type</string>
+    <string name="vouchers_type_percentage">Percentage</string>
+    <string name="vouchers_type_fixed">Fixed Amount</string>
+    <string name="vouchers_type_freeship">Free Shipping</string>
+    <string name="vouchers_value">Value</string>
+    <string name="vouchers_min_order">Min Order</string>
+    <string name="vouchers_max_discount">Max Discount</string>
+    <string name="vouchers_usage_limit">Usage Limit</string>
+    <string name="vouchers_valid_from">Valid From</string>
+    <string name="vouchers_valid_to">Valid To</string>
+    <string name="vouchers_active">Active</string>
+    <string name="vouchers_inactive">Inactive</string>
+    <string name="vouchers_expired">Expired</string>
+    <string name="vouchers_confirm_delete">Confirm Delete</string>
+    <string name="vouchers_delete_message">Are you sure you want to delete this voucher?</string>
+    <string name="vouchers_create_success">Voucher created successfully</string>
+    <string name="vouchers_update_success">Voucher updated successfully</string>
+    <string name="vouchers_delete_success">Voucher deleted successfully</string>
+    <string name="vouchers_status_on">Voucher activated</string>
+    <string name="vouchers_status_off">Voucher deactivated</string>
+    
+    <!-- ==================== CUSTOMERS/BUYERS ==================== -->
+    <string name="customers_title">Customers</string>
+    <string name="customers_no_customers">No customers yet</string>
+    <string name="customers_total_orders">Total Orders</string>
+    <string name="customers_total_spent">Total Spent</string>
+    <string name="customers_last_order">Last Order</string>
+    <string name="customers_details">Customer Details</string>
+    
+    <!-- ==================== WALLET ==================== -->
+    <string name="wallet_title">Wallet</string>
+    <string name="wallet_tab_overview">Overview</string>
+    <string name="wallet_tab_transactions">History</string>
+    <string name="wallet_tab_revenue">Revenue</string>
+    <string name="wallet_balance">Available Balance</string>
+    <string name="wallet_total_earned">Total Earned</string>
+    <string name="wallet_total_withdrawn">Withdrawn</string>
+    <string name="wallet_withdraw">Withdraw</string>
+    <string name="wallet_withdraw_request">Withdrawal Request</string>
+    <string name="wallet_info_title">💡 Wallet Info</string>
+    <string name="wallet_info_balance">Available Balance</string>
+    <string name="wallet_info_balance_desc">Amount you can withdraw to your bank account</string>
+    <string name="wallet_info_earned">Total Earned</string>
+    <string name="wallet_info_earned_desc">Total amount earned from orders</string>
+    <string name="wallet_info_withdrawn">Withdrawn</string>
+    <string name="wallet_info_withdrawn_desc">Total amount withdrawn to your bank account</string>
+    <string name="wallet_info_note">⚠️ Note: Minimum withdrawal amount is 100,000₫. Withdrawal requests are processed within 1-3 business days.</string>
+    <string name="wallet_transactions_title">Transaction History</string>
+    <string name="wallet_transactions_count">%1$d transactions</string>
+    <string name="wallet_no_transactions">No transactions yet</string>
+    <string name="wallet_transaction_order_payout">Order Payment</string>
+    <string name="wallet_transaction_withdrawal">Withdrawal</string>
+    <string name="wallet_transaction_adjustment">Adjustment</string>
+    <string name="wallet_transaction_order">Order #%1$s</string>
+    <string name="wallet_balance_after">Balance: %1$s</string>
+    <string name="wallet_revenue_chart">Revenue Chart</string>
+    <string name="wallet_revenue_daily">Daily Breakdown</string>
+    <string name="wallet_no_revenue_data">No revenue data yet</string>
+    <string name="wallet_payout_amount">Withdrawal Amount (VND) *</string>
+    <string name="wallet_payout_amount_hint">Enter amount to withdraw</string>
+    <string name="wallet_payout_bank_code">Bank Code *</string>
+    <string name="wallet_payout_bank_code_hint">e.g., VCB, TCB, MB...</string>
+    <string name="wallet_payout_account_number">Account Number *</string>
+    <string name="wallet_payout_account_number_hint">Enter bank account number</string>
+    <string name="wallet_payout_account_name">Account Holder Name *</string>
+    <string name="wallet_payout_account_name_hint">e.g., NGUYEN VAN A</string>
+    <string name="wallet_payout_note">Note (Optional)</string>
+    <string name="wallet_payout_note_hint">Enter note if needed</string>
+    <string name="wallet_payout_info">Withdrawal requests are processed within 1-3 business days. Minimum amount: 100,000₫ (Owner).</string>
+    <string name="wallet_payout_submit">Submit Request</string>
+    <string name="wallet_payout_success">Withdrawal request submitted successfully</string>
+    <string name="wallet_payout_error">Unable to submit withdrawal request</string>
+    <string name="wallet_payout_error_min_amount">Minimum withdrawal amount is 100,000₫</string>
+    <string name="wallet_payout_error_insufficient">Insufficient balance</string>
+    <string name="wallet_payout_error_bank_code">Please enter bank code</string>
+    <string name="wallet_payout_error_account_number">Please enter account number</string>
+    <string name="wallet_payout_error_account_name">Please enter account holder name</string>
+    
+    <!-- ==================== REVENUE ==================== -->
+    <string name="revenue_title">Revenue Report</string>
+    <string name="revenue_period_today">Today</string>
+    <string name="revenue_period_week">This Week</string>
+    <string name="revenue_period_month">This Month</string>
+    <string name="revenue_period_year">This Year</string>
+    <string name="revenue_period_all">All Time</string>
+    <string name="revenue_total">Total Revenue</string>
+    <string name="revenue_orders">Number of Orders</string>
+    <string name="revenue_average">Average/Order</string>
+    <string name="revenue_chart">Chart</string>
+    <string name="revenue_time_slots">Time Slots</string>
+    <string name="revenue_top_products">Top Products</string>
+    <string name="revenue_no_data">No data available</string>
+    
+    <!-- ==================== REVIEWS ==================== -->
+    <string name="reviews_title">Reviews</string>
+    <string name="reviews_no_reviews">No reviews yet</string>
+    <string name="reviews_average_rating">Average Rating</string>
+    <string name="reviews_total_reviews">Total Reviews</string>
+    <string name="reviews_reply">Reply</string>
+    <string name="reviews_reply_hint">Enter reply...</string>
+    <string name="reviews_send_reply">Send Reply</string>
+    
+    <!-- ==================== CHAT ==================== -->
+    <string name="chat_title">Messages</string>
+    <string name="chat_no_conversations">No conversations yet</string>
+    <string name="chat_type_message">Type a message...</string>
+    <string name="chat_send">Send</string>
+    
+    <!-- ==================== CHATBOT ==================== -->
+    <string name="chatbot_title">AI Assistant</string>
+    <string name="chatbot_welcome">Hello! I\'m your AI assistant, ready to help you.</string>
+    <string name="chatbot_type_message">Enter your question...</string>
+    
+    <!-- ==================== SETTINGS ==================== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_shop_info">Shop Information</string>
+    <string name="settings_shop_name">Shop Name</string>
+    <string name="settings_shop_address">Address</string>
+    <string name="settings_shop_phone">Phone Number</string>
+    <string name="settings_shop_email">Email</string>
+    <string name="settings_shop_description">Description</string>
+    <string name="settings_shop_logo">Logo</string>
+    <string name="settings_shop_banner">Banner</string>
+    <string name="settings_business_hours">Business Hours</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_help">Help</string>
+    <string name="settings_about">About</string>
+    <string name="settings_logout">Logout</string>
+    <string name="settings_logout_confirm">Confirm Logout</string>
+    <string name="settings_logout_message">Are you sure you want to logout?</string>
+    
+    <!-- ==================== NOTIFICATIONS ==================== -->
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_no_notifications">No new notifications</string>
+    <string name="notifications_mark_read">Mark as Read</string>
+    <string name="notifications_mark_all_read">Mark All as Read</string>
+    
+    <!-- ==================== ERROR MESSAGES ==================== -->
+    <string name="error_network">Network error</string>
+    <string name="error_server">Server error</string>
+    <string name="error_unknown">An error occurred</string>
+    <string name="error_load_data">Unable to load data</string>
+    <string name="error_save_data">Unable to save data</string>
+    
+    <!-- ==================== SUCCESS MESSAGES ==================== -->
+    <string name="success_saved">Saved successfully</string>
+    <string name="success_deleted">Deleted successfully</string>
+    <string name="success_updated">Updated successfully</string>
+</resources>

@@ -21,7 +21,7 @@ import {
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
-import { CloudFunctionFileInterceptor } from '../../../core/interceptors';
+import { CloudFunctionFileInterceptor, BodyValidationInterceptor } from '../../../core/interceptors';
 import { ProductsService } from '../services';
 import {
   CreateProductDto,
@@ -60,11 +60,31 @@ export class OwnerProductsController {
    * PROD-001
    */
   @Post()
-  @UseInterceptors(CloudFunctionFileInterceptor('image'))
+  @UseInterceptors(BodyValidationInterceptor, CloudFunctionFileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Create product',
-    description: 'Owner creates a new product for their shop',
+    description: `Owner creates a new product for their shop.
+
+**IMPORTANT: Request Format**
+- Content-Type: multipart/form-data (do NOT set manually - let client library set it)
+- All fields are sent as form fields, image as file part
+
+**Common Mistakes:**
+- ❌ Manually setting Content-Type header with FormData (breaks boundary)
+- ❌ Sending JSON string in body with FormData Content-Type
+- ❌ Mixing JSON body with multipart Content-Type
+
+**Correct Usage (Android/Retrofit):**
+\`\`\`kotlin
+@Multipart
+@POST("owner/products")
+suspend fun createProduct(
+    @Part("name") name: RequestBody,
+    @Part("price") price: RequestBody,
+    @Part image: MultipartBody.Part
+): Response<ProductResponse>
+\`\`\``,
   })
   @ApiResponse({
     status: 201,
@@ -224,7 +244,7 @@ export class OwnerProductsController {
    * PROD-006 - Price Lock Rule applies
    */
   @Put(':id')
-  @UseInterceptors(CloudFunctionFileInterceptor('image'))
+  @UseInterceptors(BodyValidationInterceptor, CloudFunctionFileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Update product',

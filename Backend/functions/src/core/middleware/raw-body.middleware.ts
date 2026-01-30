@@ -3,6 +3,11 @@ import { Request, Response, NextFunction } from 'express';
 import Busboy from 'busboy';
 
 /**
+ * Check if DEBUG_HTTP is enabled
+ */
+const isDebugEnabled = () => process.env.DEBUG_HTTP === '1';
+
+/**
  * RawBodyMiddleware
  *
  * Xử lý multipart/form-data trong Cloud Functions v2 (Cloud Run).
@@ -14,15 +19,50 @@ import Busboy from 'busboy';
  * Giải pháp:
  * - Parse req.rawBody bằng Busboy
  * - Attach file vào req.file để controller có thể sử dụng
+ *
+ * Debugging:
+ * - Set DEBUG_HTTP=1 to enable detailed logging (no PII)
  */
 @Injectable()
 export class RawBodyMiddleware implements NestMiddleware {
   private readonly logger = new Logger(RawBodyMiddleware.name);
 
   use(req: Request, _res: Response, next: NextFunction) {
-    // Chỉ xử lý multipart/form-data
+    const debugHttp = isDebugEnabled();
     const contentType = req.headers['content-type'] || '';
+    const contentLength = req.headers['content-length'] || 'unknown';
+
+    // Debug log: request headers (no auth tokens)
+    if (debugHttp) {
+      this.logger.log(`[DEBUG_HTTP] === Incoming Request ===`);
+      this.logger.log(`[DEBUG_HTTP] Method: ${req.method}, Path: ${req.path}`);
+      this.logger.log(`[DEBUG_HTTP] Content-Type: ${contentType}`);
+      this.logger.log(`[DEBUG_HTTP] Content-Length: ${contentLength}`);
+      this.logger.log(`[DEBUG_HTTP] typeof req.body: ${typeof (req as any).body}`);
+      this.logger.log(`[DEBUG_HTTP] Array.isArray(req.body): ${Array.isArray((req as any).body)}`);
+      if ((req as any).body && typeof (req as any).body === 'object') {
+        const keys = Object.keys((req as any).body).slice(0, 30);
+        this.logger.log(`[DEBUG_HTTP] Object.keys(req.body).slice(0,30): ${JSON.stringify(keys)}`);
+      }
+      if (typeof (req as any).body === 'string') {
+        this.logger.log(`[DEBUG_HTTP] req.body (first 100 chars): ${((req as any).body as string).substring(0, 100)}`);
+      }
+      this.logger.log(`[DEBUG_HTTP] rawBody present: ${!!(req as any).rawBody}`);
+      if ((req as any).rawBody) {
+        this.logger.log(`[DEBUG_HTTP] rawBody length: ${(req as any).rawBody.length}`);
+      }
+    }
+
+    // ========================================
+    // For multipart/form-data: Parse with Busboy first, then check
+    // For other content types: Check for malformed body
+    // ========================================
+    
+    // Chỉ xử lý multipart/form-data
     if (!contentType.includes('multipart/form-data')) {
+      if (debugHttp) {
+        this.logger.log(`[DEBUG_HTTP] Not multipart/form-data, skipping middleware`);
+      }
       return next();
     }
 
@@ -30,9 +70,15 @@ export class RawBodyMiddleware implements NestMiddleware {
     const rawBody = (req as any).rawBody;
     if (!rawBody) {
       // Không có rawBody, để Multer xử lý bình thường (local dev)
+      if (debugHttp) {
+        this.logger.log(`[DEBUG_HTTP] No rawBody present, delegating to Multer`);
+      }
       return next();
     }
 
+    if (debugHttp) {
+      this.logger.log(`[DEBUG_HTTP] Processing multipart with Busboy, rawBody size: ${rawBody.length}`);
+    }
     this.logger.log(
       `Processing multipart/form-data with rawBody, size: ${rawBody.length} bytes`,
     );
@@ -87,13 +133,15 @@ export class RawBodyMiddleware implements NestMiddleware {
       );
 
       busboy.on('finish', () => {
-        // Merge parsed fields with existing body (don't completely replace)
-        (req as any).body = { ...(req as any).body, ...fields };
+        // IMPORTANT: Replace body entirely - the existing body may be corrupted
+        // (e.g., rawBody bytes spread as {0, 1, 2, ...} by Cloud Run)
+        (req as any).body = fields;
         if (fileData) {
           (req as any).file = fileData;
           this.logger.log(
             `File parsed successfully: ${fileData.originalname}, ${fileData.size} bytes, ${fileData.mimetype}`,
           );
+          this.logger.log(`Parsed fields: ${Object.keys(fields).join(', ')}`);
         } else {
           this.logger.warn('No file found in multipart request');
         }

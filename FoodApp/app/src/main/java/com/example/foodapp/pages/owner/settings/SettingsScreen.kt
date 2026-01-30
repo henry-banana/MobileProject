@@ -1,6 +1,7 @@
 package com.example.foodapp.pages.owner.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,15 +28,26 @@ import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.SupportAgent
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.foodapp.pages.owner.notifications.NotificationsViewModel
+import com.example.foodapp.utils.LanguageManager
 
 @Composable
 fun SettingsScreen(
@@ -120,6 +132,12 @@ fun SettingsScreen(
         )
     )
 
+    // Language state
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var currentLanguage by remember { mutableStateOf(LanguageManager.getCurrentLanguage(context)) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -158,6 +176,12 @@ fun SettingsScreen(
                 }
             )
             
+            // Ngôn ngữ / Language
+            LanguageSettingsSection(
+                currentLanguage = currentLanguage,
+                onLanguageClick = { showLanguageDialog = true }
+            )
+            
             // Bảo mật
             SettingSectionCard(title = "BẢO MẬT", items = securityItems)
             
@@ -188,6 +212,21 @@ fun SettingsScreen(
                     .padding(bottom = 16.dp)
             )
         }
+    }
+    
+    // Language Selection Dialog
+    if (showLanguageDialog) {
+        LanguageSelectionDialog(
+            currentLanguage = currentLanguage,
+            onLanguageSelected = { language ->
+                currentLanguage = language
+                LanguageManager.saveLanguage(context, language)
+                showLanguageDialog = false
+                // Restart activity to apply language change
+                activity?.recreate()
+            },
+            onDismiss = { showLanguageDialog = false }
+        )
     }
 }
 
@@ -370,4 +409,142 @@ private fun NotificationToggleItem(
             )
         }
     }
+}
+
+/**
+ * Language Settings Section
+ */
+@Composable
+private fun LanguageSettingsSection(
+    currentLanguage: LanguageManager.Language,
+    onLanguageClick: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "NGÔN NGỮ / LANGUAGE",
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.primary
+        )
+        androidx.compose.material3.Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(2.dp),
+            onClick = onLanguageClick
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp, horizontal = 16.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                // Icon Background
+                androidx.compose.material3.Surface(
+                    shape = androidx.compose.foundation.shape.CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(
+                        contentAlignment = androidx.compose.ui.Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.Outlined.Language,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                // Title and Current Language
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 16.dp)
+                ) {
+                    Text(
+                        text = "Ngôn ngữ / Language",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = currentLanguage.displayName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Arrow icon
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Default.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Language Selection Dialog
+ */
+@Composable
+private fun LanguageSelectionDialog(
+    currentLanguage: LanguageManager.Language,
+    onLanguageSelected: (LanguageManager.Language) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Chọn ngôn ngữ / Select Language",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            )
+        },
+        text = {
+            Column {
+                LanguageManager.Language.values().forEach { language ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onLanguageSelected(language) }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = language == currentLanguage,
+                            onClick = { onLanguageSelected(language) }
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = language.displayName,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                            )
+                            Text(
+                                text = if (language == LanguageManager.Language.VIETNAMESE) 
+                                    "Vietnamese" else "Tiếng Anh",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
+                        if (language == currentLanguage) {
+                            androidx.compose.material3.Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Đóng / Close")
+            }
+        }
+    )
 }
