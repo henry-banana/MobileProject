@@ -216,7 +216,6 @@
     <string name="revenue_no_data">No data available</string>
     
     <!-- ==================== REVIEWS ==================== -->
-    <string name="reviews_title">Reviews</string>
     <string name="reviews_no_reviews">No reviews yet</string>
     <string name="reviews_average_rating">Average Rating</string>
     <string name="reviews_total_reviews">Total Reviews</string>
@@ -236,7 +235,6 @@
     <string name="chatbot_type_message">Enter your question...</string>
     
     <!-- ==================== SETTINGS ==================== -->
-    <string name="settings_title">Settings</string>
     <string name="settings_shop_info">Shop Information</string>
     <string name="settings_shop_name">Shop Name</string>
     <string name="settings_shop_address">Address</string>
@@ -256,7 +254,6 @@
     <string name="settings_logout_message">Are you sure you want to logout?</string>
     
     <!-- ==================== NOTIFICATIONS ==================== -->
-    <string name="notifications_title">Notifications</string>
     <string name="notifications_no_notifications">No new notifications</string>
     <string name="notifications_mark_read">Mark as Read</string>
     <string name="notifications_mark_all_read">Mark All as Read</string>

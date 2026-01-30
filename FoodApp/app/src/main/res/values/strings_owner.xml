@@ -216,7 +216,6 @@
     <string name="revenue_no_data">Chưa có dữ liệu</string>
     
     <!-- ==================== REVIEWS ==================== -->
-    <string name="reviews_title">Đánh giá</string>
     <string name="reviews_no_reviews">Chưa có đánh giá nào</string>
     <string name="reviews_average_rating">Đánh giá trung bình</string>
     <string name="reviews_total_reviews">Tổng đánh giá</string>
@@ -236,7 +235,6 @@
     <string name="chatbot_type_message">Nhập câu hỏi...</string>
     
     <!-- ==================== SETTINGS ==================== -->
-    <string name="settings_title">Cài đặt</string>
     <string name="settings_shop_info">Thông tin cửa hàng</string>
     <string name="settings_shop_name">Tên cửa hàng</string>
     <string name="settings_shop_address">Địa chỉ</string>
@@ -256,7 +254,6 @@
     <string name="settings_logout_message">Bạn có chắc muốn đăng xuất?</string>
     
     <!-- ==================== NOTIFICATIONS ==================== -->
-    <string name="notifications_title">Thông báo</string>
     <string name="notifications_no_notifications">Không có thông báo mới</string>
     <string name="notifications_mark_read">Đánh dấu đã đọc</string>
     <string name="notifications_mark_all_read">Đánh dấu tất cả đã đọc</string>
