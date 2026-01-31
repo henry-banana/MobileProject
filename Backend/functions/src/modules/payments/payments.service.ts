@@ -341,6 +341,26 @@ export class PaymentsService {
 
       this.logger.log(`Order ${order.orderNumber} SEPAY payment verified`);
 
+      // NOTIF-008: Send payment success notification (SEPAY via polling)
+      try {
+        await this.notificationsService.send({
+          userId: order.customerId,
+          title: 'Thanh toán thành công',
+          body: `Đơn hàng ${order.orderNumber} đã được thanh toán qua chuyển khoản SePay`,
+          type: NotificationType.PAYMENT_SUCCESS,
+          category: NotificationCategory.TRANSACTIONAL,
+          orderId: order.id,
+          shopId: order.shopId,
+          data: {
+            paymentMethod: 'SEPAY',
+            amount: payment.amount,
+          },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to send PAYMENT_SUCCESS notification for order ${orderId}:`, error);
+        // Non-blocking: do not throw
+      }
+
       // Fetch updated payment
       const updatedPayment = (await this.paymentsRepo.findByOrderId(orderId))!;
       return { matched: true, payment: updatedPayment };
