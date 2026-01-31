@@ -80,6 +80,15 @@
     <string name="orders_cancel_order">Cancel Order</string>
     <string name="orders_cancel_confirm">Are you sure you want to cancel this order?</string>
     <string name="orders_cancel_reason">Cancel reason (optional)</string>
+    <!-- Orders Filters -->
+    <string name="orders_filter_all">All</string>
+    <string name="orders_filter_pending">Pending</string>
+    <string name="orders_filter_confirmed">Confirmed</string>
+    <string name="orders_filter_preparing">Preparing</string>
+    <string name="orders_filter_ready">Ready</string>
+    <string name="orders_filter_shipping">Shipping</string>
+    <string name="orders_filter_delivered">Delivered</string>
+    <string name="orders_filter_cancelled">Cancelled</string>
     
     <!-- ==================== FOODS ==================== -->
     <string name="foods_title">Food Management</string>
@@ -174,6 +183,32 @@
     <string name="vouchers_delete_success">Voucher deleted successfully</string>
     <string name="vouchers_status_on">Voucher activated</string>
     <string name="vouchers_status_off">Voucher deactivated</string>
+    <!-- Vouchers Filters -->
+    <string name="vouchers_filter_all">All</string>
+    <string name="vouchers_filter_active">Active</string>
+    <string name="vouchers_filter_inactive">Inactive</string>
+    <string name="vouchers_filter_expired">Expired</string>
+    <!-- Vouchers Stats -->
+    <string name="vouchers_stat_total">Total Vouchers</string>
+    <string name="vouchers_stat_active">Active</string>
+    <string name="vouchers_stat_expired">Expired</string>
+    <!-- Vouchers Search -->
+    <string name="vouchers_search_hint">Search voucher code, name...</string>
+    <!-- Vouchers Card -->
+    <string name="vouchers_discount">Discount</string>
+    <string name="vouchers_usage">Used</string>
+    <string name="vouchers_validity">Validity</string>
+    <string name="vouchers_btn_on">On</string>
+    <string name="vouchers_btn_off">Off</string>
+    <string name="vouchers_btn_edit">Edit</string>
+    <string name="vouchers_btn_delete">Delete</string>
+    <!-- Vouchers Empty -->
+    <string name="vouchers_empty_title">No vouchers yet</string>
+    <string name="vouchers_empty_subtitle">Create vouchers to attract customers</string>
+    <string name="vouchers_create_new">Create new voucher</string>
+    <string name="vouchers_reload">Reload</string>
+    <string name="vouchers_max_discount_fmt">max %1$s</string>
+    <string name="vouchers_free_ship_fmt">Free shipping %1$d%%</string>
     
     <!-- ==================== CUSTOMERS/BUYERS ==================== -->
     <string name="customers_title">Customers</string>
@@ -343,17 +378,6 @@
     <string name="success_deleted">Deleted successfully</string>
     <string name="success_updated">Updated successfully</string>
     
-    
-    <!-- ==================== ORDERS FILTERS ==================== -->
-    <string name="orders_filter_all">All</string>
-    <string name="orders_filter_pending">Pending</string>
-    <string name="orders_filter_confirmed">Confirmed</string>
-    <string name="orders_filter_preparing">Preparing</string>
-    <string name="orders_filter_ready">Ready</string>
-    <string name="orders_filter_shipping">Shipping</string>
-    <string name="orders_filter_delivered">Delivered</string>
-    <string name="orders_filter_cancelled">Cancelled</string>
-    
     <!-- ==================== NOTIFICATIONS ==================== -->
     <string name="notifications_filter_all">All</string>
     <string name="notifications_filter_unread">Unread</string>
@@ -379,9 +403,6 @@
     <string name="reviews_reply_dialog_title">Reply to Review</string>
     <string name="reviews_reply_content">Reply content</string>
     <string name="reviews_reply_placeholder">Thank you for your review...</string>
-    
-    <!-- ==================== VOUCHERS FILTERS ==================== -->
-    <string name="vouchers_filter_all">All</string>
     
     <!-- ==================== FOODS FILTERS ==================== -->
     <string name="foods_filter_all">All</string>
