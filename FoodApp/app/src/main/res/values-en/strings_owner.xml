@@ -280,7 +280,9 @@
     <string name="revenue_chart">Chart</string>
     <string name="revenue_time_slots">Time Slots</string>
     <string name="revenue_top_products">Top Products</string>
-    <string name="revenue_no_data">No data available</string>
+    <string name="revenue_no_data">No revenue data yet</string>
+    <string name="revenue_time_slots_detail">Revenue details by time slot</string>
+    <string name="revenue_top_products_period">Best sellers %1$s</string>
     
     <!-- ==================== REVIEWS ==================== -->
     <string name="reviews_no_reviews">No reviews yet</string>

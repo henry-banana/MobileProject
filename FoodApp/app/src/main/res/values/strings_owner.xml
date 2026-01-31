@@ -280,7 +280,9 @@
     <string name="revenue_chart">Biểu đồ</string>
     <string name="revenue_time_slots">Khung giờ</string>
     <string name="revenue_top_products">Sản phẩm bán chạy</string>
-    <string name="revenue_no_data">Chưa có dữ liệu</string>
+    <string name="revenue_no_data">Chưa có dữ liệu doanh thu</string>
+    <string name="revenue_time_slots_detail">Chi tiết doanh thu theo khung giờ</string>
+    <string name="revenue_top_products_period">Sản phẩm bán chạy %1$s</string>
     
     <!-- ==================== REVIEWS ==================== -->
     <string name="reviews_no_reviews">Chưa có đánh giá nào</string>
