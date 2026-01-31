@@ -4,48 +4,82 @@ import com.example.foodapp.data.model.owner.wallet.*
 import com.google.gson.annotations.SerializedName
 
 /**
+ * Inner response for GET /api/wallets/me
+ * This is the actual data inside the wrapper
+ */
+data class WalletInnerResponse(
+    val wallet: WalletDto? = null
+)
+
+/**
  * Response wrapper for GET /api/wallets/me
+ * API returns: { success, data: { wallet: {...} }, timestamp }
  */
 data class WrappedWalletResponse(
     val success: Boolean? = true,
-    val wallet: WalletDto?,
+    val data: WalletInnerResponse? = null,
     val message: String? = null
+)
+
+/**
+ * Inner response for GET /api/wallets/ledger
+ */
+data class LedgerInnerResponse(
+    val entries: List<LedgerEntryDto>? = null,
+    val page: Int = 1,
+    val limit: Int = 20,
+    val total: Int = 0,
+    val totalPages: Int = 0
 )
 
 /**
  * Response wrapper for GET /api/wallets/ledger
+ * API returns: { success, data: { entries, page, limit, total, totalPages }, timestamp }
  */
 data class WrappedLedgerResponse(
     val success: Boolean? = true,
-    val entries: List<LedgerEntryDto>?,
-    val page: Int,
-    val limit: Int,
-    val total: Int,
-    val totalPages: Int,
+    val data: LedgerInnerResponse? = null,
     val message: String? = null
 )
 
 /**
- * Response wrapper for POST /api/wallets/payout
+ * Inner response for POST /api/wallets/payout
  */
-data class WrappedPayoutResponse(
-    val success: Boolean? = true,
-    val message: String?,
-    val payoutRequest: PayoutRequestDto?
+data class PayoutInnerResponse(
+    val message: String? = null,
+    val payoutRequest: PayoutRequestDto? = null
 )
 
 /**
- * Response wrapper for GET /api/wallets/revenue
+ * Response wrapper for POST /api/wallets/payout
+ * API returns: { success, data: { message, payoutRequest }, timestamp }
  */
-data class WrappedWalletRevenueResponse(
+data class WrappedPayoutResponse(
     val success: Boolean? = true,
+    val data: PayoutInnerResponse? = null,
+    val message: String? = null
+)
+
+/**
+ * Inner response for GET /api/wallets/revenue
+ */
+data class RevenueInnerResponse(
     val today: Double = 0.0,
     val week: Double = 0.0,
     val month: Double = 0.0,
     val year: Double = 0.0,
     val all: Double = 0.0,
     val dailyBreakdown: List<DailyRevenueDto>? = null,
-    val calculatedAt: String? = null,
+    val calculatedAt: String? = null
+)
+
+/**
+ * Response wrapper for GET /api/wallets/revenue
+ * API returns: { success, data: { today, week, month, year, all, dailyBreakdown, calculatedAt }, timestamp }
+ */
+data class WrappedWalletRevenueResponse(
+    val success: Boolean? = true,
+    val data: RevenueInnerResponse? = null,
     val message: String? = null
 )
 
