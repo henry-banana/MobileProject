@@ -28,12 +28,12 @@ class RealWalletRepository(
             
             if (response.isSuccessful) {
                 val wrapper = response.body()
-                val walletDto = wrapper?.wallet
+                val walletDto = wrapper?.data?.wallet
                 if (walletDto != null) {
                     Log.d(TAG, "✅ Got wallet: balance=${walletDto.balance}")
                     Result.success(walletDto.toWallet())
                 } else {
-                    Log.e(TAG, "❌ Wallet data is null")
+                    Log.e(TAG, "❌ Wallet data is null. Wrapper: $wrapper")
                     Result.failure(Exception("Wallet data is null"))
                 }
             } else {
@@ -57,17 +57,19 @@ class RealWalletRepository(
             
             if (response.isSuccessful) {
                 val wrapper = response.body()
-                if (wrapper != null) {
-                    val entries = wrapper.entries?.map { it.toLedgerEntry() } ?: emptyList()
+                val ledgerData = wrapper?.data
+                if (ledgerData != null) {
+                    val entries = ledgerData.entries?.map { it.toLedgerEntry() } ?: emptyList()
                     Log.d(TAG, "✅ Got ${entries.size} ledger entries")
                     Result.success(LedgerResult(
                         entries = entries,
-                        page = wrapper.page,
-                        limit = wrapper.limit,
-                        total = wrapper.total,
-                        totalPages = wrapper.totalPages
+                        page = ledgerData.page,
+                        limit = ledgerData.limit,
+                        total = ledgerData.total,
+                        totalPages = ledgerData.totalPages
                     ))
                 } else {
+                    Log.e(TAG, "❌ Ledger data is null. Wrapper: $wrapper")
                     Result.failure(Exception("Ledger data is null"))
                 }
             } else {
@@ -91,12 +93,13 @@ class RealWalletRepository(
             
             if (response.isSuccessful) {
                 val wrapper = response.body()
-                val payoutDto = wrapper?.payoutRequest
+                val payoutData = wrapper?.data
+                val payoutDto = payoutData?.payoutRequest
                 if (payoutDto != null) {
                     Log.d(TAG, "✅ Payout request created: id=${payoutDto.id}")
                     Result.success(payoutDto.toPayoutRequest())
                 } else {
-                    Log.d(TAG, "✅ Payout request created (no details returned)")
+                    Log.d(TAG, "✅ Payout request created (no details returned). Message: ${payoutData?.message}")
                     // Return a placeholder if no details returned
                     Result.success(PayoutRequest(
                         id = "",
@@ -129,19 +132,21 @@ class RealWalletRepository(
             
             if (response.isSuccessful) {
                 val wrapper = response.body()
-                if (wrapper != null) {
-                    val dailyBreakdown = wrapper.dailyBreakdown?.map { it.toDailyRevenue() } ?: emptyList()
-                    Log.d(TAG, "✅ Got revenue: today=${wrapper.today}, month=${wrapper.month}")
+                val revenueData = wrapper?.data
+                if (revenueData != null) {
+                    val dailyBreakdown = revenueData.dailyBreakdown?.map { it.toDailyRevenue() } ?: emptyList()
+                    Log.d(TAG, "✅ Got revenue: today=${revenueData.today}, month=${revenueData.month}")
                     Result.success(RevenueStats(
-                        today = wrapper.today,
-                        week = wrapper.week,
-                        month = wrapper.month,
-                        year = wrapper.year,
-                        all = wrapper.all,
+                        today = revenueData.today,
+                        week = revenueData.week,
+                        month = revenueData.month,
+                        year = revenueData.year,
+                        all = revenueData.all,
                         dailyBreakdown = dailyBreakdown,
-                        calculatedAt = wrapper.calculatedAt ?: ""
+                        calculatedAt = revenueData.calculatedAt ?: ""
                     ))
                 } else {
+                    Log.e(TAG, "❌ Revenue data is null. Wrapper: $wrapper")
                     Result.failure(Exception("Revenue data is null"))
                 }
             } else {
