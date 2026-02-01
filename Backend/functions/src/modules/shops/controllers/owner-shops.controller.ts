@@ -258,24 +258,18 @@ export class OwnerShopsController {
   @Get('dashboard')
   @ApiOperation({
     summary: 'Get shop dashboard',
-    description: `Get shop analytics including revenue, orders, top products, and recent orders.
-    
+    description: `Get shop analytics including all-time revenue, ordersByStatus, top products, and recent orders.
+
     BEHAVIOR:
-    - When from/to parameters are provided (both required):
-      * "today" = orders delivered on the 'to' date
-      * "thisWeek" = orders delivered in the 7 days ending on 'to' date
-      * "thisMonth" = orders delivered from 1st of 'to' month to 'to' date
-      * All time buckets are clamped within [from, to] range
-    - When from/to are NOT provided:
-      * Time buckets calculated relative to server's current time
-    
+    - When from/to parameters are provided (both required): analytics are limited to [from, to]
+    - When from/to are NOT provided: analytics are calculated for all time
+
     TIMESTAMP RULES:
     - Revenue/orderCount use deliveredAt (when order was delivered)
-    - Only DELIVERED orders count toward reavenue/orderCount/topProducts
+    - Only DELIVERED orders count toward revenue/orderCount/topProducts
     - ordersByStatus counts all orders (by createdAt)
     - recentOrders sorted by createdAt desc (shows order activity)
-    - pendingOrders counts orders with status in [PENDING, CONFIRMED, PREPARING, READY, SHIPPING] created within "today" bucket
-    
+
     DATE FORMAT: YYYY-MM-DD (e.g., 2026-01-01)
     `,
   })
@@ -301,20 +295,10 @@ export class OwnerShopsController {
       example: {
         success: true,
         data: {
-          today: {
-            revenue: 500000,
-            orderCount: 25,
-            avgOrderValue: 20000,
-            pendingOrders: 3,
-          },
-          thisWeek: {
-            revenue: 2500000,
-            orderCount: 120,
-            avgOrderValue: 20833,
-          },
-          thisMonth: {
+          allTime: {
             revenue: 10000000,
             orderCount: 500,
+            avgOrderValue: 20000,
           },
           ordersByStatus: {
             PENDING: 3,

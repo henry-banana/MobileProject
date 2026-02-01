@@ -48,6 +48,7 @@
     <string name="dashboard_today">Today</string>
     <string name="dashboard_this_week">This Week</string>
     <string name="dashboard_this_month">This Month Overview</string>
+    <string name="dashboard_all_time">All-time Overview</string>
     <string name="dashboard_this_year">This Year</string>
     <string name="dashboard_no_orders">No orders yet</string>
     <string name="dashboard_order_status_dist">Order Status Distribution</string>

@@ -1,16 +1,8 @@
 package com.example.foodapp.data.model.shipper.wallet
 
 import com.google.gson.annotations.SerializedName
-
-/**
- * Firebase Timestamp wrapper để parse timestamp từ backend
- */
-data class FirebaseTimestamp(
-    @SerializedName("_seconds") val seconds: Long = 0,
-    @SerializedName("_nanoseconds") val nanoseconds: Long = 0
-) {
-    fun toMillis(): Long = seconds * 1000 + nanoseconds / 1_000_000
-}
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 /**
  * Wallet Model - ví của shipper
@@ -67,6 +59,7 @@ data class LedgerEntry(
         return when (type) {
             LedgerType.ORDER_PAYOUT -> orderNumber?.let { "Đơn hàng #$it" } ?: "Thu nhập từ đơn hàng"
             LedgerType.WITHDRAWAL -> "Rút tiền"
+            LedgerType.PAYOUT -> "Rút tiền"
             LedgerType.ADJUSTMENT -> description ?: "Điều chỉnh"
             LedgerType.PAYOUT -> "Rút tiền"
             null -> description ?: "Giao dịch"

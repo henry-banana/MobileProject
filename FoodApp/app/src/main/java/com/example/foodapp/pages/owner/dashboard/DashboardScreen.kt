@@ -62,20 +62,18 @@ fun DashboardScreen(
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     // 1. Overview Cards (Grid 2x2) - Hiển thị dữ liệu tháng này
-                    Text(stringResource(R.string.dashboard_this_month), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold), color = OwnerColors.TextPrimary)
+                    Text(stringResource(R.string.dashboard_all_time), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold), color = OwnerColors.TextPrimary)
                     
                     // Tính tổng đơn từ ordersByStatus
                     val totalOrders = data.ordersByStatus.values.sum()
-                    val pendingOrders = (data.ordersByStatus["PENDING"] ?: 0) + 
-                                       (data.ordersByStatus["CONFIRMED"] ?: 0) + 
-                                       (data.ordersByStatus["PREPARING"] ?: 0)
-                    val completedOrders = data.ordersByStatus["COMPLETED"] ?: 0
+                    val pendingOrders = data.ordersByStatus["PENDING"] ?: 0
+                    val completedOrders = data.ordersByStatus["DELIVERED"] ?: 0
                     
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             ModernStatCard(
                                 title = stringResource(R.string.dashboard_total_revenue),
-                                value = formatCurrency(data.thisMonth.revenue),
+                                value = formatCurrency(data.allTime.revenue),
                                 icon = Icons.Default.AttachMoney,
                                 color = OwnerColors.Success,
                                 modifier = Modifier.weight(1f)
@@ -334,3 +332,4 @@ fun formatDate(isoString: String): String {
         isoString
     }
 }
+

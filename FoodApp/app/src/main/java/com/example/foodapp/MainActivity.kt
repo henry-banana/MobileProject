@@ -32,8 +32,7 @@ class MainActivity : ComponentActivity() {
     
     companion object {
         private const val TAG = "MainActivity"
-        
-        // Notification channel IDs
+
         const val CHANNEL_ORDERS = "orders_channel"
         const val CHANNEL_GENERAL = "general_channel"
         const val CHANNEL_CHAT = "chat_channel"
@@ -44,9 +43,9 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            Log.d(TAG, "✅ Notification permission granted")
+            Log.d(TAG, "Notification permission granted")
         } else {
-            Log.w(TAG, "⚠️ Notification permission denied - user won't receive push notifications")
+            Log.w(TAG, "Notification permission denied - user won't receive push notifications")
         }
     }
     
@@ -90,17 +89,15 @@ class MainActivity : ComponentActivity() {
             val permission = Manifest.permission.POST_NOTIFICATIONS
             when {
                 ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED -> {
-                    Log.d(TAG, "✅ Notification permission already granted")
+                    Log.d(TAG, "Notification permission already granted")
                 }
                 shouldShowRequestPermissionRationale(permission) -> {
                     // Show explanation to user why we need this permission
                     // For now, just request the permission
-                    Log.d(TAG, "📝 Should show rationale for notification permission")
                     notificationPermissionLauncher.launch(permission)
                 }
                 else -> {
                     // Request the permission
-                    Log.d(TAG, "🔔 Requesting notification permission...")
                     notificationPermissionLauncher.launch(permission)
                 }
             }
@@ -148,8 +145,7 @@ class MainActivity : ComponentActivity() {
             notificationManager.createNotificationChannels(
                 listOf(ordersChannel, generalChannel, chatChannel)
             )
-            
-            Log.d(TAG, "✅ Notification channels created")
+
         }
     }
 }
@@ -165,15 +161,12 @@ fun MainApp() {
     // Khi cần restart, trigger recreate activity
     LaunchedEffect(restartRequired.value) {
         if (restartRequired.value) {
-            // Delay một chút để animation hoàn tất
             kotlinx.coroutines.delay(300)
             (context as? ComponentActivity)?.recreate()
             restartRequired.value = false
         }
     }
-
     FoodAppNavHost(
         navController = navController,
-        onLanguageChanged = { restartRequired.value = true }
     )
 }

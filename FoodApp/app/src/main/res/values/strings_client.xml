@@ -900,6 +900,78 @@
     <string name="change_language">Đổi ngôn ngữ</string>
 
 
+    <!-- Notification Item -->
+
+    <!-- Mark as Read -->
+    <string name="mark_all_read">Đánh dấu tất cả đã đọc</string>
+    <string name="mark_all_read_button">Đánh dấu tất cả đã đọc</string>
+    <string name="mark_all_read_dialog_title">Đánh dấu tất cả đã đọc</string>
+    <string name="mark_all_read_dialog_message">Bạn có chắc muốn đánh dấu tất cả %d thông báo là đã đọc?</string>
+    <string name="mark_all_read_success">Đã đánh dấu %d thông báo là đã đọc</string>
+    <string name="mark_all_read_error">Không thể đánh dấu tất cả đã đọc: %s</string>
+
+
+    <!-- Forgot Password OTP Screen -->
+    <string name="verify_otp_title">Xác thực OTP</string>
+    <string name="otp_description">Nhập mã OTP 6 số đã gửi đến</string>
+    <string name="otp_timer_prefix">Mã OTP hết hạn sau: </string>
+    <string name="otp_expired">00:00</string>
+    <string name="resend_otp">Gửi lại mã OTP</string>
+    <string name="resending_otp">Đang gửi lại...</string>
+    <string name="otp_input_hint">Nhập mã OTP 6 số</string>
+    <string name="back_arrow">←</string>
+
+    <!-- OTP States -->
+    <string name="error_otp_invalid">Mã OTP không hợp lệ</string>
+    <string name="error_otp_expired">Mã OTP đã hết hạn</string>
+    <string name="error_otp_not_found">Không tìm thấy OTP. Vui lòng yêu cầu mã mới</string>
+    <string name="otp_sent_successfully">Đã gửi OTP thành công</string>
+    <string name="otp_verified_successfully">Xác thực OTP thành công</string>
+
+    <!-- Validation Messages -->
+    <string name="error_incomplete_otp">Vui lòng nhập đủ 6 số</string>
+    <string name="error_otp_max_attempts">Quá nhiều lần thử. Vui lòng thử lại sau</string>
+
+    <!-- Timer -->
+    <string name="timer_minutes_seconds">%1$02d:%2$02d</string>
+    <string name="timer_seconds_only">%1$d giây</string>
+
+    <!-- OTP Digits -->
+    <string name="otp_dot">•</string>
+
+    <!-- Placeholders -->
+    <string name="email_placeholder">email@cuaban.com</string>
+
+
+    <!-- Reset Password Screen -->
+    <string name="reset_password_title">Reset Password</string>
+    <string name="reset_password_description">Enter new password for account</string>
+    <string name="reset_password_email_missing">Email information not found</string>
+    <string name="new_password_label">New Password</string>
+    <string name="new_password_placeholder">At least 6 characters</string>
+    <string name="confirm_password_label">Confirm Password</string>
+    <string name="confirm_password_placeholder">Re-enter password</string>
+    <string name="reset_password_button">Reset Password</string>
+    <string name="password_requirement_min_length">At least 6 characters</string>
+    <string name="password_requirement_match">Passwords match</string>
+    <string name="email_missing_warning">⚠ Email not found. Please go back and try again.</string>
+
+    <!-- Forgot Password Email Screen -->
+    <string name="forgot_password_title">Quên mật khẩu?</string>
+    <string name="forgot_password_description">Đừng lo lắng! Nhập email của bạn và chúng tôi sẽ gửi mã xác thực để đặt lại mật khẩu</string>
+    <string name="email_placeholder_hint">example@email.com</string>
+    <string name="send_verification_code">Gửi mã xác thực</string>
+    <string name="checking_email">Đang kiểm tra...</string>
+    <string name="note_title">Lưu ý</string>
+    <string name="note_message">Mã xác thực sẽ được gửi đến email của bạn. Vui lòng kiểm tra cả hộp thư spam nếu không thấy email.</string>
+    <string name="back_button_description">Quay lại</string>
+    <string name="lock_reset_icon_description">Đặt lại khóa</string>
+    <string name="email_icon_description">Email</string>
+    <string name="check_circle_description">Email hợp lệ</string>
+    <string name="error_icon_description">Lỗi</string>
+    <string name="info_icon_description">Thông tin</string>
+    <string name="send_icon_description">Gửi</string>
+
 
 
 </resources>

@@ -65,6 +65,8 @@ fun LoginScreen(
     val logInState by viewModel.logInState.collectAsStateWithLifecycle()
     val googleLogInState by viewModel.googleLogInState.collectAsStateWithLifecycle()
 
+
+
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -413,7 +415,6 @@ fun LoginContent(
                             color = Color.White
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        // stringResource ở đây vẫn OK vì trong composable scope
                         Text(stringResource(R.string.logging_in), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                     isEmailLoginSuccess -> {

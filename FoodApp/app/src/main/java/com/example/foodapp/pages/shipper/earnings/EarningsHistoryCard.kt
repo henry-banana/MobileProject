@@ -59,6 +59,7 @@ fun LedgerEntryCard(entry: LedgerEntry) {
                         imageVector = when (entry.type) {
                             LedgerType.ORDER_PAYOUT -> Icons.Outlined.ShoppingBag
                             LedgerType.WITHDRAWAL -> Icons.Outlined.AccountBalanceWallet
+                            LedgerType.PAYOUT -> Icons.Outlined.AccountBalanceWallet
                             LedgerType.ADJUSTMENT -> Icons.Outlined.Tune
                             LedgerType.PAYOUT -> Icons.Outlined.AccountBalanceWallet
                             null -> Icons.Outlined.ReceiptLong
