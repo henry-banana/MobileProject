@@ -849,4 +849,12 @@
     <string name="language_vietnamese">Vietnamese</string>
     <string name="language_english">English</string>
     <string name="change_language">Change Language</string>
+
+    <!-- Mark as Read -->
+    <string name="mark_all_read">Mark all as read</string>
+    <string name="mark_all_read_button">Mark all as read</string>
+    <string name="mark_all_read_dialog_title">Mark all as read</string>
+    <string name="mark_all_read_dialog_message">Are you sure you want to mark all %d notifications as read?</string>
+    <string name="mark_all_read_success">Marked %d notifications as read</string>
+    <string name="mark_all_read_error">Failed to mark all as read: %s</string>
 </resources>

@@ -3,9 +3,9 @@ package com.example.foodapp.pages.client.notifications
 
 import android.content.Context
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -39,7 +39,7 @@ import java.util.*
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit,
-    //onNotificationClick: (notificationId: String) -> Unit = {},
+    onNotificationClick: (notificationId: String, notification: NotificationResponse) -> Unit = { _, _ -> },
 ) {
     val context = LocalContext.current
     val viewModel: NotificationsViewModel = viewModel(
@@ -51,14 +51,12 @@ fun NotificationsScreen(
     val currentNotifications by viewModel.currentNotifications.observeAsState()
     val unreadCount by viewModel.unreadCount.observeAsState(0)
     val markReadState by viewModel.markReadState.observeAsState()
+    val markAllReadState by viewModel.markAllReadState.observeAsState()
 
     // Local state
     var selectedFilter by remember { mutableStateOf(NotificationFilter.ALL) }
     var showFilterDropdown by remember { mutableStateOf(false) }
-
-    // Animation state
-    var refreshRotation by remember { mutableStateOf(0f) }
-    val infiniteTransition = rememberInfiniteTransition(label = "refresh")
+    var showMarkAllDialog by remember { mutableStateOf(false) }
 
     // Xử lý kết quả đánh dấu đã đọc
     LaunchedEffect(markReadState) {
@@ -66,6 +64,25 @@ fun NotificationsScreen(
             is MarkReadState.Success -> {
                 delay(2000)
                 viewModel.resetMarkReadState()
+            }
+            is MarkReadState.Error -> {
+                delay(3000)
+                viewModel.resetMarkReadState()
+            }
+            else -> {}
+        }
+    }
+
+    // Xử lý kết quả đánh dấu tất cả đã đọc
+    LaunchedEffect(markAllReadState) {
+        when (markAllReadState) {
+            is MarkAllReadState.Success -> {
+                delay(2000)
+                viewModel.resetMarkAllReadState()
+            }
+            is MarkAllReadState.Error -> {
+                delay(3000)
+                viewModel.resetMarkAllReadState()
             }
             else -> {}
         }
@@ -145,6 +162,28 @@ fun NotificationsScreen(
                         }
                     },
                     actions = {
+                        // Nút đánh dấu tất cả đã đọc (chỉ hiển thị khi có thông báo chưa đọc)
+                        if (unreadCount > 0) {
+                            IconButton(
+                                onClick = { showMarkAllDialog = true },
+                                enabled = markAllReadState !is MarkAllReadState.Loading
+                            ) {
+                                if (markAllReadState is MarkAllReadState.Loading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.5.dp,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Default.DoneAll,
+                                        contentDescription = stringResource(R.string.mark_all_read_button),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+
                         // Filter button with badge
                         Box {
                             BadgedBox(
@@ -273,6 +312,46 @@ fun NotificationsScreen(
                         actionIconContentColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
+            }
+        },
+        floatingActionButton = {
+            // Floating Action Button để đánh dấu tất cả đã đọc
+            if (unreadCount > 0 && currentNotifications?.isNotEmpty() == true) {
+                AnimatedVisibility(
+                    visible = unreadCount > 0,
+                    enter = fadeIn() + scaleIn(),
+                    exit = fadeOut() + scaleOut()
+                ) {
+                    ExtendedFloatingActionButton(
+                        onClick = { showMarkAllDialog = true },
+                        icon = {
+                            if (markAllReadState is MarkAllReadState.Loading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.DoneAll,
+                                    contentDescription = null
+                                )
+                            }
+                        },
+                        text = {
+                            Text(
+                                stringResource(R.string.mark_all_read),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .shadow(8.dp, RoundedCornerShape(16.dp))
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -411,8 +490,14 @@ fun NotificationsScreen(
                                     NotificationItem(
                                         notification = notification,
                                         onNotificationClick = {
-                                            // Xử lý khi click vào thông báo
-                                            //viewModel.markAsRead(notification.id ?: "")
+                                            // Đánh dấu thông báo đã đọc khi click
+                                            notification.id?.let { notificationId ->
+                                                if (!notification.read) {
+                                                    viewModel.markNotificationAsRead(notificationId)
+                                                }
+                                            }
+                                            // Gọi callback để xử lý navigation nếu cần
+                                            onNotificationClick(notification.id ?: "", notification)
                                         }
                                     )
                                 }
@@ -431,15 +516,18 @@ fun NotificationsScreen(
 
             // Hiển thị Snackbar khi đánh dấu đã đọc thành công
             AnimatedVisibility(
-                visible = markReadState is MarkReadState.Success || markReadState is MarkReadState.Error,
+                visible = markReadState is MarkReadState.Success ||
+                        markReadState is MarkReadState.Error ||
+                        markAllReadState is MarkAllReadState.Success ||
+                        markAllReadState is MarkAllReadState.Error,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(16.dp)
             ) {
-                when (markReadState) {
-                    is MarkReadState.Success -> {
+                when {
+                    markReadState is MarkReadState.Success -> {
                         Snackbar(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -462,7 +550,33 @@ fun NotificationsScreen(
                             }
                         }
                     }
-                    is MarkReadState.Error -> {
+
+                    markAllReadState is MarkAllReadState.Success -> {
+                        val updatedCount = (markAllReadState as MarkAllReadState.Success).updatedCount
+                        Snackbar(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.shadow(8.dp, RoundedCornerShape(12.dp))
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    stringResource(R.string.mark_all_read_success, updatedCount),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    markReadState is MarkReadState.Error -> {
                         val error = (markReadState as MarkReadState.Error).message
                         Snackbar(
                             containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -486,10 +600,79 @@ fun NotificationsScreen(
                             }
                         }
                     }
-                    else -> {}
+
+                    markAllReadState is MarkAllReadState.Error -> {
+                        val error = (markAllReadState as MarkAllReadState.Error).message
+                        Snackbar(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.shadow(8.dp, RoundedCornerShape(12.dp))
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Error,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    stringResource(R.string.mark_all_read_error, error),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    // Dialog xác nhận đánh dấu tất cả đã đọc
+    if (showMarkAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showMarkAllDialog = false },
+            title = {
+                Text(
+                    stringResource(R.string.mark_all_read_dialog_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(stringResource(R.string.mark_all_read_dialog_message, unreadCount))
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.markAllNotificationsAsRead()
+                        showMarkAllDialog = false
+                    },
+                    enabled = markAllReadState !is MarkAllReadState.Loading,
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (markAllReadState is MarkAllReadState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showMarkAllDialog = false },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
     }
 }
 
@@ -505,8 +688,9 @@ fun NotificationItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
+                interactionSource = remember { MutableInteractionSource() },
                 onClick = onNotificationClick,
-                enabled = isUnread
+                indication = null
             )
             .animateContentSize(),
         shape = RoundedCornerShape(16.dp),

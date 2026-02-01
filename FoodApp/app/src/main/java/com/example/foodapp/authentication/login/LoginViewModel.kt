@@ -56,21 +56,6 @@ class LoginViewModel(
 
     fun getGoogleSignInIntent() = googleSignInClient?.signInIntent
 
-    /**
-     * Xử lý khi nhấn nút Google Sign-In
-     */
-    fun onGoogleSignInButtonClicked(): Boolean {
-        return try {
-            _googleLogInState.value = GoogleLogInState.Loading
-            googleSignInClient?.signInIntent != null
-        } catch (e: Exception) {
-            _googleLogInState.value = GoogleLogInState.Error(
-                "Không thể khởi tạo Google Sign-In",
-                "GOOGLE_INIT_ERROR"
-            )
-            false
-        }
-    }
 
     /**
      * Xử lý kết quả từ Google Sign-In Activity
@@ -106,11 +91,11 @@ class LoginViewModel(
 
 
         try {
-            // 1. Sign in với Firebase để lấy Firebase ID token
+            // Sign in với Firebase để lấy Firebase ID token
             val credential = GoogleAuthProvider.getCredential(googleIdToken, null)
             val authResult = firebaseAuth.signInWithCredential(credential).await()
 
-            // 2. Lấy Firebase ID token
+            // Lấy Firebase ID token
             val tokenResult = authResult.user?.getIdToken(true)?.await()
             val firebaseIdToken = tokenResult?.token
 
@@ -157,7 +142,7 @@ class LoginViewModel(
                     // Cập nhật state thành công
                     updateGoogleSignInSuccess(client, role)
 
-                    Log.d("LoginViewModel", "✅ Google Sign-In thành công: ${client.email}")
+                    Log.d("LoginViewModel", "Google Sign-In thành công: ${client.email}")
                 }
 
                 is ApiResult.Failure -> {
@@ -166,11 +151,9 @@ class LoginViewModel(
                         errorMsg.first,
                         errorMsg.second
                     )
-                    Log.e("LoginViewModel", "❌ Google Sign-In thất bại: ${result.exception.message}")
                 }
             }
         } catch (e: Exception) {
-            Log.e("LoginViewModel", "❌ Lỗi kết nối API", e)
             _googleLogInState.value = GoogleLogInState.Error(
                 "Lỗi kết nối: ${e.message ?: "Vui lòng thử lại sau"}",
                 "NETWORK_ERROR"
@@ -248,17 +231,6 @@ class LoginViewModel(
             message.contains("no internet", ignoreCase = true) ->
                 Pair("Không có kết nối internet", "NO_INTERNET")
             else -> Pair(message, "API_ERROR")
-        }
-    }
-
-
-    fun signOutGoogle() {
-        googleSignInClient?.signOut()?.addOnCompleteListener {
-            firebaseAuth.signOut()
-            authManager.clearAuthData()
-            _googleLogInState.value = GoogleLogInState.Idle
-            _existAccountState.value = null
-            Log.d("LoginViewModel", "✅ Đã đăng xuất Google")
         }
     }
 
@@ -380,7 +352,7 @@ class LoginViewModel(
      */
     private fun delayAndRegisterDeviceToken() {
         viewModelScope.launch {
-            delay(1000) //thời gian chờ chờ server
+            delay(500) //thời gian chờ chờ server
             registerDeviceTokenForUser() //Đăng ký device token
         }
     }

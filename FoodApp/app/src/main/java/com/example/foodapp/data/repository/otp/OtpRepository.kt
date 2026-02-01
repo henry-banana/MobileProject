@@ -6,6 +6,7 @@ import retrofit2.HttpException
 import java.io.IOException
 import com.example.foodapp.data.remote.api.ApiClient
 import com.example.foodapp.data.model.shared.otp.*
+import retrofit2.Response
 
 class OtpRepository {
     private val apiService = ApiClient.otpApiService
@@ -107,7 +108,7 @@ class OtpRepository {
     }
 
     // Helper function để xử lý HTTP errors
-    private fun handleHttpError(response: retrofit2.Response<*>): ApiResult<Nothing> {
+    private fun handleHttpError(response: Response<*>): ApiResult<Nothing> {
         val errorCode = response.code()
         val errorBody = response.errorBody()?.string()
 

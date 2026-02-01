@@ -85,15 +85,12 @@ sealed class Screen(val route: String) {
     object Chat : Screen("chat/{conversationId}") {
         fun createRoute(conversationId: String) = "chat/$conversationId"
     }
-
     object UserProductDetail : Screen ("product_detail/{productId}") {
         fun createRoute(productId: String) = "product_detail/$productId"
     }
-
     object ShopDetail : Screen("shop_detail/{shopId}") {
         fun createRoute(shopId: String) = "shop_detail/$shopId"
     }
-
     object UserPayment : Screen("payment/{productsJson}/{quantitiesJson}") {
         fun createRoute(productsJson: String, quantitiesJson: String): String {
             val encodedProductsJson = URLEncoder.encode(productsJson, StandardCharsets.UTF_8.toString())
@@ -101,12 +98,9 @@ sealed class Screen(val route: String) {
             return "payment/$encodedProductsJson/$encodedQuantitiesJson"
         }
     }
-
     object OrderDetail : Screen("order_detail/{orderId}") {
         fun createRoute(orderId: String) = "order_detail/$orderId"
     }
-
-    // SỬA: OrderSuccess route nhận orderJson
     object OrderSuccess : Screen("order_success/{orderJson}") {
         fun createRoute(orderJson: String): String {
             val encodedOrderJson = URLEncoder.encode(orderJson, StandardCharsets.UTF_8.toString())
@@ -123,7 +117,6 @@ sealed class Screen(val route: String) {
 @Composable
 fun FoodAppNavHost(
     navController: NavHostController,
-    onLanguageChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val repository = remember { UserFirebaseRepository(context) }

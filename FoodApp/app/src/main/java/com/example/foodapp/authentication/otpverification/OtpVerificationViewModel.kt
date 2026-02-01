@@ -105,11 +105,7 @@ class OtpVerificationViewModel(
 
             when (val result = otpRepository.sendOtp(email)) {
                 is ApiResult.Success -> {
-                    // Với model mới, result.data là SimpleMessageData
-                    // Nếu API trả về expiresAt, cần điều chỉnh model
-                    // Hiện tại không có expiresAt trong SimpleMessageData
 
-                    // Bắt đầu timer với mặc định
                     startTimer()
 
                     _otpState.value = OtpVerificationState.Idle

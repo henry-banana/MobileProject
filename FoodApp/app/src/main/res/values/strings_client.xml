@@ -900,6 +900,16 @@
     <string name="change_language">Đổi ngôn ngữ</string>
 
 
+    <!-- Notification Item -->
+
+    <!-- Mark as Read -->
+    <string name="mark_all_read">Đánh dấu tất cả đã đọc</string>
+    <string name="mark_all_read_button">Đánh dấu tất cả đã đọc</string>
+    <string name="mark_all_read_dialog_title">Đánh dấu tất cả đã đọc</string>
+    <string name="mark_all_read_dialog_message">Bạn có chắc muốn đánh dấu tất cả %d thông báo là đã đọc?</string>
+    <string name="mark_all_read_success">Đã đánh dấu %d thông báo là đã đọc</string>
+    <string name="mark_all_read_error">Không thể đánh dấu tất cả đã đọc: %s</string>
+
 
 
 </resources>
