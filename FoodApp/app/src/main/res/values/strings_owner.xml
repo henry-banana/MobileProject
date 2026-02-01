@@ -48,6 +48,7 @@
     <string name="dashboard_today">Hôm nay</string>
     <string name="dashboard_this_week">Tuần này</string>
     <string name="dashboard_this_month">Tổng quan tháng này</string>
+    <string name="dashboard_all_time">Tổng quan toàn thời gian</string>
     <string name="dashboard_this_year">Năm nay</string>
     <string name="dashboard_no_orders">Chưa có đơn hàng nào</string>
     <string name="dashboard_order_status_dist">Phân bố trạng thái đơn</string>
