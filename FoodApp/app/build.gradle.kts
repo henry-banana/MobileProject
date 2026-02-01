@@ -55,6 +55,8 @@ android {
 
 dependencies {
 
+    // Fragment library for ActivityResult APIs (required for registerForActivityResult)
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
 
     implementation("com.google.firebase:firebase-messaging:23.3.1")
     implementation("com.google.firebase:firebase-analytics:21.5.0")
