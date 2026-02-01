@@ -60,10 +60,11 @@ fun UserHomeContent(
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
+    val allCategoriesText = stringResource(R.string.all_categories)
 
-    val categoryMap = remember(categories) {
+    val categoryMap = remember(categories, allCategoriesText) {
         mutableMapOf<String?, String>().apply {
-            this[null] = "Tất cả"
+            this[null] = allCategoriesText
             categories.forEach { category ->
                 if (category.isActive) {
                     this[category.id] = category.name
@@ -71,6 +72,7 @@ fun UserHomeContent(
             }
         }
     }
+
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
