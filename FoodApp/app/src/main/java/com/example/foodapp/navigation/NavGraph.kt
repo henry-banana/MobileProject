@@ -262,7 +262,7 @@ fun FoodAppNavHost(
         composable(Screen.OtpResetPassword.route) {
             ForgotPasswordOTPScreen(
                 onBackClicked = { navController.navigate(Screen.Login.route) { popUpTo(0) { inclusive = true } } },
-                onSuccess = { navController.navigate(Screen.Login.route) { popUpTo(0) { inclusive = true } } }
+                onSuccess = { navController.navigate(Screen.ResetPassword.route) { popUpTo(0) { inclusive = true } } }
             )
         }
 
