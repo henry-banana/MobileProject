@@ -857,4 +857,56 @@
     <string name="mark_all_read_dialog_message">Are you sure you want to mark all %d notifications as read?</string>
     <string name="mark_all_read_success">Marked %d notifications as read</string>
     <string name="mark_all_read_error">Failed to mark all as read: %s</string>
+
+
+    <!-- All string IDs for easy reference -->
+    <string name="back_arrow">←</string>
+    <string name="email_placeholder">your@email.com</string>
+    <string name="error_incomplete_otp">Please enter all 6 digits</string>
+    <string name="error_otp_expired">OTP has expired</string>
+    <string name="error_otp_invalid">Invalid OTP code</string>
+    <string name="error_otp_max_attempts">Too many attempts. Please try again later</string>
+    <string name="error_otp_not_found">OTP not found. Please request a new one</string>
+    <string name="otp_description">Enter the 6-digit OTP sent to</string>
+    <string name="otp_dot">•</string>
+    <string name="otp_expired">00:00</string>
+    <string name="otp_input_hint">Enter 6-digit OTP</string>
+    <string name="otp_sent_successfully">OTP sent successfully</string>
+    <string name="otp_timer_prefix">OTP expires in: </string>
+    <string name="otp_verified_successfully">OTP verified successfully</string>
+    <string name="resend_otp">Resend OTP</string>
+    <string name="resending_otp">Resending...</string>
+    <string name="timer_minutes_seconds">%02d:%02d</string>
+    <string name="timer_seconds_only">%d seconds</string>
+    <string name="verify_otp_title">Verify OTP</string>
+
+    <!-- Reset Password Screen -->
+    <string name="reset_password_title">Đặt lại mật khẩu</string>
+    <string name="reset_password_description">Nhập mật khẩu mới cho tài khoản</string>
+    <string name="reset_password_email_missing">Không tìm thấy thông tin email</string>
+    <string name="new_password_label">Mật khẩu mới</string>
+    <string name="new_password_placeholder">Ít nhất 6 ký tự</string>
+    <string name="confirm_password_label">Xác nhận mật khẩu</string>
+    <string name="confirm_password_placeholder">Nhập lại mật khẩu</string>
+    <string name="reset_password_button">Đặt lại mật khẩu</string>
+    <string name="password_requirement_min_length">Ít nhất 6 ký tự</string>
+    <string name="password_requirement_match">Mật khẩu khớp</string>
+    <string name="email_missing_warning">⚠ Không tìm thấy email. Vui lòng quay lại và thử lại.</string>
+
+
+    <!-- Forgot Password Email Screen -->
+    <string name="forgot_password_title">Forgot Password?</string>
+    <string name="forgot_password_description">Don\'t worry! Enter your email and we\'ll send a verification code to reset your password</string>
+    <string name="email_placeholder_hint">example@email.com</string>
+    <string name="send_verification_code">Send Verification Code</string>
+    <string name="checking_email">Checking email...</string>
+    <string name="note_title">Note</string>
+    <string name="note_message">The verification code will be sent to your email. Please check your spam folder if you don\'t see the email.</string>
+    <string name="back_button_description">Back</string>
+    <string name="lock_reset_icon_description">Lock reset</string>
+    <string name="email_icon_description">Email</string>
+    <string name="check_circle_description">Valid email</string>
+    <string name="error_icon_description">Error</string>
+    <string name="info_icon_description">Information</string>
+    <string name="send_icon_description">Send</string>
 </resources>

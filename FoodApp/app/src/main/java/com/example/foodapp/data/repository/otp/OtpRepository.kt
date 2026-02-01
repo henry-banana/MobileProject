@@ -11,10 +11,10 @@ import retrofit2.Response
 class OtpRepository {
     private val apiService = ApiClient.otpApiService
 
-    suspend fun sendOtp(email: String): ApiResult<SimpleMessageData> {
+    suspend fun sendOtp(email: String, type: OTPType): ApiResult<SimpleMessageData> {
         return try {
             withContext(Dispatchers.IO) {
-                val request = SendOtpRequest(email)
+                val request = SendOtpRequest(email, type)
                 val response = apiService.sendOtp(request)
 
                 if (response.isSuccessful) {
@@ -75,10 +75,10 @@ class OtpRepository {
         }
     }
 
-    suspend fun sendOtpResetPassword(email: String): ApiResult<SimpleMessageData> {
+    suspend fun sendOtpResetPassword(email: String,type: OTPType): ApiResult<SimpleMessageData> {
         return try {
             withContext(Dispatchers.IO) {
-                val request = SendOtpRequest(email)
+                val request = SendOtpRequest(email, type)
                 val response = apiService.sendOtp(request)
 
                 if (response.isSuccessful) {
@@ -86,7 +86,7 @@ class OtpRepository {
                     if (apiResponse != null && apiResponse.success) {
                         val data = apiResponse.data
                         if (data != null) {
-                            ApiResult.Success(data) // SimpleMessageData
+                            ApiResult.Success(data)
                         } else {
                             ApiResult.Failure(Exception("Không nhận được dữ liệu từ server"))
                         }
